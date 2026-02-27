@@ -11,8 +11,8 @@
  */
 
 import {useState} from "react";
-import {Book} from "@/lib/types";
-import {interpolate, useLanguage} from "@/lib/i18n/context";
+import {Book} from "@/src/lib/types";
+import {interpolate, useLanguage} from "@/src/lib/i18n/context";
 
 interface LentPageProps {
     lentBooks: Book[];

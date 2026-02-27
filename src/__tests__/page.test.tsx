@@ -1,5 +1,5 @@
 import {render, screen} from "@testing-library/react";
-import Home from "@/app/page";
+import Home from "@/src/app/page";
 
 // Mock next/font/google used in layout (not needed here since we test just the page component)
 jest.mock("next/image", () => ({

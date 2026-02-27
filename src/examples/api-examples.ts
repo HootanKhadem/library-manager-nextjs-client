@@ -10,8 +10,8 @@
  *   npx ts-node --project tsconfig.json examples/api-examples.ts
  */
 
-import {AUTHORS, BOOKS, getBookById, getLentBooks, getOverdueBooks,} from "../lib/data";
-import {Book, BookStatus} from "../lib/types";
+import {AUTHORS, BOOKS, getBookById, getLentBooks, getOverdueBooks,} from "@/lib/data";
+import {Book, BookStatus} from "@/lib/types";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION 1 — SYNCHRONOUS EXAMPLES
