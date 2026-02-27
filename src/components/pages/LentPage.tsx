@@ -69,8 +69,8 @@ function LendCard({book}: { book: Book }) {
             <div
                 className={`px-5 py-5 relative ${
                     isOverdue
-                        ? "bg-gradient-to-br from-[#7a1a0a] to-[#4d1010]"
-                        : "bg-gradient-to-br from-[#5c2d0a] to-[#3d1c02]"
+                        ? "bg-linear-to-br from-[#7a1a0a] to-[#4d1010]"
+                        : "bg-linear-to-br from-[#5c2d0a] to-[#3d1c02]"
                 }`}
             >
                 <div className="absolute bottom-3 right-4 text-4xl opacity-20">📖</div>
@@ -107,7 +107,7 @@ function LendCard({book}: { book: Book }) {
 function LendRow({label, value, overdue}: { label: string; value: string; overdue?: boolean }) {
     return (
         <div className="flex justify-between mb-2 text-[0.78rem]">
-            <span className="font-mono text-[#6b4c2a] text-[0.65rem] tracking-[0.1em] uppercase">{label}</span>
+            <span className="font-mono text-[#6b4c2a] text-[0.65rem] tracking-widest uppercase">{label}</span>
             <span className={`font-bold ${overdue ? "text-[#a03020]" : "text-[#3d2b1a]"}`}>{value}</span>
         </div>
     );
@@ -117,7 +117,7 @@ function FilterBtn({active, onClick, children}: { active: boolean; onClick: () =
     return (
         <button
             onClick={onClick}
-            className={`border rounded-sm px-3.5 py-1.5 font-mono text-[0.62rem] tracking-[0.1em] uppercase transition-all ${
+            className={`border rounded-sm px-3.5 py-1.5 font-mono text-[0.62rem] tracking-widest uppercase transition-all ${
                 active
                     ? "bg-[#3d1c02] text-[#f5f0e8] border-[#3d1c02]"
                     : "bg-transparent text-[#6b4c2a] border-[rgba(61,28,2,0.18)] hover:bg-[#3d1c02] hover:text-[#f5f0e8] hover:border-[#3d1c02]"
