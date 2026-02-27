@@ -1,6 +1,6 @@
 import {fireEvent, render, screen} from "@testing-library/react";
-import DashboardPage from "@/components/pages/DashboardPage";
-import {BOOKS} from "@/lib/data";
+import DashboardPage from "@/src/components/pages/DashboardPage";
+import {BOOKS} from "@/src/lib/data";
 
 describe("DashboardPage component", () => {
     const onBookClick = jest.fn();

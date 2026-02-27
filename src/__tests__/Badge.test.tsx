@@ -1,5 +1,5 @@
 import {render, screen} from "@testing-library/react";
-import Badge from "@/components/Badge";
+import Badge from "@/src/components/Badge";
 
 describe("Badge component", () => {
     it("renders 'Owned' status", () => {

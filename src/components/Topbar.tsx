@@ -12,8 +12,8 @@
  * The search placeholder is t.common.searchPlaceholder.
  */
 
-import {PageId} from "@/lib/types";
-import {useLanguage} from "@/lib/i18n/context";
+import {PageId} from "@/src/lib/types";
+import {useLanguage} from "@/src/lib/i18n/context";
 
 interface TopbarProps {
     activePage: PageId;

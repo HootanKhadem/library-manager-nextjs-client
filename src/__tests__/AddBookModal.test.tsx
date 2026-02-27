@@ -1,5 +1,5 @@
 import {fireEvent, render, screen} from "@testing-library/react";
-import AddBookModal from "@/components/AddBookModal";
+import AddBookModal from "@/src/components/AddBookModal";
 
 describe("AddBookModal component", () => {
     const onClose = jest.fn();

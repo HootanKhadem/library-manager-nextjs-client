@@ -47,9 +47,9 @@
  */
 
 import React, {createContext, useCallback, useContext, useEffect, useState} from "react";
-import {Language, TextDirection, Translations} from "@/lib/i18n/types";
-import en from "@/lib/i18n/translations/en";
-import fa from "@/lib/i18n/translations/fa";
+import {Language, TextDirection, Translations} from "@/src/lib/i18n/types";
+import en from "@/src/lib/i18n/translations/en";
+import fa from "@/src/lib/i18n/translations/fa";
 
 // ---------------------------------------------------------------------------
 // Translation map

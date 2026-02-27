@@ -1,5 +1,5 @@
 import {fireEvent, render, screen} from "@testing-library/react";
-import LibraryApp from "@/components/LibraryApp";
+import LibraryApp from "@/src/components/LibraryApp";
 
 // Helper: click sidebar nav item by its text label
 function clickNav(label: string) {

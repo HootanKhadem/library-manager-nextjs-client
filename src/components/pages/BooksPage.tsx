@@ -12,11 +12,11 @@
  */
 
 import {useState} from "react";
-import {Book, BookStatus} from "@/lib/types";
-import Badge from "@/components/Badge";
-import StarRating from "@/components/StarRating";
-import GenreTag from "@/components/GenreTag";
-import {interpolate, useLanguage} from "@/lib/i18n/context";
+import {Book, BookStatus} from "@/src/lib/types";
+import Badge from "@/src/components/Badge";
+import StarRating from "@/src/components/StarRating";
+import GenreTag from "@/src/components/GenreTag";
+import {interpolate, useLanguage} from "@/src/lib/i18n/context";
 
 interface BooksPageProps {
     books: Book[];

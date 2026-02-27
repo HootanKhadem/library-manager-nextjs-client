@@ -1,5 +1,5 @@
 import {fireEvent, render, screen} from "@testing-library/react";
-import Sidebar from "@/components/Sidebar";
+import Sidebar from "@/src/components/Sidebar";
 
 const defaultProps = {
     activePage: "dashboard" as const,

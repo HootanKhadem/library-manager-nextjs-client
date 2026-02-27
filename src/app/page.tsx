@@ -1,4 +1,4 @@
-import LibraryApp from "@/components/LibraryApp";
+import LibraryApp from "@/src/components/LibraryApp";
 
 export default function Home() {
     return <LibraryApp/>;

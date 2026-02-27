@@ -20,10 +20,10 @@
  * regardless of direction.
  */
 
-import {PageId} from "@/lib/types";
-import {getLentBooks} from "@/lib/data";
-import {useLanguage} from "@/lib/i18n/context";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
+import {PageId} from "@/src/lib/types";
+import {getLentBooks} from "@/src/lib/data";
+import {useLanguage} from "@/src/lib/i18n/context";
+import LanguageSwitcher from "@/src/components/LanguageSwitcher";
 
 interface SidebarProps {
     activePage: PageId;

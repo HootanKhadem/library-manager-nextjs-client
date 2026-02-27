@@ -1,4 +1,4 @@
-import {AUTHORS, BOOKS, BORGES_WORKS, getBookById, getLentBooks, getOverdueBooks} from "@/lib/data";
+import {AUTHORS, BOOKS, BORGES_WORKS, getBookById, getLentBooks, getOverdueBooks} from "@/src/lib/data";
 
 describe("Data helpers", () => {
     describe("BOOKS", () => {

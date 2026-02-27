@@ -25,8 +25,8 @@
  * directional mirroring via the dir attribute on <html>.
  */
 
-import {useLanguage} from "@/lib/i18n/context";
-import {Language} from "@/lib/i18n/types";
+import {useLanguage} from "@/src/lib/i18n/context";
+import {Language} from "@/src/lib/i18n/types";
 
 export default function LanguageSwitcher() {
     const {language, setLanguage, languages, t} = useLanguage();

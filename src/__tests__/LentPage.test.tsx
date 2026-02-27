@@ -1,6 +1,6 @@
 import {fireEvent, render, screen} from "@testing-library/react";
-import LentPage from "@/components/pages/LentPage";
-import {getLentBooks} from "@/lib/data";
+import LentPage from "@/src/components/pages/LentPage";
+import {getLentBooks} from "@/src/lib/data";
 
 describe("LentPage component", () => {
     const lentBooks = getLentBooks();

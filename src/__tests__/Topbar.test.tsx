@@ -1,5 +1,5 @@
 import {fireEvent, render, screen} from "@testing-library/react";
-import Topbar from "@/components/Topbar";
+import Topbar from "@/src/components/Topbar";
 
 describe("Topbar component", () => {
     const defaultProps = {

@@ -1,5 +1,5 @@
 import {render, screen} from "@testing-library/react";
-import GenreTag from "@/components/GenreTag";
+import GenreTag from "@/src/components/GenreTag";
 
 describe("GenreTag component", () => {
     it("renders the genre text", () => {

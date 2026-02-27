@@ -1,6 +1,6 @@
 import {fireEvent, render, screen} from "@testing-library/react";
-import BooksPage from "@/components/pages/BooksPage";
-import {BOOKS} from "@/lib/data";
+import BooksPage from "@/src/components/pages/BooksPage";
+import {BOOKS} from "@/src/lib/data";
 
 const onBookClick = jest.fn();
 const onAddBook = jest.fn();

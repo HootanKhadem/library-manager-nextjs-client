@@ -11,18 +11,18 @@
  * all user-visible text lives in the child components.
  */
 import {useState} from "react";
-import {Book, PageId} from "@/lib/types";
-import {AUTHORS, BOOKS, BORGES_WORKS, getLentBooks} from "@/lib/data";
-import {LanguageProvider} from "@/lib/i18n/context";
-import Sidebar from "@/components/Sidebar";
-import Topbar from "@/components/Topbar";
-import DashboardPage from "@/components/pages/DashboardPage";
-import BooksPage from "@/components/pages/BooksPage";
-import LentPage from "@/components/pages/LentPage";
-import AuthorsPage from "@/components/pages/AuthorsPage";
-import SettingsPage from "@/components/pages/SettingsPage";
-import BookDetailModal from "@/components/BookDetailModal";
-import AddBookModal, {NewBookFormData} from "@/components/AddBookModal";
+import {Book, PageId} from "@/src/lib/types";
+import {AUTHORS, BOOKS, BORGES_WORKS, getLentBooks} from "@/src/lib/data";
+import {LanguageProvider} from "@/src/lib/i18n/context";
+import Sidebar from "@/src/components/Sidebar";
+import Topbar from "@/src/components/Topbar";
+import DashboardPage from "@/src/components/pages/DashboardPage";
+import BooksPage from "@/src/components/pages/BooksPage";
+import LentPage from "@/src/components/pages/LentPage";
+import AuthorsPage from "@/src/components/pages/AuthorsPage";
+import SettingsPage from "@/src/components/pages/SettingsPage";
+import BookDetailModal from "@/src/components/BookDetailModal";
+import AddBookModal, {NewBookFormData} from "@/src/components/AddBookModal";
 
 export default function LibraryApp() {
     const [activePage, setActivePage] = useState<PageId>("dashboard");

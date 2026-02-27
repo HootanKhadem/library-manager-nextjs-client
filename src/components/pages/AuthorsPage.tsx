@@ -10,11 +10,11 @@
  * The "books in collection" card label uses interpolate() for the count.
  */
 
-import {Author, Book} from "@/lib/types";
-import Badge from "@/components/Badge";
-import StarRating from "@/components/StarRating";
-import GenreTag from "@/components/GenreTag";
-import {interpolate, useLanguage} from "@/lib/i18n/context";
+import {Author, Book} from "@/src/lib/types";
+import Badge from "@/src/components/Badge";
+import StarRating from "@/src/components/StarRating";
+import GenreTag from "@/src/components/GenreTag";
+import {interpolate, useLanguage} from "@/src/lib/i18n/context";
 
 interface AuthorsPageProps {
     authors: Author[];

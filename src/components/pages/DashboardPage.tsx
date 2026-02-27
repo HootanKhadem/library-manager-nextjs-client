@@ -10,12 +10,12 @@
  * in the current language.
  */
 
-import {Book} from "@/lib/types";
-import {ACTIVITY_ITEMS, getLentBooks, getOverdueBooks} from "@/lib/data";
-import Badge from "@/components/Badge";
-import StarRating from "@/components/StarRating";
-import GenreTag from "@/components/GenreTag";
-import {useLanguage} from "@/lib/i18n/context";
+import {Book} from "@/src/lib/types";
+import {ACTIVITY_ITEMS, getLentBooks, getOverdueBooks} from "@/src/lib/data";
+import Badge from "@/src/components/Badge";
+import StarRating from "@/src/components/StarRating";
+import GenreTag from "@/src/components/GenreTag";
+import {useLanguage} from "@/src/lib/i18n/context";
 
 interface DashboardPageProps {
     books: Book[];

@@ -10,8 +10,8 @@
  */
 
 "use client";
-import {BookStatus} from "@/lib/types";
-import {useLanguage} from "@/lib/i18n/context";
+import {BookStatus} from "@/src/lib/types";
+import {useLanguage} from "@/src/lib/i18n/context";
 
 interface BadgeProps {
     status: BookStatus;

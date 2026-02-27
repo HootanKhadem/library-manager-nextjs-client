@@ -9,7 +9,7 @@
  * The loan duration options are translated strings from t.settings.loan30/60/90.
  */
 
-import {useLanguage} from "@/lib/i18n/context";
+import {useLanguage} from "@/src/lib/i18n/context";
 
 export default function SettingsPage() {
     const {t} = useLanguage();

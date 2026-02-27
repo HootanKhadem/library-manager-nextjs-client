@@ -1,6 +1,6 @@
 import {fireEvent, render, screen} from "@testing-library/react";
-import BookDetailModal from "@/components/BookDetailModal";
-import {Book} from "@/lib/types";
+import BookDetailModal from "@/src/components/BookDetailModal";
+import {Book} from "@/src/lib/types";
 
 const mockBook: Book = {
     id: "test-book",

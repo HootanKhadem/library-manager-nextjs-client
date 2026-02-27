@@ -19,12 +19,12 @@
 
 import React from "react";
 import {act, fireEvent, render, screen} from "@testing-library/react";
-import {interpolate, LanguageProvider, useLanguage} from "@/lib/i18n/context";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
-import Sidebar from "@/components/Sidebar";
-import Topbar from "@/components/Topbar";
-import en from "@/lib/i18n/translations/en";
-import fa from "@/lib/i18n/translations/fa";
+import {interpolate, LanguageProvider, useLanguage} from "@/src/lib/i18n/context";
+import LanguageSwitcher from "@/src/components/LanguageSwitcher";
+import Sidebar from "@/src/components/Sidebar";
+import Topbar from "@/src/components/Topbar";
+import en from "@/src/lib/i18n/translations/en";
+import fa from "@/src/lib/i18n/translations/fa";
 
 // ─── Mocks required by next/image and next/link ───────────────────────────────
 jest.mock("next/image", () => ({

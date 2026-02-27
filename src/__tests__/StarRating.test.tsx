@@ -1,5 +1,5 @@
 import {render, screen} from "@testing-library/react";
-import StarRating from "@/components/StarRating";
+import StarRating from "@/src/components/StarRating";
 
 describe("StarRating component", () => {
     it("renders 5 filled stars for rating 5", () => {
