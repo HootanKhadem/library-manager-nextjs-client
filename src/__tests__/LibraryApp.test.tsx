@@ -52,13 +52,13 @@ describe("LibraryApp integration", () => {
 
     it("opens AddBookModal when Add New Book is clicked", () => {
         render(<LibraryApp/>);
-        fireEvent.click(screen.getByText("＋ Add New Book"));
+        fireEvent.click(screen.getByLabelText(/Add New Book/i));
         expect(screen.getByTestId("add-book-modal")).toBeInTheDocument();
     });
 
     it("closes AddBookModal when Cancel is clicked", () => {
         render(<LibraryApp/>);
-        fireEvent.click(screen.getByText("＋ Add New Book"));
+        fireEvent.click(screen.getByLabelText(/Add New Book/i));
         fireEvent.click(screen.getByText("Cancel").closest("button")!);
         expect(screen.queryByTestId("add-book-modal")).not.toBeInTheDocument();
     });
@@ -82,7 +82,8 @@ describe("LibraryApp integration", () => {
     it("filters books via search query on Books page", () => {
         render(<LibraryApp/>);
         clickNav("All Books");
-        fireEvent.change(screen.getByRole("textbox", {name: /search/i}), {
+        // type="search" gives the input a role of "searchbox"
+        fireEvent.change(screen.getByRole("searchbox", {name: /search/i}), {
             target: {value: "Borges"},
         });
         expect(screen.getByText("Ficciones")).toBeInTheDocument();
@@ -92,7 +93,7 @@ describe("LibraryApp integration", () => {
     it("adds a new book to the list", () => {
         render(<LibraryApp/>);
         clickNav("All Books");
-        fireEvent.click(screen.getByText("＋ Add New Book"));
+        fireEvent.click(screen.getByLabelText(/Add New Book/i));
         fireEvent.change(screen.getByPlaceholderText(/The Brothers Karamazov/i), {
             target: {value: "Dune"},
         });

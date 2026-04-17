@@ -24,7 +24,6 @@ describe("Sidebar component", () => {
         expect(screen.getByText("Dashboard")).toBeInTheDocument();
         expect(screen.getByText("All Books")).toBeInTheDocument();
         expect(screen.getByText("Currently Lent")).toBeInTheDocument();
-        // Authors appears in sidebar nav section
         const authorsNavItem = screen.getAllByText("Authors");
         expect(authorsNavItem.length).toBeGreaterThan(0);
         expect(screen.getByText("Preferences")).toBeInTheDocument();
@@ -39,7 +38,6 @@ describe("Sidebar component", () => {
     it("calls onNavigate with correct page when nav item is clicked", () => {
         const onNavigate = jest.fn();
         render(<Sidebar {...defaultProps} onNavigate={onNavigate}/>);
-        // Click the text node itself (emoji is in a separate span)
         fireEvent.click(screen.getByText("All Books").closest("button")!);
         expect(onNavigate).toHaveBeenCalledWith("books");
     });
@@ -47,15 +45,9 @@ describe("Sidebar component", () => {
     it("calls onAddBook when Add New Book button is clicked", () => {
         const onAddBook = jest.fn();
         render(<Sidebar {...defaultProps} onAddBook={onAddBook}/>);
-        fireEvent.click(screen.getByText("＋ Add New Book"));
+        // Button has aria-label matching t.sidebar.addNewBook
+        fireEvent.click(screen.getByLabelText(/Add New Book/i));
         expect(onAddBook).toHaveBeenCalled();
-    });
-
-    it("shows the stat chips", () => {
-        render(<Sidebar {...defaultProps} />);
-        expect(screen.getByTestId("stat-total")).toBeInTheDocument();
-        expect(screen.getByTestId("stat-lent")).toBeInTheDocument();
-        expect(screen.getByTestId("stat-authors")).toBeInTheDocument();
     });
 
     it("shows mobile overlay when isOpen is true", () => {

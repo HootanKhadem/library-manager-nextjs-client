@@ -25,6 +25,7 @@ function SidebarShell({ isOpen, onClose, children }: SidebarShellProps) {
 
             {/* Sidebar */}
             <aside
+                data-testid="sidebar"
                 className={[
                     "group fixed inset-y-0 start-0 z-30 flex flex-col bg-[var(--sidebar-bg)] transition-all duration-200 ease-in-out",
                     /* desktop: 60px collapsed, hover → 240px */
@@ -98,7 +99,7 @@ function NavItem({ icon, label, active = false, onClick, href }: NavItemProps) {
     if (href) {
         return (
             <li>
-                <Link href={href} className={className}>
+                <Link href={href} className={className} aria-current={active ? "page" : undefined}>
                     {content}
                 </Link>
             </li>
@@ -107,7 +108,7 @@ function NavItem({ icon, label, active = false, onClick, href }: NavItemProps) {
 
     return (
         <li>
-            <button onClick={onClick} className={className}>
+            <button onClick={onClick} className={className} aria-current={active ? "page" : undefined}>
                 {content}
             </button>
         </li>

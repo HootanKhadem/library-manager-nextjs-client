@@ -43,9 +43,10 @@ describe("BooksPage component", () => {
         );
     });
 
-    it("calls onAddBook when + Add button is clicked", () => {
+    it("calls onAddBook when Add button is clicked", () => {
         render(<BooksPage books={BOOKS} onBookClick={onBookClick} onAddBook={onAddBook}/>);
-        fireEvent.click(screen.getByRole("button", {name: /＋ Add/i}));
+        // Button renders t.common.add = "Add" with a Plus icon (aria-hidden)
+        fireEvent.click(screen.getByRole("button", {name: /^Add$/i}));
         expect(onAddBook).toHaveBeenCalled();
     });
 

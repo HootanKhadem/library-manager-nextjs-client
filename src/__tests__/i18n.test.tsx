@@ -338,8 +338,10 @@ describe("Topbar i18n", () => {
                 <Topbar {...defaultProps} />
             </LanguageProvider>
         );
-        const input = screen.getByRole("searchbox") ?? screen.getByPlaceholderText(fa.common.searchPlaceholder);
+        // type="search" gives the input a role of "searchbox"
+        const input = screen.getByRole("searchbox");
         expect(input).toBeInTheDocument();
+        expect(input).toHaveAttribute("placeholder", fa.common.searchPlaceholder);
     });
 });
 

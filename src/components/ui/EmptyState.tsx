@@ -19,7 +19,7 @@ function EmptyState({ icon, heading, description, action, className = "" }: Empt
                 </span>
             )}
             <div>
-                <p className="text-sm font-semibold text-[var(--foreground)]">{heading}</p>
+                <h3 className="text-sm font-semibold text-[var(--foreground)]">{heading}</h3>
                 {description && (
                     <p className="mt-1 text-sm text-[var(--muted)]">{description}</p>
                 )}

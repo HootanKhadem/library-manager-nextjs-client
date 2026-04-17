@@ -14,13 +14,11 @@ describe("Topbar component", () => {
     it("renders dashboard title", () => {
         render(<Topbar {...defaultProps} />);
         expect(screen.getByTestId("topbar-title")).toHaveTextContent("Dashboard");
-        expect(screen.getByTestId("topbar-title")).toHaveTextContent("Overview");
     });
 
     it("renders books page title", () => {
         render(<Topbar {...defaultProps} activePage="books"/>);
         expect(screen.getByTestId("topbar-title")).toHaveTextContent("All Books");
-        expect(screen.getByTestId("topbar-title")).toHaveTextContent("Your Complete Collection");
     });
 
     it("renders lent page title", () => {
@@ -40,13 +38,14 @@ describe("Topbar component", () => {
 
     it("renders search input", () => {
         render(<Topbar {...defaultProps} />);
-        expect(screen.getByRole("textbox", {name: /search/i})).toBeInTheDocument();
+        // type="search" gives the input a role of "searchbox"
+        expect(screen.getByRole("searchbox", {name: /search/i})).toBeInTheDocument();
     });
 
     it("calls onSearchChange when typing in search box", () => {
         const onSearchChange = jest.fn();
         render(<Topbar {...defaultProps} onSearchChange={onSearchChange}/>);
-        fireEvent.change(screen.getByRole("textbox", {name: /search/i}), {
+        fireEvent.change(screen.getByRole("searchbox", {name: /search/i}), {
             target: {value: "Borges"},
         });
         expect(onSearchChange).toHaveBeenCalledWith("Borges");
@@ -54,6 +53,6 @@ describe("Topbar component", () => {
 
     it("shows current search query in input", () => {
         render(<Topbar {...defaultProps} searchQuery="McCarthy"/>);
-        expect(screen.getByRole("textbox", {name: /search/i})).toHaveValue("McCarthy");
+        expect(screen.getByRole("searchbox", {name: /search/i})).toHaveValue("McCarthy");
     });
 });

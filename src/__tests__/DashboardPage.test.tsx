@@ -10,7 +10,7 @@ describe("DashboardPage component", () => {
 
     it("renders the dashboard heading", () => {
         render(<DashboardPage books={BOOKS} onBookClick={onBookClick} onViewAll={onViewAll}/>);
-        expect(screen.getByText("Bibliophile")).toBeInTheDocument();
+        expect(screen.getByText(/Bibliophile/i)).toBeInTheDocument();
     });
 
     it("renders KPI cards", () => {

@@ -28,7 +28,7 @@ export default function DashboardPage({ books, onBookClick, onViewAll }: Dashboa
     return (
         <div data-testid="dashboard-page">
             <PageHeader
-                title={t.dashboard.greeting}
+                title={`${t.dashboard.greeting} ${t.dashboard.greetingName}`}
                 subtitle={t.dashboard.greetingSubtitle}
             />
 

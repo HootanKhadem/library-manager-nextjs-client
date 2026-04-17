@@ -8,9 +8,10 @@ interface ModalProps {
     onClose: () => void;
     children: ReactNode;
     className?: string;
+    "data-testid"?: string;
 }
 
-function Modal({ open, onClose, children, className = "" }: ModalProps) {
+function Modal({ open, onClose, children, className = "", "data-testid": testId }: ModalProps) {
     const handleKey = useCallback(
         (e: KeyboardEvent) => {
             if (e.key === "Escape") onClose();
@@ -49,6 +50,7 @@ function Modal({ open, onClose, children, className = "" }: ModalProps) {
                     className,
                 ].join(" ")}
                 style={{ boxShadow: "var(--shadow-modal)" }}
+                data-testid={testId}
             >
                 {children}
             </div>
