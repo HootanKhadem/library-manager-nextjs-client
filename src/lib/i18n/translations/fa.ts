@@ -33,7 +33,7 @@
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
-import {Translations} from "@/lib/i18n/types";
+import {Translations} from "@/src/lib/i18n/types";
 
 const fa: Translations = {
     common: {

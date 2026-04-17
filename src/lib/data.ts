@@ -1,4 +1,4 @@
-import {ActivityItem, Author, Book} from "@/lib/types";
+import {ActivityItem, Author, Book} from "@/src/lib/types";
 
 export const BOOKS: Book[] = [
     {

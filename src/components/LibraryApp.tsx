@@ -1,19 +1,9 @@
 "use client";
-/**
- * components/LibraryApp.tsx
- *
- * Root client component that:
- *  - Wraps the entire UI inside LanguageProvider so every child can call
- *    useLanguage() to access translations and the current text direction.
- *  - Manages navigation, book list, search and modal state.
- *
- * i18n note: this component itself does not render any translatable strings —
- * all user-visible text lives in the child components.
- */
-import {useState} from "react";
-import {Book, PageId} from "@/src/lib/types";
-import {AUTHORS, BOOKS, BORGES_WORKS, getLentBooks} from "@/src/lib/data";
-import {LanguageProvider} from "@/src/lib/i18n/context";
+
+import { useState } from "react";
+import { Book, PageId } from "@/src/lib/types";
+import { AUTHORS, BOOKS, BORGES_WORKS, getLentBooks } from "@/src/lib/data";
+import { LanguageProvider } from "@/src/lib/i18n/context";
 import Sidebar from "@/src/components/Sidebar";
 import Topbar from "@/src/components/Topbar";
 import DashboardPage from "@/src/components/pages/DashboardPage";
@@ -22,7 +12,7 @@ import LentPage from "@/src/components/pages/LentPage";
 import AuthorsPage from "@/src/components/pages/AuthorsPage";
 import SettingsPage from "@/src/components/pages/SettingsPage";
 import BookDetailModal from "@/src/components/BookDetailModal";
-import AddBookModal, {NewBookFormData} from "@/src/components/AddBookModal";
+import AddBookModal, { NewBookFormData } from "@/src/components/AddBookModal";
 
 export default function LibraryApp() {
     const [activePage, setActivePage] = useState<PageId>("dashboard");
@@ -34,10 +24,10 @@ export default function LibraryApp() {
 
     const filteredBooks = searchQuery.trim()
         ? books.filter(
-            (b) =>
-                b.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                b.author.toLowerCase().includes(searchQuery.toLowerCase())
-        )
+              (b) =>
+                  b.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  b.author.toLowerCase().includes(searchQuery.toLowerCase())
+          )
         : books;
 
     function handleAddBook(data: NewBookFormData) {
@@ -59,22 +49,18 @@ export default function LibraryApp() {
     }
 
     return (
-        // LanguageProvider is the i18n root — all child components call useLanguage()
-        // to get translated strings (t) and the text direction (dir).
         <LanguageProvider>
-            <div className="min-h-screen bg-[#f5f0e8]">
+            <div className="min-h-screen bg-[var(--background)]">
                 <Sidebar
                     activePage={activePage}
-                    onNavigate={(page) => {
-                        setActivePage(page);
-                        setSidebarOpen(false);
-                    }}
+                    onNavigate={(page) => { setActivePage(page); setSidebarOpen(false); }}
                     isOpen={sidebarOpen}
                     onClose={() => setSidebarOpen(false)}
                     onAddBook={() => setShowAddModal(true)}
                 />
 
-                <main className="lg:ml-60 min-h-screen flex flex-col transition-[margin-left] duration-300">
+                {/* lg:ml-[60px] — matches the 60px collapsed sidebar width */}
+                <main className="lg:ms-[60px] min-h-screen flex flex-col">
                     <Topbar
                         activePage={activePage}
                         onMenuToggle={() => setSidebarOpen((o) => !o)}
@@ -82,7 +68,7 @@ export default function LibraryApp() {
                         onSearchChange={setSearchQuery}
                     />
 
-                    <div className="p-8 flex-1">
+                    <div className="flex-1 p-6 lg:p-8">
                         {activePage === "dashboard" && (
                             <DashboardPage
                                 books={filteredBooks}
@@ -98,24 +84,27 @@ export default function LibraryApp() {
                             />
                         )}
                         {activePage === "lent" && (
-                            <LentPage lentBooks={getLentBooks().filter((b) =>
-                                searchQuery ? b.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                    b.author.toLowerCase().includes(searchQuery.toLowerCase()) : true
-                            )}/>
+                            <LentPage
+                                lentBooks={getLentBooks().filter((b) =>
+                                    searchQuery
+                                        ? b.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                          b.author.toLowerCase().includes(searchQuery.toLowerCase())
+                                        : true
+                                )}
+                            />
                         )}
                         {activePage === "authors" && (
-                            <AuthorsPage authors={AUTHORS} borgesWorks={BORGES_WORKS}/>
+                            <AuthorsPage authors={AUTHORS} borgesWorks={BORGES_WORKS} />
                         )}
-                        {activePage === "settings" && <SettingsPage/>}
+                        {activePage === "settings" && <SettingsPage />}
                     </div>
                 </main>
 
                 {selectedBook && (
-                    <BookDetailModal book={selectedBook} onClose={() => setSelectedBook(null)}/>
+                    <BookDetailModal book={selectedBook} onClose={() => setSelectedBook(null)} />
                 )}
-
                 {showAddModal && (
-                    <AddBookModal onClose={() => setShowAddModal(false)} onAdd={handleAddBook}/>
+                    <AddBookModal onClose={() => setShowAddModal(false)} onAdd={handleAddBook} />
                 )}
             </div>
         </LanguageProvider>

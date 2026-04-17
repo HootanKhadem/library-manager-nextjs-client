@@ -1,122 +1,97 @@
 @import "tailwindcss";
 
+/* ─── Design Tokens ────────────────────────────────────────────────────── */
 :root {
-    --background: #f5f0e8;
-    --foreground: #1a0f00;
-    --font-libre-baskerville: 'Libre Baskerville', Georgia, serif;
-    --font-courier-prime: 'Courier Prime', ui-monospace, monospace;
-    --font-vazirmatn: 'Vazirmatn', ui-rounded, sans-serif;
+    /* Surfaces */
+    --background:        #fafaf9;   /* stone-50 */
+    --card:              #ffffff;
+    --sidebar-bg:        #1c1917;   /* stone-900 */
+
+    /* Text */
+    --foreground:        #1c1917;   /* stone-900 */
+    --muted:             #78716c;   /* stone-500 */
+    --muted-foreground:  #a8a29e;   /* stone-400 */
+
+    /* Borders */
+    --border:            #e7e5e4;   /* stone-200 */
+    --border-strong:     #d6d3d1;   /* stone-300 */
+
+    /* Accent — Rose-600 */
+    --accent:            #e11d48;
+    --accent-hover:      #be123c;
+    --accent-subtle:     #fff1f2;   /* rose-50 */
+    --accent-foreground: #ffffff;
+
+    /* Semantic */
+    --destructive:             #dc2626;
+    --destructive-foreground:  #ffffff;
+    --success:                 #16a34a;
+    --success-foreground:      #ffffff;
+    --warning:                 #d97706;
+    --warning-foreground:      #ffffff;
+
+    /* Focus ring */
+    --ring: #e11d48;
+
+    /* Shadows */
+    --shadow-card:    0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.04);
+    --shadow-modal:   0 20px 60px -10px rgb(0 0 0 / 0.18);
+    --shadow-dropdown: 0 4px 16px -2px rgb(0 0 0 / 0.10);
+
+    /* Typography */
+    --font-sans:   var(--font-plus-jakarta-sans, 'Plus Jakarta Sans'), ui-sans-serif, system-ui, sans-serif;
+    --font-farsi:  var(--font-vazirmatn, 'Vazirmatn'), 'Tahoma', Arial, sans-serif;
 }
 
+/* ─── Tailwind 4 theme bridge ──────────────────────────────────────────── */
 @theme inline {
-    --color-background: var(--background);
-    --color-foreground: var(--foreground);
-    --font-playfair: var(--font-playfair);
-    --font-mono: var(--font-courier-prime);
-    --font-serif: var(--font-libre-baskerville);
-
+    --color-background:   var(--background);
+    --color-foreground:   var(--foreground);
+    --color-card:         var(--card);
+    --color-sidebar:      var(--sidebar-bg);
+    --color-border:       var(--border);
+    --color-muted:        var(--muted);
+    --color-accent:       var(--accent);
 }
 
+/* ─── Base ─────────────────────────────────────────────────────────────── */
 body {
     background: var(--background);
     color: var(--foreground);
-    font-family: var(--font-libre-baskerville), Georgia, serif;
+    font-family: var(--font-sans);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
-}
-
-@keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes fadeUp {
-    from {
-        opacity: 0;
-        transform: translateY(14px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.animate-fadeIn {
-    animation: fadeIn 0.2s ease;
-}
-
-.animate-slideUp {
-    animation: slideUp 0.3s ease;
-}
-
-.animate-fadeUp {
-    animation: fadeUp 0.35s ease;
-}
-
-/* Custom scrollbar */
-::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
-
-::-webkit-scrollbar-track {
-    background: #ede5d5;
-}
-
-::-webkit-scrollbar-thumb {
-    background: rgba(61, 28, 2, 0.25);
-    border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: #7a3d12;
-}
-
-/* Font utilities - mapped to CSS variables set by Next.js font */
-.font-playfair {
-    font-family: var(--font-playfair), 'Playfair Display', Georgia, serif;
-}
-
-.font-mono {
-    font-family: var(--font-courier-prime), 'Courier Prime', ui-monospace, monospace;
-}
-
-.font-serif {
-    font-family: var(--font-libre-baskerville), 'Libre Baskerville', Georgia, serif;
+/* ─── Font utilities ───────────────────────────────────────────────────── */
+.font-sans {
+    font-family: var(--font-sans);
 }
 
 /*
- * font-vazirmatn — applied to <body> by LanguageProvider when language is "fa".
- *
- * Vazirmatn is an open-source typeface designed specifically for Persian/Farsi
- * and Arabic scripts. It also covers Latin characters, so it works as the sole
- * active font while the UI is in RTL mode.
- *
- * How RTL font switching works:
- *  1. LanguageProvider (lib/i18n/context.tsx) runs a useEffect on language change.
- *  2. It adds/removes the class "font-vazirmatn" on document.body.
- *  3. This class overrides the default font-family for all descendants.
- *  4. Latin text (book titles, ISBNs) still renders correctly because Vazirmatn
- *     includes Latin glyphs.
- *
- * To add another RTL font (e.g. for Arabic):
- *  1. Load it in layout.tsx with next/font/google, assign a CSS variable.
- *  2. Add a utility class here (e.g. .font-noto-arabic).
- *  3. Set fontClass: "font-noto-arabic" in LANGUAGE_META in context.tsx.
+ * Applied to <body> by LanguageProvider when language is "fa".
+ * Vazirmatn supports both Arabic and Latin scripts.
  */
 .font-vazirmatn {
-    font-family: var(--font-vazirmatn), 'Vazirmatn', 'Tahoma', Arial, sans-serif;
+    font-family: var(--font-farsi);
 }
+
+/* ─── Scrollbar ────────────────────────────────────────────────────────── */
+::-webkit-scrollbar        { width: 5px; height: 5px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: var(--border-strong); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+/* ─── Animations ───────────────────────────────────────────────────────── */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn  { animation: fadeIn  0.15s ease; }
+.animate-slideUp { animation: slideUp 0.2s  ease; }
