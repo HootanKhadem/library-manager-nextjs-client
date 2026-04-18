@@ -1,4 +1,4 @@
-import { HTMLAttributes, ReactNode, ThHTMLAttributes, TdHTMLAttributes } from "react";
+import {HTMLAttributes, TdHTMLAttributes, ThHTMLAttributes} from "react";
 
 function DataTable({ className = "", children, ...props }: HTMLAttributes<HTMLTableElement>) {
     return (
@@ -43,7 +43,7 @@ function DataTableRow({ className = "", children, ...props }: HTMLAttributes<HTM
 function Th({ className = "", children, ...props }: ThHTMLAttributes<HTMLTableCellElement>) {
     return (
         <th
-            className={["px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--muted)] whitespace-nowrap", className].join(" ")}
+            className={["px-4 py-3 text-start text-xs font-semibold uppercase tracking-wide text-[var(--muted)] whitespace-nowrap", className].join(" ")}
             {...props}
         >
             {children}

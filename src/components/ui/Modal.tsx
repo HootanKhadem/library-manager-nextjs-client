@@ -1,7 +1,7 @@
 "use client";
 
-import { HTMLAttributes, ReactNode, useEffect, useCallback } from "react";
-import { X } from "lucide-react";
+import {HTMLAttributes, ReactNode, useCallback, useEffect} from "react";
+import {X} from "lucide-react";
 
 interface ModalProps {
     open: boolean;
@@ -33,7 +33,7 @@ function Modal({ open, onClose, children, className = "", "data-testid": testId 
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 flex flex-col justify-end sm:items-center sm:justify-center p-0 sm:p-4"
             role="dialog"
             aria-modal="true"
         >
@@ -43,10 +43,10 @@ function Modal({ open, onClose, children, className = "", "data-testid": testId 
                 onClick={onClose}
                 aria-hidden="true"
             />
-            {/* Container */}
+            {/* Container — bottom sheet on mobile, centered card on sm+ */}
             <div
                 className={[
-                    "relative z-10 w-full bg-[var(--card)] rounded-2xl border border-[var(--border)] animate-slideUp overflow-hidden",
+                    "relative z-10 w-full bg-[var(--card)] rounded-t-2xl sm:rounded-2xl border border-[var(--border)] animate-slideUp overflow-hidden",
                     className,
                 ].join(" ")}
                 style={{ boxShadow: "var(--shadow-modal)" }}
