@@ -248,6 +248,14 @@ const fa: Translations = {
         wishlist: "آرزو",
         read: "خوانده‌شده",
     },
+
+    barcodeScanner: {
+        title: "اسکن بارکد",
+        subtitle: "دوربین را به بارکد پشت جلد کتاب بگیرید",
+        scanning: "در حال اسکن — بارکد را ثابت نگه دارید…",
+        permissionDenied: "دسترسی به دوربین رد شد. لطفاً مجوز دوربین را فعال کنید.",
+        error: "خواندن بارکد ممکن نشد. دوباره امتحان کنید.",
+    },
 };
 
 export default fa;

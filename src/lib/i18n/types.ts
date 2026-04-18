@@ -263,4 +263,13 @@ export interface Translations {
         wishlist: string;
         read: string;
     };
+
+    // ── Barcode scanner modal ────────────────────────────────────────────────────
+    barcodeScanner: {
+        title: string;
+        subtitle: string;
+        scanning: string;
+        permissionDenied: string;
+        error: string;
+    };
 }

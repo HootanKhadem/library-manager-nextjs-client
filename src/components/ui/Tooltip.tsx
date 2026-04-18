@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useState, useRef, useId } from "react";
+import {ReactNode, useId, useState} from "react";
 
 interface TooltipProps {
     content: string;

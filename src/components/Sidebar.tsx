@@ -1,10 +1,10 @@
 "use client";
 
-import { LayoutDashboard, BookOpen, Bookmark, Users, Settings, BookPlus, Library } from "lucide-react";
-import { PageId } from "@/src/lib/types";
-import { useLanguage } from "@/src/lib/i18n/context";
-import { SidebarShell, SidebarLogo, SidebarNav, NavItem, SidebarFooter } from "@/src/components/ui/Sidebar";
-import { Tooltip } from "@/src/components/ui/Tooltip";
+import {Bookmark, BookOpen, BookPlus, LayoutDashboard, Library, Settings, Users} from "lucide-react";
+import {PageId} from "@/src/lib/types";
+import {useLanguage} from "@/src/lib/i18n/context";
+import {NavItem, SidebarFooter, SidebarLogo, SidebarNav, SidebarShell} from "@/src/components/ui/Sidebar";
+import {Tooltip} from "@/src/components/ui/Tooltip";
 
 interface SidebarProps {
     activePage: PageId;
@@ -59,7 +59,7 @@ export default function Sidebar({ activePage, onNavigate, isOpen, onClose, onAdd
                  */}
                 <Tooltip content={t.sidebar.addNewBook} side="right">
                     <button
-                        onClick={onAddBook}
+                        onClick={() => { onAddBook(); onClose(); }}
                         aria-label={t.sidebar.addNewBook}
                         className="flex items-center gap-3 w-full rounded-lg px-2.5 py-2 text-sm font-medium transition-colors duration-150 cursor-pointer bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] overflow-hidden"
                     >

@@ -34,3 +34,5 @@ export { GenreTag } from "./GenreTag";
 export { Avatar } from "./Avatar";
 
 export { Tooltip } from "./Tooltip";
+
+export { BarcodeScanner } from "./BarcodeScanner";

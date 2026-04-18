@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { BookStatus } from "@/src/lib/types";
-import { useLanguage } from "@/src/lib/i18n/context";
-import { Modal, ModalHeader, ModalBody, ModalFooter, ModalCloseButton } from "@/src/components/ui/Modal";
-import { Input } from "@/src/components/ui/Input";
-import { Select } from "@/src/components/ui/Select";
-import { Button } from "@/src/components/ui/Button";
+import {useState} from "react";
+import {ScanLine} from "lucide-react";
+import {BookStatus} from "@/src/lib/types";
+import {useLanguage} from "@/src/lib/i18n/context";
+import {Modal, ModalBody, ModalCloseButton, ModalFooter, ModalHeader} from "@/src/components/ui/Modal";
+import {Input} from "@/src/components/ui/Input";
+import {Select} from "@/src/components/ui/Select";
+import {Button} from "@/src/components/ui/Button";
+import {BarcodeScanner} from "@/src/components/ui/BarcodeScanner";
 
 interface AddBookModalProps {
     onClose: () => void;
@@ -35,6 +37,7 @@ const EMPTY_FORM: NewBookFormData = {
 export default function AddBookModal({ onClose, onAdd }: AddBookModalProps) {
     const { t } = useLanguage();
     const [form, setForm] = useState<NewBookFormData>(EMPTY_FORM);
+    const [scannerOpen, setScannerOpen] = useState(false);
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
         setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -130,12 +133,32 @@ export default function AddBookModal({ onClose, onAdd }: AddBookModalProps) {
                         onChange={handleChange}
                         placeholder={t.addBook.fieldPublisherPlaceholder}
                     />
-                    <Input
-                        label={t.addBook.fieldIsbn}
-                        name="isbn"
-                        value={form.isbn}
-                        onChange={handleChange}
-                        placeholder={t.addBook.fieldIsbnPlaceholder}
+                    <div className="flex items-end gap-2">
+                        <div className="flex-1">
+                            <Input
+                                label={t.addBook.fieldIsbn}
+                                name="isbn"
+                                value={form.isbn}
+                                onChange={handleChange}
+                                placeholder={t.addBook.fieldIsbnPlaceholder}
+                            />
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setScannerOpen(true)}
+                            aria-label={t.barcodeScanner.title}
+                            className="h-9 px-2.5 rounded-lg border border-[var(--border)] bg-[var(--card)] text-[var(--muted)] hover:border-[var(--border-strong)] hover:text-[var(--foreground)] transition-colors shrink-0 cursor-pointer"
+                        >
+                            <ScanLine className="h-4 w-4" aria-hidden="true" />
+                        </button>
+                    </div>
+                    <BarcodeScanner
+                        open={scannerOpen}
+                        onClose={() => setScannerOpen(false)}
+                        onScan={(isbn) => {
+                            setForm((prev) => ({ ...prev, isbn }));
+                            setScannerOpen(false);
+                        }}
                     />
                     <Input
                         label={t.addBook.fieldPages}

@@ -1,6 +1,6 @@
 "use client";
 
-import { HTMLAttributes, ReactNode } from "react";
+import {ReactNode} from "react";
 import Link from "next/link";
 
 /* ─── Shell ─────────────────────────────────────────────────────────────── */
@@ -26,13 +26,15 @@ function SidebarShell({ isOpen, onClose, children }: SidebarShellProps) {
             {/* Sidebar */}
             <aside
                 data-testid="sidebar"
+                data-open={isOpen || undefined}
                 className={[
                     "group fixed inset-y-0 start-0 z-30 flex flex-col bg-[var(--sidebar-bg)] transition-all duration-200 ease-in-out",
                     /* desktop: 60px collapsed, hover → 240px */
                     "lg:w-[60px] lg:hover:w-60",
                     /* mobile: full drawer toggled by isOpen */
                     "w-60",
-                    isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+                    /* hide off-screen on mobile only; lg always visible */
+                    isOpen ? "translate-x-0" : "max-lg:ltr:-translate-x-full max-lg:rtl:translate-x-full",
                 ].join(" ")}
             >
                 {children}
@@ -52,7 +54,7 @@ function SidebarLogo({ icon, label }: SidebarLogoProps) {
     return (
         <div className="flex h-14 items-center gap-3 border-b border-white/10 px-[18px]">
             <span className="shrink-0 text-[var(--accent)]">{icon}</span>
-            <span className="overflow-hidden whitespace-nowrap font-semibold text-white text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+            <span className="overflow-hidden whitespace-nowrap font-semibold text-white text-sm opacity-0 group-hover:opacity-100 group-data-[open]:opacity-100 transition-opacity duration-150">
                 {label}
             </span>
         </div>
@@ -81,7 +83,7 @@ interface NavItemProps {
 
 function NavItem({ icon, label, active = false, onClick, href }: NavItemProps) {
     const className = [
-        "flex items-center gap-3 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors duration-150 cursor-pointer w-full",
+        "flex items-center gap-3 rounded-lg px-2.5 py-2.5 min-h-[44px] text-sm font-medium transition-colors duration-150 cursor-pointer w-full",
         active
             ? "bg-[var(--accent)] text-white"
             : "text-stone-400 hover:bg-white/10 hover:text-white",
@@ -90,7 +92,7 @@ function NavItem({ icon, label, active = false, onClick, href }: NavItemProps) {
     const content = (
         <>
             <span className="shrink-0 h-5 w-5 flex items-center justify-center">{icon}</span>
-            <span className="overflow-hidden whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+            <span className="overflow-hidden whitespace-nowrap opacity-0 group-hover:opacity-100 group-data-[open]:opacity-100 transition-opacity duration-150">
                 {label}
             </span>
         </>
