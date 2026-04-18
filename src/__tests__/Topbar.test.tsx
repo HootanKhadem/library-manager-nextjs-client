@@ -4,8 +4,7 @@ import Topbar from "@/src/components/Topbar";
 // BarcodeScanner uses @zxing/browser — mock it so tests don't need a camera
 jest.mock("@zxing/browser", () => ({
     BrowserMultiFormatReader: jest.fn().mockImplementation(() => ({
-        decodeFromVideoDevice: jest.fn().mockResolvedValue(undefined),
-        reset: jest.fn(),
+        decodeFromVideoDevice: jest.fn().mockResolvedValue({ stop: jest.fn() }),
     })),
 }));
 

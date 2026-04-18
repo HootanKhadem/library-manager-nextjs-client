@@ -15,20 +15,21 @@ const MockReader = BrowserMultiFormatReader as jest.MockedClass<typeof BrowserMu
 
 type ScanCallback = (result: { getText: () => string } | null, err?: Error) => void;
 
-let mockReset: jest.Mock;
+let mockStop: jest.Mock;
+let mockControls: { stop: jest.Mock };
 let mockDecodeFromVideoDevice: jest.Mock;
 let capturedCallback: ScanCallback | null;
 
 beforeEach(() => {
     capturedCallback = null;
-    mockReset = jest.fn();
+    mockStop = jest.fn();
+    mockControls = { stop: mockStop };
     mockDecodeFromVideoDevice = jest.fn((_deviceId: unknown, _el: unknown, cb: ScanCallback) => {
         capturedCallback = cb;
-        return Promise.resolve();
+        return Promise.resolve(mockControls);
     });
     MockReader.mockImplementation(() => ({
         decodeFromVideoDevice: mockDecodeFromVideoDevice,
-        reset: mockReset,
     }) as unknown as BrowserMultiFormatReader);
 });
 
@@ -78,7 +79,37 @@ describe("BarcodeScanner", () => {
         });
         expect(onScan).toHaveBeenCalledWith("9780141182605");
         expect(onClose).toHaveBeenCalled();
-        expect(mockReset).toHaveBeenCalled();
+        await waitFor(() => {
+            expect(mockStop).toHaveBeenCalled();
+        });
+    });
+
+    it("stops scanner even if decode callback runs before controls resolve", async () => {
+        let resolveControls: ((value: { stop: jest.Mock }) => void) | null = null;
+        mockDecodeFromVideoDevice.mockImplementation((_deviceId: unknown, _el: unknown, cb: ScanCallback) => {
+            capturedCallback = cb;
+            return new Promise((resolve) => {
+                resolveControls = resolve;
+            });
+        });
+
+        const { onScan, onClose } = renderScanner();
+
+        await act(async () => {
+            capturedCallback?.({ getText: () => "9780306406157" });
+        });
+
+        expect(onScan).toHaveBeenCalledWith("9780306406157");
+        expect(onClose).toHaveBeenCalled();
+        expect(mockStop).not.toHaveBeenCalled();
+
+        await act(async () => {
+            resolveControls?.(mockControls);
+        });
+
+        await waitFor(() => {
+            expect(mockStop).toHaveBeenCalledTimes(1);
+        });
     });
 
     it("ignores null results (normal 'not found yet' frames)", async () => {
@@ -115,14 +146,16 @@ describe("BarcodeScanner", () => {
         expect(onClose).toHaveBeenCalled();
     });
 
-    it("resets the reader on unmount", () => {
+    it("stops scanner on unmount", async () => {
         const { rerender } = renderScanner();
         rerender(
             <LanguageProvider initialLanguage="en">
                 <BarcodeScanner open={false} onClose={jest.fn()} onScan={jest.fn()} />
             </LanguageProvider>
         );
-        expect(mockReset).toHaveBeenCalled();
+        await waitFor(() => {
+            expect(mockStop).toHaveBeenCalled();
+        });
     });
 
     it("renders correctly in Farsi (RTL)", () => {
