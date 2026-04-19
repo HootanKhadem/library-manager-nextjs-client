@@ -9,7 +9,7 @@ RUN npm ci
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-COPY --from=deps /src/app/node_modules ./node_modules
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Disable Next.js telemetry during build
@@ -29,9 +29,9 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Copy only the necessary build output
-COPY --from=builder /src/app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /src/app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /src/app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
 

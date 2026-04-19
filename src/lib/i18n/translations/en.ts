@@ -233,6 +233,7 @@ const en: Translations = {
         title: "Scan Barcode",
         subtitle: "Point your camera at the barcode on the back cover",
         scanning: "Scanning — hold the barcode steady…",
+        insecureContext: "Camera access requires HTTPS. Open this page over HTTPS or localhost.",
         permissionDenied: "Camera access denied. Please allow camera permission and try again.",
         error: "Could not read barcode. Please try again.",
     },

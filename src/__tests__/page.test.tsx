@@ -11,9 +11,9 @@ jest.mock("next/image", () => ({
 }));
 
 describe("Home page", () => {
-    it("renders LibraryApp with Bibliotheca in the sidebar", () => {
+    it("renders LibraryApp with Librax in the sidebar", () => {
         render(<Home/>);
-        expect(screen.getByText("Bibliotheca")).toBeInTheDocument();
+        expect(screen.getByText("Librax")).toBeInTheDocument();
     });
 
     it("renders the dashboard page by default", () => {

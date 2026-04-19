@@ -1,5 +1,5 @@
 /**
- * Bibliotheca — API Usage Examples
+ * Librax — API Usage Examples
  *
  * This file demonstrates how to consume the library data both synchronously
  * and asynchronously. Since this is a client-side-only app the data lives

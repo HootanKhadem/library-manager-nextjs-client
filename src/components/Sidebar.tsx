@@ -35,7 +35,7 @@ export default function Sidebar({ activePage, onNavigate, isOpen, onClose, onAdd
 
     return (
         <SidebarShell isOpen={isOpen} onClose={onClose}>
-            <SidebarLogo icon={<Library className="h-5 w-5" />} label="Bibliotheca" />
+            <SidebarLogo icon={<Library className="h-5 w-5"/>} label="Librax"/>
 
             <SidebarNav>
                 {navItems.map(({ page, label }) => (

@@ -1,5 +1,5 @@
-import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Vazirmatn } from "next/font/google";
+import type {Metadata} from "next";
+import {Plus_Jakarta_Sans, Vazirmatn} from "next/font/google";
 import "./globals.css";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
@@ -16,7 +16,7 @@ const vazirmatn = Vazirmatn({
 });
 
 export const metadata: Metadata = {
-    title: "Bibliotheca — Personal Library Manager",
+    title: "Librax — Personal Library Manager",
     description: "A personal library manager to catalogue and track your book collection.",
 };
 

@@ -1,4 +1,4 @@
-# Bibliotheca — Personal Library Manager
+# Librax — Personal Library Manager
 
 A personal library management application built with **Next.js 16**, **React 19**, **TypeScript 5**, and **Tailwind CSS
 v4**. Track your book collection, manage lent books, and catalogue authors — all in a beautifully styled, client-side
@@ -118,13 +118,13 @@ npx jest --coverage
 ### Build the Docker image
 
 ```bash
-docker build -t bibliotheca .
+docker build -t Librax .
 ```
 
 ### Run the container
 
 ```bash
-docker run -p 3000:3000 bibliotheca
+docker run -p 3000:3000 Librax
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.

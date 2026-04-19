@@ -14,9 +14,9 @@ describe("Sidebar component", () => {
         jest.clearAllMocks();
     });
 
-    it("renders the Bibliotheca logo", () => {
+    it("renders the Librax logo", () => {
         render(<Sidebar {...defaultProps} />);
-        expect(screen.getByText("Bibliotheca")).toBeInTheDocument();
+        expect(screen.getByText("Librax")).toBeInTheDocument();
     });
 
     it("renders all navigation items", () => {
