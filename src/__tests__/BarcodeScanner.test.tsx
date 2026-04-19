@@ -21,6 +21,10 @@ let mockDecodeFromVideoDevice: jest.Mock;
 let capturedCallback: ScanCallback | null;
 
 beforeEach(() => {
+    Object.defineProperty(window, "isSecureContext", {
+        value: true,
+        configurable: true,
+    });
     capturedCallback = null;
     mockStop = jest.fn();
     mockControls = { stop: mockStop };

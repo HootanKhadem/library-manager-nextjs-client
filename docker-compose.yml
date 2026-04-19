@@ -1,5 +1,5 @@
 services:
-  bibliotheca:
+  Librax:
     build:
       context: .
       dockerfile: Dockerfile

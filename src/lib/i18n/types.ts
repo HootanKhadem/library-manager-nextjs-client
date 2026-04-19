@@ -269,6 +269,7 @@ export interface Translations {
         title: string;
         subtitle: string;
         scanning: string;
+        insecureContext: string;
         permissionDenied: string;
         error: string;
     };

@@ -21,7 +21,7 @@ export function BarcodeScanner({ open, onClose, onScan }: BarcodeScannerProps) {
     useEffect(() => { onScanRef.current = onScan; });
     useEffect(() => { onCloseRef.current = onClose; });
 
-    const [scanState, setScanState] = useState<"scanning" | "denied" | "error">("scanning");
+    const [scanState, setScanState] = useState<"scanning" | "denied" | "error" | "insecure">("scanning");
     const handleClose = useCallback(() => {
         setScanState("scanning");
         onCloseRef.current();
@@ -29,6 +29,10 @@ export function BarcodeScanner({ open, onClose, onScan }: BarcodeScannerProps) {
 
     useEffect(() => {
         if (!open || !videoRef.current) return;
+        if (!window.isSecureContext) {
+            setScanState("insecure");
+            return;
+        }
 
         const reader = new BrowserMultiFormatReader();
         let controls: IScannerControls | undefined;
@@ -39,6 +43,7 @@ export function BarcodeScanner({ open, onClose, onScan }: BarcodeScannerProps) {
             controls?.stop();
         };
 
+        setScanState("scanning");
         reader
             .decodeFromVideoDevice(undefined, videoRef.current, (result) => {
                 if (!result) return; // normal "not found yet" frame
@@ -63,6 +68,7 @@ export function BarcodeScanner({ open, onClose, onScan }: BarcodeScannerProps) {
 
     const statusText =
         scanState === "denied" ? t.barcodeScanner.permissionDenied :
+            scanState === "insecure" ? t.barcodeScanner.insecureContext :
         scanState === "error"  ? t.barcodeScanner.error :
         t.barcodeScanner.scanning;
 
@@ -85,6 +91,9 @@ export function BarcodeScanner({ open, onClose, onScan }: BarcodeScannerProps) {
                     <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-stone-900">
                         <video
                             ref={videoRef}
+                            autoPlay
+                            muted
+                            playsInline
                             className="w-full h-full object-cover"
                             data-testid="barcode-video"
                         />
