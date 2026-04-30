@@ -24,22 +24,26 @@ function setupAuth(overrides: AuthState = {}) {
     (useAuth as jest.Mock).mockReturnValue({
         isAuthenticated: false,
         hydrated: true,
-        login: jest.fn().mockReturnValue(true),
+        login: jest.fn().mockResolvedValue(true),
         logout: jest.fn(),
         ...overrides,
     });
     (useRouter as jest.Mock).mockReturnValue({replace: mockReplace});
 }
 
+/** Fill both fields and click submit; wraps in act for async handleSubmit. */
+async function submitForm(email = "a@b.com", password = "hunter2") {
+    fireEvent.change(screen.getByLabelText(/email address/i), {target: {value: email}});
+    fireEvent.change(screen.getByLabelText(/^password$/i), {target: {value: password}});
+    await act(async () => {
+        fireEvent.click(screen.getByRole("button", {name: /sign in/i}));
+    });
+}
+
 describe("LoginPage", () => {
     beforeEach(() => {
         jest.clearAllMocks();
-        jest.useFakeTimers();
         setupAuth();
-    });
-
-    afterEach(() => {
-        jest.useRealTimers();
     });
 
     // ── Rendering ────────────────────────────────────────────────────────────
@@ -50,11 +54,11 @@ describe("LoginPage", () => {
         expect(container.firstChild).toBeNull();
     });
 
-    it("returns null and redirects to / when already authenticated", () => {
+    it("returns null and redirects to /dashboard when already authenticated", () => {
         setupAuth({isAuthenticated: true, hydrated: true});
         const {container} = render(<LoginPage/>);
         expect(container.firstChild).toBeNull();
-        expect(mockReplace).toHaveBeenCalledWith("/");
+        expect(mockReplace).toHaveBeenCalledWith("/dashboard");
     });
 
     it("renders the page when unauthenticated and hydrated", () => {
@@ -114,7 +118,7 @@ describe("LoginPage", () => {
     it("renders the create account footer link", () => {
         render(<LoginPage/>);
         expect(screen.getByText(/don't have an account/i)).toBeInTheDocument();
-        expect(screen.getByRole("link", {name: /create one/i})).toBeInTheDocument();
+        expect(screen.getByRole("button", {name: /create one/i})).toBeInTheDocument();
     });
 
     // ── Password toggle ──────────────────────────────────────────────────────
@@ -170,97 +174,73 @@ describe("LoginPage", () => {
 
     // ── Loading state ────────────────────────────────────────────────────────
 
-    it("shows 'Signing in…' and disables the button while loading", () => {
+    it("shows 'Signing in…' and disables the button while the request is in flight", async () => {
+        // A promise that never resolves keeps the component in the loading state
+        setupAuth({
+            login: jest.fn().mockReturnValue(new Promise(() => {
+            }))
+        });
         render(<LoginPage/>);
         fireEvent.change(screen.getByLabelText(/email address/i), {target: {value: "a@b.com"}});
-        fireEvent.change(screen.getByLabelText(/^password$/i), {target: {value: "secret"}});
+        fireEvent.change(screen.getByLabelText(/^password$/i), {target: {value: "pass"}});
         fireEvent.click(screen.getByRole("button", {name: /sign in/i}));
 
-        const btn = screen.getByRole("button", {name: /signing in/i});
+        const btn = await screen.findByRole("button", {name: /signing in/i});
         expect(btn).toBeDisabled();
-        expect(btn).toHaveTextContent(/signing in/i);
     });
 
     // ── Successful login ─────────────────────────────────────────────────────
 
-    it("calls login() with email, password, and remember=false by default", () => {
-        const mockLogin = jest.fn().mockReturnValue(true);
+    it("calls login() with email, password, and remember=false by default", async () => {
+        const mockLogin = jest.fn().mockResolvedValue(true);
         setupAuth({login: mockLogin});
         render(<LoginPage/>);
-
-        fireEvent.change(screen.getByLabelText(/email address/i), {target: {value: "user@example.com"}});
-        fireEvent.change(screen.getByLabelText(/^password$/i), {target: {value: "hunter2"}});
-        fireEvent.click(screen.getByRole("button", {name: /sign in/i}));
-
-        act(() => {
-            jest.runAllTimers();
-        });
-
+        await submitForm("user@example.com", "hunter2");
         expect(mockLogin).toHaveBeenCalledWith("user@example.com", "hunter2", false);
     });
 
-    it("calls login() with remember=true when checkbox is checked", () => {
-        const mockLogin = jest.fn().mockReturnValue(true);
+    it("calls login() with remember=true when checkbox is checked", async () => {
+        const mockLogin = jest.fn().mockResolvedValue(true);
         setupAuth({login: mockLogin});
         render(<LoginPage/>);
-
-        fireEvent.change(screen.getByLabelText(/email address/i), {target: {value: "a@b.com"}});
-        fireEvent.change(screen.getByLabelText(/^password$/i), {target: {value: "pass"}});
         fireEvent.click(screen.getByLabelText(/remember me/i));
-        fireEvent.click(screen.getByRole("button", {name: /sign in/i}));
-
-        act(() => {
-            jest.runAllTimers();
-        });
-
+        await submitForm("a@b.com", "pass");
         expect(mockLogin).toHaveBeenCalledWith("a@b.com", "pass", true);
     });
 
-    it("redirects to / after a successful login", () => {
+    it("redirects to /dashboard after a successful login", async () => {
         render(<LoginPage/>);
-        fireEvent.change(screen.getByLabelText(/email address/i), {target: {value: "a@b.com"}});
-        fireEvent.change(screen.getByLabelText(/^password$/i), {target: {value: "pass"}});
-        fireEvent.click(screen.getByRole("button", {name: /sign in/i}));
-
-        act(() => {
-            jest.runAllTimers();
-        });
-
-        expect(mockReplace).toHaveBeenCalledWith("/");
+        await submitForm();
+        expect(mockReplace).toHaveBeenCalledWith("/dashboard");
     });
 
     // ── Failed login ─────────────────────────────────────────────────────────
 
-    it("shows an error and re-enables the button when login() returns false", () => {
-        setupAuth({login: jest.fn().mockReturnValue(false)});
+    it("shows an error and re-enables the button when login() returns false", async () => {
+        setupAuth({login: jest.fn().mockResolvedValue(false)});
         render(<LoginPage/>);
-
-        fireEvent.change(screen.getByLabelText(/email address/i), {target: {value: "a@b.com"}});
-        fireEvent.change(screen.getByLabelText(/^password$/i), {target: {value: "wrong"}});
-        fireEvent.click(screen.getByRole("button", {name: /sign in/i}));
-
-        act(() => {
-            jest.runAllTimers();
-        });
-
+        await submitForm();
         expect(screen.getByText(/invalid credentials/i)).toBeInTheDocument();
         expect(screen.getByRole("button", {name: /sign in/i})).not.toBeDisabled();
     });
 
-    it("clears a previous error when the user starts a new submission", () => {
-        setupAuth({login: jest.fn().mockReturnValueOnce(false).mockReturnValue(true)});
+    it("shows a generic error when login() throws", async () => {
+        setupAuth({login: jest.fn().mockRejectedValue(new Error("network error"))});
+        render(<LoginPage/>);
+        fireEvent.change(screen.getByLabelText(/email address/i), {target: {value: "a@b.com"}});
+        fireEvent.change(screen.getByLabelText(/^password$/i), {target: {value: "pass"}});
+        await act(async () => {
+            fireEvent.click(screen.getByRole("button", {name: /sign in/i}));
+        });
+        expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
+    });
+
+    it("clears a previous error when the user starts a new submission", async () => {
+        setupAuth({login: jest.fn().mockResolvedValueOnce(false).mockResolvedValue(true)});
         render(<LoginPage/>);
 
-        const emailInput = screen.getByLabelText(/email address/i);
-        const passwordInput = screen.getByLabelText(/^password$/i);
-
         // First attempt — fails
-        fireEvent.change(emailInput, {target: {value: "a@b.com"}});
-        fireEvent.change(passwordInput, {target: {value: "wrong"}});
-        fireEvent.click(screen.getByRole("button", {name: /sign in/i}));
-        act(() => {
-            jest.runAllTimers();
-        });
+        await submitForm();
         expect(screen.getByText(/invalid credentials/i)).toBeInTheDocument();
 
         // Second attempt — error clears immediately on submit

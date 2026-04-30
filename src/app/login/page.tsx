@@ -1,6 +1,6 @@
 'use client';
 
-import {useState, useEffect} from 'react';
+import {useEffect, useState} from 'react';
 import {useRouter} from 'next/navigation';
 import {useAuth} from '@/src/contexts/AuthContext';
 import styles from './login.module.css';
@@ -24,13 +24,13 @@ export default function LoginPage() {
 
     useEffect(() => {
         if (hydrated && isAuthenticated) {
-            router.replace('/');
+            router.replace('/dashboard');
         }
     }, [hydrated, isAuthenticated, router]);
 
     if (!hydrated || isAuthenticated) return null;
 
-    function handleSubmit(e: React.FormEvent) {
+    async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         setError('');
 
@@ -40,15 +40,18 @@ export default function LoginPage() {
         }
 
         setIsLoading(true);
-        setTimeout(() => {
-            const ok = login(email, password, remember);
+        try {
+            const ok = await login(email, password, remember);
             if (ok) {
-                router.replace('/');
+                router.replace('/dashboard');
             } else {
                 setError('Invalid credentials. Please try again.');
-                setIsLoading(false);
             }
-        }, 700);
+        } catch {
+            setError('Something went wrong. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
     }
 
     return (
@@ -213,7 +216,7 @@ export default function LoginPage() {
 
                         {/* Error message */}
                         {error && (
-                            <p className="text-xs text-rose-600 mb-3 -mt-1">{error}</p>
+                            <p role="alert" className="text-xs text-rose-600 mb-3 -mt-1">{error}</p>
                         )}
 
                         {/* Remember / Forgot row */}
@@ -243,10 +246,12 @@ export default function LoginPage() {
                                     <span className="text-xs text-stone-500">Remember me</span>
                                 </label>
                             </div>
-                            <a href="#"
-                               className="text-xs font-medium text-rose-600 hover:text-rose-700 no-underline transition-colors duration-150">
+                            <button
+                                type="button"
+                                className="text-xs font-medium text-rose-600 hover:text-rose-700 no-underline transition-colors duration-150 bg-transparent border-none p-0 cursor-pointer"
+                            >
                                 Forgot password?
-                            </a>
+                            </button>
                         </div>
 
                         {/* Submit */}
@@ -305,10 +310,12 @@ export default function LoginPage() {
                     {/* Footer */}
                     <p className={`mt-[22px] text-center text-xs text-stone-400 ${styles.a11}`}>
                         Don&apos;t have an account?{' '}
-                        <a href="#"
-                           className="text-rose-600 font-medium no-underline hover:text-rose-700 transition-colors duration-150">
+                        <button
+                            type="button"
+                            className="text-rose-600 font-medium no-underline hover:text-rose-700 transition-colors duration-150 bg-transparent border-none p-0 cursor-pointer"
+                        >
                             Create one
-                        </a>
+                        </button>
                     </p>
 
                 </section>

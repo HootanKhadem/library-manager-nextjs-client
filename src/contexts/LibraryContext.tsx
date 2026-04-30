@@ -1,9 +1,8 @@
 'use client';
 
-import {createContext, useContext, useState, ReactNode} from 'react';
-import {Book} from '@/src/lib/types';
+import {createContext, ReactNode, useCallback, useContext, useMemo, useState} from 'react';
+import {Book, NewBookFormData} from '@/src/lib/types';
 import {BOOKS} from '@/src/lib/data';
-import {NewBookFormData} from '@/src/components/AddBookModal';
 
 interface LibraryContextValue {
     books: Book[];
@@ -24,7 +23,7 @@ export function LibraryProvider({children}: { children: ReactNode }) {
     const [showAddModal, setShowAddModal] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
 
-    function addBook(data: NewBookFormData) {
+    const addBook = useCallback((data: NewBookFormData) => {
         const newBook: Book = {
             id: `book-${Date.now()}`,
             title: data.title,
@@ -40,10 +39,10 @@ export function LibraryProvider({children}: { children: ReactNode }) {
             notes: data.notes || undefined,
         };
         setBooks(prev => [newBook, ...prev]);
-    }
+    }, []);
 
-    return (
-        <LibraryContext.Provider value={{
+    const value = useMemo(
+        () => ({
             books,
             addBook,
             selectedBook,
@@ -51,11 +50,12 @@ export function LibraryProvider({children}: { children: ReactNode }) {
             showAddModal,
             setShowAddModal,
             searchQuery,
-            setSearchQuery,
-        }}>
-            {children}
-        </LibraryContext.Provider>
+            setSearchQuery
+        }),
+        [books, addBook, selectedBook, showAddModal, searchQuery],
     );
+
+    return <LibraryContext.Provider value={value}>{children}</LibraryContext.Provider>;
 }
 
 export function useLibrary() {
