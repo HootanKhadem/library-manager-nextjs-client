@@ -58,10 +58,10 @@ export default function LoginPage() {
         <main className="min-h-screen flex items-center justify-center bg-[#f5f4f0] px-4 py-6">
             <div
                 className={[
-                    'flex w-full max-w-[860px] min-h-[540px] rounded-xl overflow-hidden',
+                    'flex w-full max-w-215 min-h-135 rounded-xl overflow-hidden',
                     'shadow-[0_4px_24px_rgba(0,0,0,0.10),0_1px_4px_rgba(0,0,0,0.06)]',
                     // responsive: stack vertically on small screens
-                    'max-[640px]:flex-col max-[640px]:max-w-[420px] max-[640px]:min-h-0',
+                    'max-[640px]:flex-col max-[640px]:max-w-105 max-[640px]:min-h-0',
                     styles.card,
                 ].join(' ')}
             >
@@ -134,7 +134,7 @@ export default function LoginPage() {
                             </label>
                             <div className={`relative ${styles.inputWrap}`}>
                                 <span
-                                    className={`absolute left-[11px] top-1/2 -translate-y-1/2 flex pointer-events-none transition-colors duration-150 text-stone-400 ${styles.inputIcon}`}
+                                    className={`absolute left-2.75 top-1/2 -translate-y-1/2 flex pointer-events-none transition-colors duration-150 text-stone-400 ${styles.inputIcon}`}
                                     aria-hidden="true">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                                          stroke="currentColor" strokeWidth="2" strokeLinecap="round"
@@ -166,7 +166,7 @@ export default function LoginPage() {
                             </label>
                             <div className={`relative ${styles.inputWrap}`}>
                                 <span
-                                    className={`absolute left-[11px] top-1/2 -translate-y-1/2 flex pointer-events-none transition-colors duration-150 text-stone-400 ${styles.inputIcon}`}
+                                    className={`absolute left-2.75 top-1/2 -translate-y-1/2 flex pointer-events-none transition-colors duration-150 text-stone-400 ${styles.inputIcon}`}
                                     aria-hidden="true">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                                          stroke="currentColor" strokeWidth="2" strokeLinecap="round"
@@ -188,7 +188,7 @@ export default function LoginPage() {
                                 />
                                 <button
                                     type="button"
-                                    className="absolute right-[11px] top-1/2 -translate-y-1/2 flex bg-transparent border-none p-0 text-stone-400 hover:text-stone-700 cursor-pointer transition-colors duration-150"
+                                    className="absolute right-2.75 top-1/2 -translate-y-1/2 flex bg-transparent border-none p-0 text-stone-400 hover:text-stone-700 cursor-pointer transition-colors duration-150"
                                     aria-label="Toggle password visibility"
                                     onClick={() => setShowPassword(v => !v)}
                                 >
@@ -234,7 +234,7 @@ export default function LoginPage() {
                                     className={`flex items-center gap-2 cursor-pointer select-none ${styles.checkLabel}`}
                                     htmlFor="remember">
                                     <span
-                                        className={`w-[15px] h-[15px] border border-stone-300/80 rounded-[4px] bg-white flex items-center justify-center shrink-0 transition-[border-color,background] duration-150 cursor-pointer ${styles.checkBox}`}
+                                        className={`w-3.75 h-3.75 border border-stone-300/80 rounded-sm bg-white flex items-center justify-center shrink-0 transition-[border-color,background] duration-150 cursor-pointer ${styles.checkBox}`}
                                         aria-hidden="true"
                                     >
                                         <svg width="9" height="9" viewBox="0 0 10 10" fill="none"
@@ -278,7 +278,7 @@ export default function LoginPage() {
                     </form>
 
                     {/* Divider */}
-                    <div className={`flex items-center gap-3 my-[18px] ${styles.a9}`} aria-hidden="true">
+                    <div className={`flex items-center gap-3 my-4.5 ${styles.a9}`} aria-hidden="true">
                         <div className="flex-1 h-px bg-stone-200"/>
                         <span className="text-[11px] text-stone-400 whitespace-nowrap">or continue with</span>
                         <div className="flex-1 h-px bg-stone-200"/>
@@ -308,7 +308,7 @@ export default function LoginPage() {
                     </button>
 
                     {/* Footer */}
-                    <p className={`mt-[22px] text-center text-xs text-stone-400 ${styles.a11}`}>
+                    <p className={`mt-5.5 text-center text-xs text-stone-400 ${styles.a11}`}>
                         Don&apos;t have an account?{' '}
                         <button
                             type="button"
