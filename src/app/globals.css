@@ -93,5 +93,16 @@ body {
     to   { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 .animate-fadeIn  { animation: fadeIn  0.15s ease; }
 .animate-slideUp { animation: slideUp 0.2s  ease; }

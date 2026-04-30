@@ -1,28 +1,39 @@
 "use client";
 
 import {useState} from "react";
+import {usePathname} from "next/navigation";
 import {ScanLine, Search, X} from "lucide-react";
 import {PageId} from "@/src/lib/types";
 import {useLanguage} from "@/src/lib/i18n/context";
+import {useLibrary} from "@/src/contexts/LibraryContext";
 import {Topbar as TopbarShell} from "@/src/components/ui/Topbar";
 import {BarcodeScanner} from "@/src/components/ui/BarcodeScanner";
 
 interface TopbarProps {
-    activePage: PageId;
     onMenuToggle: () => void;
-    searchQuery: string;
-    onSearchChange: (q: string) => void;
 }
 
-export default function Topbar({ activePage, onMenuToggle, searchQuery, onSearchChange }: TopbarProps) {
+const PATH_TO_PAGE: Record<string, PageId> = {
+    '/dashboard': 'dashboard',
+    '/books': 'books',
+    '/lent': 'lent',
+    '/authors': 'authors',
+    '/settings': 'settings',
+};
+
+export default function Topbar({onMenuToggle}: TopbarProps) {
     const { t } = useLanguage();
-    const [title] = t.topbar.pages[activePage];
+    const {searchQuery, setSearchQuery} = useLibrary();
+    const pathname = usePathname();
     const [scannerOpen, setScannerOpen] = useState(false);
     const [searchExpanded, setSearchExpanded] = useState(false);
 
+    const pageId: PageId = PATH_TO_PAGE[pathname] ?? 'dashboard';
+    const [title] = t.topbar.pages[pageId];
+
     function closeSearch() {
         setSearchExpanded(false);
-        onSearchChange("");
+        setSearchQuery('');
     }
 
     return (
@@ -36,7 +47,6 @@ export default function Topbar({ activePage, onMenuToggle, searchQuery, onSearch
                 }
                 endSlot={
                     <div className="flex items-center gap-2">
-                        {/* Mobile: search icon — opens full-screen overlay */}
                         <button
                             className="sm:hidden p-2 rounded-lg text-[var(--muted-foreground)] hover:bg-stone-100 hover:text-[var(--foreground)] transition-colors cursor-pointer"
                             aria-label={t.common.search}
@@ -45,14 +55,13 @@ export default function Topbar({ activePage, onMenuToggle, searchQuery, onSearch
                             <Search className="h-4 w-4" aria-hidden="true" />
                         </button>
 
-                        {/* Desktop: always-visible search bar */}
                         <div className="hidden sm:flex items-center gap-2 h-8 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 w-56 focus-within:border-[var(--accent)] focus-within:ring-2 focus-within:ring-[var(--accent)]/20 transition-all">
                             <Search className="h-3.5 w-3.5 shrink-0 text-[var(--muted-foreground)]" aria-hidden="true" />
                             <input
                                 type="search"
                                 placeholder={t.common.searchPlaceholder}
                                 value={searchQuery}
-                                onChange={(e) => onSearchChange(e.target.value)}
+                                onChange={(e) => setSearchQuery(e.target.value)}
                                 className="w-full bg-transparent text-xs text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] outline-none"
                                 aria-label={t.common.search}
                             />
@@ -69,7 +78,6 @@ export default function Topbar({ activePage, onMenuToggle, searchQuery, onSearch
                 }
             />
 
-            {/* Mobile search overlay — fixed over the topbar */}
             {searchExpanded && (
                 <div className="sm:hidden fixed inset-x-0 top-0 z-20 h-14 flex items-center gap-3 px-4 bg-[var(--background)]/95 backdrop-blur-sm border-b border-[var(--border)]">
                     <button
@@ -83,7 +91,7 @@ export default function Topbar({ activePage, onMenuToggle, searchQuery, onSearch
                         autoFocus
                         type="search"
                         value={searchQuery}
-                        onChange={(e) => onSearchChange(e.target.value)}
+                        onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder={t.common.searchPlaceholder}
                         aria-label={t.common.search}
                         className="flex-1 bg-transparent text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] outline-none"
@@ -103,7 +111,7 @@ export default function Topbar({ activePage, onMenuToggle, searchQuery, onSearch
                 open={scannerOpen}
                 onClose={() => setScannerOpen(false)}
                 onScan={(isbn) => {
-                    onSearchChange(isbn);
+                    setSearchQuery(isbn);
                     setScannerOpen(false);
                 }}
             />

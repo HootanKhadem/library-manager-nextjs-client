@@ -1,65 +1,63 @@
 "use client";
 
+import {usePathname} from 'next/navigation';
 import {Bookmark, BookOpen, BookPlus, LayoutDashboard, Library, Settings, Users} from "lucide-react";
-import {PageId} from "@/src/lib/types";
 import {useLanguage} from "@/src/lib/i18n/context";
+import {useLibrary} from "@/src/contexts/LibraryContext";
 import {NavItem, SidebarFooter, SidebarLogo, SidebarNav, SidebarShell} from "@/src/components/ui/Sidebar";
 import {Tooltip} from "@/src/components/ui/Tooltip";
 
 interface SidebarProps {
-    activePage: PageId;
-    onNavigate: (page: PageId) => void;
     isOpen: boolean;
     onClose: () => void;
-    onAddBook: () => void;
 }
 
-const PAGE_ICONS: Record<PageId, React.ReactNode> = {
-    dashboard: <LayoutDashboard className="h-4 w-4" />,
-    books:     <BookOpen className="h-4 w-4" />,
-    lent:      <Bookmark className="h-4 w-4" />,
-    authors:   <Users className="h-4 w-4" />,
-    settings:  <Settings className="h-4 w-4" />,
-};
+const NAV_ITEMS = [
+    {href: '/dashboard', icon: <LayoutDashboard className="h-4 w-4"/>},
+    {href: '/books', icon: <BookOpen className="h-4 w-4"/>},
+    {href: '/lent', icon: <Bookmark className="h-4 w-4"/>},
+    {href: '/authors', icon: <Users className="h-4 w-4"/>},
+    {href: '/settings', icon: <Settings className="h-4 w-4"/>},
+] as const;
 
-export default function Sidebar({ activePage, onNavigate, isOpen, onClose, onAddBook }: SidebarProps) {
+export default function Sidebar({isOpen, onClose}: SidebarProps) {
     const { t } = useLanguage();
+    const {setShowAddModal} = useLibrary();
+    const pathname = usePathname();
 
-    const navItems: { page: PageId; label: string }[] = [
-        { page: "dashboard", label: t.sidebar.navDashboard },
-        { page: "books",     label: t.sidebar.navAllBooks },
-        { page: "lent",      label: t.sidebar.navCurrentlyLent },
-        { page: "authors",   label: t.sidebar.navAuthors },
-        { page: "settings",  label: t.sidebar.navPreferences },
-    ];
+    const labels: Record<string, string> = {
+        '/dashboard': t.sidebar.navDashboard,
+        '/books': t.sidebar.navAllBooks,
+        '/lent': t.sidebar.navCurrentlyLent,
+        '/authors': t.sidebar.navAuthors,
+        '/settings': t.sidebar.navPreferences,
+    };
 
     return (
         <SidebarShell isOpen={isOpen} onClose={onClose}>
             <SidebarLogo icon={<Library className="h-5 w-5"/>} label="Librax"/>
 
             <SidebarNav>
-                {navItems.map(({ page, label }) => (
-                    <Tooltip key={page} content={label} side="right">
+                {NAV_ITEMS.map(({href, icon}) => (
+                    <Tooltip key={href} content={labels[href]} side="right">
                         <NavItem
-                            icon={PAGE_ICONS[page]}
-                            label={label}
-                            active={activePage === page}
-                            onClick={() => { onNavigate(page); onClose(); }}
+                            href={href}
+                            icon={icon}
+                            label={labels[href]}
+                            active={pathname === href}
+                            onClick={onClose}
                         />
                     </Tooltip>
                 ))}
             </SidebarNav>
 
             <SidebarFooter>
-                {/*
-                 * The Add New Book button mirrors NavItem's collapse behaviour:
-                 * - icon always visible (px-2.5 matches NavItem padding)
-                 * - label fades in on group-hover (same as NavItem labels)
-                 * - overflow-hidden on the wrapper clips the text at 60px
-                 */}
                 <Tooltip content={t.sidebar.addNewBook} side="right">
                     <button
-                        onClick={() => { onAddBook(); onClose(); }}
+                        onClick={() => {
+                            setShowAddModal(true);
+                            onClose();
+                        }}
                         aria-label={t.sidebar.addNewBook}
                         className="flex items-center gap-3 w-full rounded-lg px-2.5 py-2 text-sm font-medium transition-colors duration-150 cursor-pointer bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] overflow-hidden"
                     >

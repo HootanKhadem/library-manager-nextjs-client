@@ -1,6 +1,7 @@
 import type {Metadata} from "next";
 import {Plus_Jakarta_Sans, Vazirmatn} from "next/font/google";
 import "./globals.css";
+import {AuthProvider} from "@/src/contexts/AuthContext";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
     variable: "--font-plus-jakarta-sans",
@@ -28,7 +29,7 @@ export default function RootLayout({
     return (
         <html lang="en">
             <body className={`${plusJakartaSans.variable} ${vazirmatn.variable} antialiased`}>
-                {children}
+            <AuthProvider>{children}</AuthProvider>
             </body>
         </html>
     );

@@ -9,7 +9,10 @@
       "mcp__mcp-obsidian__obsidian_delete_file",
       "mcp__mcp-obsidian__obsidian_append_content",
       "Bash(npx tsc *)",
-      "Bash(npx jest *)"
+      "Bash(npx jest *)",
+      "Read(//c/Users/Hootan//**)",
+      "Read(//d//**)",
+      "Bash(xargs grep *)"
     ]
   }
 }

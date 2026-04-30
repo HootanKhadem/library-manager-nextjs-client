@@ -1,18 +1,22 @@
 import {fireEvent, render, screen} from "@testing-library/react";
 import Sidebar from "@/src/components/Sidebar";
 
-const defaultProps = {
-    activePage: "dashboard" as const,
-    onNavigate: jest.fn(),
-    isOpen: false,
-    onClose: jest.fn(),
-    onAddBook: jest.fn(),
-};
+jest.mock("next/navigation", () => ({
+    usePathname: jest.fn(() => "/dashboard"),
+    useRouter: jest.fn(() => ({push: jest.fn()})),
+}));
+
+const mockSetShowAddModal = jest.fn();
+jest.mock("@/src/contexts/LibraryContext", () => ({
+    useLibrary: jest.fn(() => ({setShowAddModal: mockSetShowAddModal})),
+}));
+
+import {usePathname} from "next/navigation";
+
+const defaultProps = {isOpen: false, onClose: jest.fn()};
 
 describe("Sidebar component", () => {
-    beforeEach(() => {
-        jest.clearAllMocks();
-    });
+    beforeEach(() => jest.clearAllMocks());
 
     it("renders the Librax logo", () => {
         render(<Sidebar {...defaultProps} />);
@@ -24,30 +28,27 @@ describe("Sidebar component", () => {
         expect(screen.getByText("Dashboard")).toBeInTheDocument();
         expect(screen.getByText("All Books")).toBeInTheDocument();
         expect(screen.getByText("Currently Lent")).toBeInTheDocument();
-        const authorsNavItem = screen.getAllByText("Authors");
-        expect(authorsNavItem.length).toBeGreaterThan(0);
+        expect(screen.getAllByText("Authors").length).toBeGreaterThan(0);
         expect(screen.getByText("Preferences")).toBeInTheDocument();
     });
 
-    it("marks the active page nav item", () => {
-        render(<Sidebar {...defaultProps} activePage="books"/>);
-        const booksBtn = screen.getByText("All Books").closest("button");
-        expect(booksBtn).toHaveAttribute("aria-current", "page");
+    it("marks the active nav item based on current pathname", () => {
+        (usePathname as jest.Mock).mockReturnValue("/books");
+        render(<Sidebar {...defaultProps} />);
+        const booksLink = screen.getByText("All Books").closest("a");
+        expect(booksLink).toHaveAttribute("aria-current", "page");
     });
 
-    it("calls onNavigate with correct page when nav item is clicked", () => {
-        const onNavigate = jest.fn();
-        render(<Sidebar {...defaultProps} onNavigate={onNavigate}/>);
-        fireEvent.click(screen.getByText("All Books").closest("button")!);
-        expect(onNavigate).toHaveBeenCalledWith("books");
+    it("nav items link to their correct paths", () => {
+        render(<Sidebar {...defaultProps} />);
+        expect(screen.getByText("Dashboard").closest("a")).toHaveAttribute("href", "/dashboard");
+        expect(screen.getByText("All Books").closest("a")).toHaveAttribute("href", "/books");
     });
 
-    it("calls onAddBook when Add New Book button is clicked", () => {
-        const onAddBook = jest.fn();
-        render(<Sidebar {...defaultProps} onAddBook={onAddBook}/>);
-        // Button has aria-label matching t.sidebar.addNewBook
+    it("calls setShowAddModal when Add New Book is clicked", () => {
+        render(<Sidebar {...defaultProps} />);
         fireEvent.click(screen.getByLabelText(/Add New Book/i));
-        expect(onAddBook).toHaveBeenCalled();
+        expect(mockSetShowAddModal).toHaveBeenCalledWith(true);
     });
 
     it("shows mobile overlay when isOpen is true", () => {

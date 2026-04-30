@@ -26,7 +26,7 @@ import Topbar from "@/src/components/Topbar";
 import en from "@/src/lib/i18n/translations/en";
 import fa from "@/src/lib/i18n/translations/fa";
 
-// ─── Mocks required by next/image and next/link ───────────────────────────────
+// ─── Mocks required by next/image, next/link and next/navigation ─────────────
 jest.mock("next/image", () => ({
     __esModule: true,
     default: (props: React.ImgHTMLAttributes<HTMLImageElement>) => {
@@ -40,6 +40,25 @@ jest.mock("next/link", () => ({
     default: ({children, href}: { children: React.ReactNode; href: string }) => (
         <a href={href}>{children}</a>
     ),
+}));
+
+jest.mock("next/navigation", () => ({
+    usePathname: jest.fn(() => "/dashboard"),
+    useRouter: jest.fn(() => ({push: jest.fn()})),
+}));
+
+jest.mock("@/src/contexts/LibraryContext", () => ({
+    useLibrary: jest.fn(() => ({
+        searchQuery: "",
+        setSearchQuery: jest.fn(),
+        setShowAddModal: jest.fn(),
+    })),
+}));
+
+jest.mock("@zxing/browser", () => ({
+    BrowserMultiFormatReader: jest.fn().mockImplementation(() => ({
+        decodeFromVideoDevice: jest.fn().mockResolvedValue({stop: jest.fn()}),
+    })),
 }));
 
 // ─── Helper component that exposes hook values via data-testid ────────────────
@@ -272,11 +291,8 @@ describe("LanguageSwitcher component", () => {
 // ─── Sidebar: Farsi labels ────────────────────────────────────────────────────
 describe("Sidebar i18n", () => {
     const defaultProps = {
-        activePage: "dashboard" as const,
-        onNavigate: jest.fn(),
         isOpen: false,
         onClose: jest.fn(),
-        onAddBook: jest.fn(),
     };
 
     it("renders English nav labels by default", () => {
@@ -305,10 +321,7 @@ describe("Sidebar i18n", () => {
 // ─── Topbar: Farsi page titles ────────────────────────────────────────────────
 describe("Topbar i18n", () => {
     const defaultProps = {
-        activePage: "dashboard" as const,
         onMenuToggle: jest.fn(),
-        searchQuery: "",
-        onSearchChange: jest.fn(),
     };
 
     it("renders English title by default", () => {

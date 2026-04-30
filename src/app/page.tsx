@@ -1,5 +1,5 @@
-import LibraryApp from "@/src/components/LibraryApp";
+import {redirect} from 'next/navigation';
 
 export default function Home() {
-    return <LibraryApp/>;
+    redirect('/dashboard');
 }
