@@ -2,7 +2,7 @@
 
 import {useState} from "react";
 import {ScanLine} from "lucide-react";
-import {BookStatus} from "@/src/lib/types";
+import {BookStatus, NewBookFormData} from "@/src/lib/types";
 import {useLanguage} from "@/src/lib/i18n/context";
 import {Modal, ModalBody, ModalCloseButton, ModalFooter, ModalHeader} from "@/src/components/ui/Modal";
 import {Input} from "@/src/components/ui/Input";
@@ -13,20 +13,6 @@ import {BarcodeScanner} from "@/src/components/ui/BarcodeScanner";
 interface AddBookModalProps {
     onClose: () => void;
     onAdd: (book: NewBookFormData) => void;
-}
-
-export interface NewBookFormData {
-    title: string;
-    author: string;
-    year: string;
-    genre: string;
-    status: BookStatus;
-    publisher: string;
-    isbn: string;
-    pages: string;
-    rating: string;
-    description: string;
-    notes: string;
 }
 
 const EMPTY_FORM: NewBookFormData = {

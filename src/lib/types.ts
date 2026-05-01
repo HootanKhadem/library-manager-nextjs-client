@@ -57,3 +57,17 @@ export interface ActivityItem {
 }
 
 export type PageId = "dashboard" | "books" | "lent" | "authors" | "settings";
+
+export interface NewBookFormData {
+    title: string;
+    author: string;
+    year: string;
+    genre: string;
+    status: BookStatus;
+    publisher: string;
+    isbn: string;
+    pages: string;
+    rating: string;
+    description: string;
+    notes: string;
+}
