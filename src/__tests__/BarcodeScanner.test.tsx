@@ -41,9 +41,10 @@ beforeEach(() => {
     const mockCtx = {drawImage: jest.fn()};
     HTMLCanvasElement.prototype.getContext = jest.fn().mockReturnValue(mockCtx) as typeof HTMLCanvasElement.prototype.getContext;
 
-    mockDecodeFromCanvas = jest.fn().mockRejectedValue(
-        Object.assign(new Error("NotFoundException"), {name: "NotFoundException"})
-    );
+    const notFound = Object.assign(new Error("NotFoundException"), {name: "NotFoundException"});
+    mockDecodeFromCanvas = jest.fn().mockImplementation(() => {
+        throw notFound;
+    });
     MockReader.mockImplementation(() => ({
         decodeFromCanvas: mockDecodeFromCanvas,
     }) as unknown as BrowserMultiFormatReader);
@@ -84,15 +85,9 @@ async function triggerScan() {
     // Fire loadedmetadata → starts setInterval
     fireEvent(video, new Event("loadedmetadata"));
 
-    // Advance 100ms → interval callback fires
+    // Advance 100ms → interval callback fires (decodeFromCanvas is synchronous)
     await act(async () => {
         jest.advanceTimersByTime(100);
-    });
-
-    // Flush decodeFromCanvas promise chain
-    await act(async () => {
-        await Promise.resolve();
-        await Promise.resolve();
     });
 }
 
@@ -122,7 +117,7 @@ describe("BarcodeScanner", () => {
     });
 
     it("calls onScan with decoded text and then calls onClose", async () => {
-        mockDecodeFromCanvas.mockResolvedValueOnce({getText: () => "9780141182605"});
+        mockDecodeFromCanvas.mockReturnValueOnce({getText: () => "9780141182605"});
         const { onScan, onClose } = renderScanner();
         await triggerScan();
         expect(onScan).toHaveBeenCalledWith("9780141182605");
@@ -130,7 +125,7 @@ describe("BarcodeScanner", () => {
     });
 
     it("stops stream tracks after successful scan", async () => {
-        mockDecodeFromCanvas.mockResolvedValueOnce({getText: () => "9780141182605"});
+        mockDecodeFromCanvas.mockReturnValueOnce({getText: () => "9780141182605"});
         renderScanner();
         await triggerScan();
         expect(mockTrackStop).toHaveBeenCalled();
