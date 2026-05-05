@@ -3,7 +3,7 @@
 import {useCallback, useEffect, useRef, useState} from "react";
 import {ScanLine} from "lucide-react";
 import {BrowserMultiFormatReader} from "@zxing/browser";
-import {BarcodeFormat, DecodeHintType, Result} from "@zxing/library";
+import {BarcodeFormat, DecodeHintType} from "@zxing/library";
 import {Modal, ModalBody, ModalCloseButton, ModalHeader} from "@/src/components/ui/Modal";
 import {useLanguage} from "@/src/lib/i18n/context";
 
@@ -105,18 +105,17 @@ export function BarcodeScanner({ open, onClose, onScan }: BarcodeScannerProps) {
             overlay.style.width = `${(cropWidth / video.videoWidth) * 100}%`;
             overlay.style.height = `${(cropHeight / video.videoHeight) * 100}%`;
 
-            reader.decodeFromCanvas(cropCanvas)
-                .then((result: Result) => {
-                    if (stopped) return;
-                    onScanRef.current(result.getText());
-                    stopScanner();
-                    handleClose();
-                })
-                .catch((err: unknown) => {
-                    if (err instanceof Error && err.name !== "NotFoundException") {
-                        console.error("Decoding error:", err);
-                    }
-                });
+            try {
+                const result = reader.decodeFromCanvas(cropCanvas);
+                if (stopped) return;
+                onScanRef.current(result.getText());
+                stopScanner();
+                handleClose();
+            } catch (err: unknown) {
+                if (err instanceof Error && err.name !== "NotFoundException") {
+                    console.error("Decoding error:", err);
+                }
+            }
         };
 
         setScanState("scanning");
