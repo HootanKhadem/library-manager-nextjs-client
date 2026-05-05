@@ -1,57 +1,52 @@
 import React from "react";
 import {act, fireEvent, render, screen, waitFor} from "@testing-library/react";
-import {BrowserMultiFormatReader} from "@zxing/browser";
-import {BarcodeFormat, DecodeHintType} from "@zxing/library";
 import {BarcodeScanner} from "@/src/components/ui/BarcodeScanner";
 import {LanguageProvider} from "@/src/lib/i18n/context";
 
 // ---------------------------------------------------------------------------
-// Mock @zxing/browser
+// Mock @ericblade/quagga2 (dynamic import)
 // ---------------------------------------------------------------------------
-jest.mock("@zxing/browser", () => ({
-    BrowserMultiFormatReader: jest.fn(),
+type QuaggaInitCb = (err: Error | null) => void;
+type QuaggaDetectedCb = (result: { codeResult: { code: string } }) => void;
+
+let mockInit: jest.Mock;
+let mockStart: jest.Mock;
+let mockStop: jest.Mock;
+let mockOnDetected: jest.Mock;
+let capturedDetectedCb: QuaggaDetectedCb | null = null;
+
+jest.mock("@ericblade/quagga2", () => ({
+    __esModule: true,
+    default: {
+        get init() {
+            return mockInit;
+        },
+        get start() {
+            return mockStart;
+        },
+        get stop() {
+            return mockStop;
+        },
+        get onDetected() {
+            return mockOnDetected;
+        },
+    },
 }));
 
-const MockReader = BrowserMultiFormatReader as jest.MockedClass<typeof BrowserMultiFormatReader>;
-
-let mockDecodeFromCanvas: jest.Mock;
-let mockTrackStop: jest.Mock;
-let mockGetUserMedia: jest.Mock;
-
-function makeStream(): MediaStream {
-    mockTrackStop = jest.fn();
-    const track = {stop: mockTrackStop} as unknown as MediaStreamTrack;
-    return {getTracks: () => [track]} as unknown as MediaStream;
-}
-
 beforeEach(() => {
-    jest.useFakeTimers();
+    capturedDetectedCb = null;
 
     Object.defineProperty(window, "isSecureContext", {value: true, configurable: true});
 
-    mockGetUserMedia = jest.fn().mockResolvedValue(makeStream());
-    Object.defineProperty(navigator, "mediaDevices", {
-        value: {getUserMedia: mockGetUserMedia},
-        configurable: true,
-        writable: true,
+    mockInit = jest.fn((_config: unknown, cb: QuaggaInitCb) => cb(null));
+    mockStart = jest.fn();
+    mockStop = jest.fn();
+    mockOnDetected = jest.fn((cb: QuaggaDetectedCb) => {
+        capturedDetectedCb = cb;
     });
-
-    HTMLVideoElement.prototype.play = jest.fn().mockResolvedValue(undefined);
-
-    const mockCtx = {drawImage: jest.fn()};
-    HTMLCanvasElement.prototype.getContext = jest.fn().mockReturnValue(mockCtx) as typeof HTMLCanvasElement.prototype.getContext;
-
-    const notFound = Object.assign(new Error("NotFoundException"), {name: "NotFoundException"});
-    mockDecodeFromCanvas = jest.fn().mockImplementation(() => {
-        throw notFound;
-    });
-    MockReader.mockImplementation(() => ({
-        decodeFromCanvas: mockDecodeFromCanvas,
-    }) as unknown as BrowserMultiFormatReader);
 });
 
 afterEach(() => {
-    jest.useRealTimers();
     jest.clearAllMocks();
 });
 
@@ -69,25 +64,12 @@ function renderScanner(props: Partial<React.ComponentProps<typeof BarcodeScanner
     return { onClose, onScan, rerender };
 }
 
-// Simulate: getUserMedia resolves → loadedmetadata fires → interval ticks → decodeFromCanvas settles
-async function triggerScan() {
-    // Flush getUserMedia promise → .then() runs, sets video.srcObject and onloadedmetadata
+// Flush dynamic import + init callback + state updates
+async function flushInit() {
     await act(async () => {
         await Promise.resolve();
         await Promise.resolve();
-    });
-
-    const video = screen.getByTestId("barcode-video") as HTMLVideoElement;
-    Object.defineProperty(video, "readyState", {get: () => 4, configurable: true});
-    Object.defineProperty(video, "videoWidth", {get: () => 640, configurable: true});
-    Object.defineProperty(video, "videoHeight", {get: () => 480, configurable: true});
-
-    // Fire loadedmetadata → starts setInterval
-    fireEvent(video, new Event("loadedmetadata"));
-
-    // Advance 100ms → interval callback fires (decodeFromCanvas is synchronous)
-    await act(async () => {
-        jest.advanceTimersByTime(100);
+        await Promise.resolve();
     });
 }
 
@@ -104,11 +86,11 @@ describe("BarcodeScanner", () => {
         expect(screen.queryByTestId("barcode-scanner")).toBeNull();
     });
 
-    it("renders modal with title and video when open", () => {
+    it("renders modal with title and container when open", () => {
         renderScanner();
         expect(screen.getByTestId("barcode-scanner")).toBeInTheDocument();
         expect(screen.getByText("Scan Barcode")).toBeInTheDocument();
-        expect(screen.getByTestId("barcode-video")).toBeInTheDocument();
+        expect(screen.getByTestId("barcode-container")).toBeInTheDocument();
     });
 
     it("shows scanning status message", () => {
@@ -116,31 +98,51 @@ describe("BarcodeScanner", () => {
         expect(screen.getByRole("status")).toHaveTextContent(/scanning/i);
     });
 
-    it("calls onScan with decoded text and then calls onClose", async () => {
-        mockDecodeFromCanvas.mockReturnValueOnce({getText: () => "9780141182605"});
+    it("initializes and starts Quagga on open", async () => {
+        renderScanner();
+        await flushInit();
+        expect(mockInit).toHaveBeenCalled();
+        expect(mockStart).toHaveBeenCalled();
+    });
+
+    it("calls onScan with decoded text then calls onClose", async () => {
         const { onScan, onClose } = renderScanner();
-        await triggerScan();
+        await flushInit();
+
+        await act(async () => {
+            capturedDetectedCb?.({codeResult: {code: "9780141182605"}});
+        });
+
         expect(onScan).toHaveBeenCalledWith("9780141182605");
         expect(onClose).toHaveBeenCalled();
     });
 
-    it("stops stream tracks after successful scan", async () => {
-        mockDecodeFromCanvas.mockReturnValueOnce({getText: () => "9780141182605"});
+    it("stops Quagga after successful scan", async () => {
         renderScanner();
-        await triggerScan();
-        expect(mockTrackStop).toHaveBeenCalled();
+        await flushInit();
+
+        await act(async () => {
+            capturedDetectedCb?.({codeResult: {code: "9780141182605"}});
+        });
+
+        expect(mockStop).toHaveBeenCalled();
     });
 
-    it("does not call onScan when no barcode found (NotFoundException)", async () => {
+    it("ignores empty code results", async () => {
         const { onScan } = renderScanner();
-        await triggerScan();
+        await flushInit();
+
+        await act(async () => {
+            capturedDetectedCb?.({codeResult: {code: ""}});
+        });
+
         expect(onScan).not.toHaveBeenCalled();
     });
 
     it("shows permission denied message when camera is blocked", async () => {
         const err = new Error("Permission denied");
         err.name = "NotAllowedError";
-        mockGetUserMedia.mockRejectedValue(err);
+        mockInit = jest.fn((_config: unknown, cb: QuaggaInitCb) => cb(err));
 
         renderScanner();
         await waitFor(() => {
@@ -148,8 +150,8 @@ describe("BarcodeScanner", () => {
         });
     });
 
-    it("shows generic error message for other camera errors", async () => {
-        mockGetUserMedia.mockRejectedValue(new Error("Device not found"));
+    it("shows generic error message for other init errors", async () => {
+        mockInit = jest.fn((_config: unknown, cb: QuaggaInitCb) => cb(new Error("Device not found")));
 
         renderScanner();
         await waitFor(() => {
@@ -163,20 +165,18 @@ describe("BarcodeScanner", () => {
         expect(onClose).toHaveBeenCalled();
     });
 
-    it("stops stream tracks on unmount / close", async () => {
+    it("stops Quagga on unmount after init", async () => {
         const { rerender } = renderScanner();
-        // Let getUserMedia resolve so stream is captured
-        await act(async () => {
-            await Promise.resolve();
-            await Promise.resolve();
-        });
+        await flushInit();
 
         rerender(
             <LanguageProvider initialLanguage="en">
                 <BarcodeScanner open={false} onClose={jest.fn()} onScan={jest.fn()} />
             </LanguageProvider>
         );
-        expect(mockTrackStop).toHaveBeenCalled();
+
+        await flushInit();
+        expect(mockStop).toHaveBeenCalled();
     });
 
     it("renders correctly in Farsi (RTL)", () => {
@@ -188,20 +188,10 @@ describe("BarcodeScanner", () => {
         expect(screen.getByText("اسکن بارکد")).toBeInTheDocument();
     });
 
-    it("initializes reader with TRY_HARDER and barcode formats", () => {
-        renderScanner();
-        expect(MockReader).toHaveBeenCalled();
-        const hints = MockReader.mock.calls[0][0] as Map<DecodeHintType, unknown>;
-        expect(hints.get(DecodeHintType.TRY_HARDER)).toBe(true);
-        const formats = hints.get(DecodeHintType.POSSIBLE_FORMATS) as BarcodeFormat[];
-        expect(formats).toContain(BarcodeFormat.QR_CODE);
-        expect(formats).toContain(BarcodeFormat.EAN_13);
-        expect(formats).toContain(BarcodeFormat.CODE_128);
-    });
-
-    it("does not call getUserMedia in insecure context", () => {
+    it("does not call getUserMedia / init in insecure context", async () => {
         Object.defineProperty(window, "isSecureContext", {value: false, configurable: true});
         renderScanner();
-        expect(mockGetUserMedia).not.toHaveBeenCalled();
+        await flushInit();
+        expect(mockInit).not.toHaveBeenCalled();
     });
 });

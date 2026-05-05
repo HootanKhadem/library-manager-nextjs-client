@@ -12,7 +12,11 @@
       "Bash(npx jest *)",
       "Read(//c/Users/Hootan//**)",
       "Read(//d//**)",
-      "Bash(xargs grep *)"
+      "Bash(xargs grep *)",
+      "Bash(node -e \"const r = require\\('@zxing/browser'\\); console.log\\(Object.keys\\(new r.BrowserMultiFormatReader\\(\\)\\)\\)\")",
+      "Bash(node -e \"const r = require\\('@zxing/browser'\\); const reader = new r.BrowserMultiFormatReader\\(\\); console.log\\(typeof reader.decodeFromCanvas\\); console.log\\(typeof reader.decodeFromVideoDevice\\); console.log\\(typeof reader.decodeOnceFromVideoDevice\\);\")",
+      "Bash(node -e ' *)",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\({**d.get\\('dependencies',{}\\), **d.get\\('devDependencies',{}\\)}, indent=2\\)\\)\")"
     ]
   }
 }
