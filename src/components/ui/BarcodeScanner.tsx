@@ -3,6 +3,7 @@
 import {useCallback, useEffect, useRef, useState} from "react";
 import {ScanLine} from "lucide-react";
 import {BrowserMultiFormatReader, type IScannerControls} from "@zxing/browser";
+import {BarcodeFormat, DecodeHintType} from "@zxing/library";
 import {Modal, ModalBody, ModalCloseButton, ModalHeader} from "@/src/components/ui/Modal";
 import {useLanguage} from "@/src/lib/i18n/context";
 
@@ -34,7 +35,19 @@ export function BarcodeScanner({ open, onClose, onScan }: BarcodeScannerProps) {
             return;
         }
 
-        const reader = new BrowserMultiFormatReader();
+        const hints = new Map();
+        hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+            BarcodeFormat.QR_CODE,
+            BarcodeFormat.EAN_13,
+            BarcodeFormat.CODE_128,
+            BarcodeFormat.CODE_39,
+            BarcodeFormat.EAN_8,
+            BarcodeFormat.UPC_A,
+            BarcodeFormat.UPC_E,
+        ]);
+        hints.set(DecodeHintType.TRY_HARDER, true);
+
+        const reader = new BrowserMultiFormatReader(hints);
         let controls: IScannerControls | undefined;
         let stopRequested = false;
 
