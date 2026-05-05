@@ -6,7 +6,7 @@ import {BarcodeScanner} from "@/src/components/ui/BarcodeScanner";
 import {LanguageProvider} from "@/src/lib/i18n/context";
 
 // ---------------------------------------------------------------------------
-// Mock @zxing/browser — instance is configured in beforeEach to avoid TDZ
+// Mock @zxing/browser
 // ---------------------------------------------------------------------------
 jest.mock("@zxing/browser", () => ({
     BrowserMultiFormatReader: jest.fn(),
@@ -14,28 +14,44 @@ jest.mock("@zxing/browser", () => ({
 
 const MockReader = BrowserMultiFormatReader as jest.MockedClass<typeof BrowserMultiFormatReader>;
 
-type ScanCallback = (result: { getText: () => string } | null, err?: Error) => void;
+let mockDecodeFromCanvas: jest.Mock;
+let mockTrackStop: jest.Mock;
+let mockGetUserMedia: jest.Mock;
 
-let mockStop: jest.Mock;
-let mockControls: { stop: jest.Mock };
-let mockDecodeFromVideoDevice: jest.Mock;
-let capturedCallback: ScanCallback | null;
+function makeStream(): MediaStream {
+    mockTrackStop = jest.fn();
+    const track = {stop: mockTrackStop} as unknown as MediaStreamTrack;
+    return {getTracks: () => [track]} as unknown as MediaStream;
+}
 
 beforeEach(() => {
-    Object.defineProperty(window, "isSecureContext", {
-        value: true,
+    jest.useFakeTimers();
+
+    Object.defineProperty(window, "isSecureContext", {value: true, configurable: true});
+
+    mockGetUserMedia = jest.fn().mockResolvedValue(makeStream());
+    Object.defineProperty(navigator, "mediaDevices", {
+        value: {getUserMedia: mockGetUserMedia},
         configurable: true,
+        writable: true,
     });
-    capturedCallback = null;
-    mockStop = jest.fn();
-    mockControls = { stop: mockStop };
-    mockDecodeFromVideoDevice = jest.fn((_deviceId: unknown, _el: unknown, cb: ScanCallback) => {
-        capturedCallback = cb;
-        return Promise.resolve(mockControls);
-    });
+
+    HTMLVideoElement.prototype.play = jest.fn().mockResolvedValue(undefined);
+
+    const mockCtx = {drawImage: jest.fn()};
+    HTMLCanvasElement.prototype.getContext = jest.fn().mockReturnValue(mockCtx) as typeof HTMLCanvasElement.prototype.getContext;
+
+    mockDecodeFromCanvas = jest.fn().mockRejectedValue(
+        Object.assign(new Error("NotFoundException"), {name: "NotFoundException"})
+    );
     MockReader.mockImplementation(() => ({
-        decodeFromVideoDevice: mockDecodeFromVideoDevice,
+        decodeFromCanvas: mockDecodeFromCanvas,
     }) as unknown as BrowserMultiFormatReader);
+});
+
+afterEach(() => {
+    jest.useRealTimers();
+    jest.clearAllMocks();
 });
 
 // ---------------------------------------------------------------------------
@@ -50,6 +66,34 @@ function renderScanner(props: Partial<React.ComponentProps<typeof BarcodeScanner
         </LanguageProvider>
     );
     return { onClose, onScan, rerender };
+}
+
+// Simulate: getUserMedia resolves → loadedmetadata fires → interval ticks → decodeFromCanvas settles
+async function triggerScan() {
+    // Flush getUserMedia promise → .then() runs, sets video.srcObject and onloadedmetadata
+    await act(async () => {
+        await Promise.resolve();
+        await Promise.resolve();
+    });
+
+    const video = screen.getByTestId("barcode-video") as HTMLVideoElement;
+    Object.defineProperty(video, "readyState", {get: () => 4, configurable: true});
+    Object.defineProperty(video, "videoWidth", {get: () => 640, configurable: true});
+    Object.defineProperty(video, "videoHeight", {get: () => 480, configurable: true});
+
+    // Fire loadedmetadata → starts setInterval
+    fireEvent(video, new Event("loadedmetadata"));
+
+    // Advance 100ms → interval callback fires
+    await act(async () => {
+        jest.advanceTimersByTime(100);
+    });
+
+    // Flush decodeFromCanvas promise chain
+    await act(async () => {
+        await Promise.resolve();
+        await Promise.resolve();
+    });
 }
 
 // ---------------------------------------------------------------------------
@@ -77,57 +121,31 @@ describe("BarcodeScanner", () => {
         expect(screen.getByRole("status")).toHaveTextContent(/scanning/i);
     });
 
-    it("calls onScan with the decoded text and then calls onClose", async () => {
+    it("calls onScan with decoded text and then calls onClose", async () => {
+        mockDecodeFromCanvas.mockResolvedValueOnce({getText: () => "9780141182605"});
         const { onScan, onClose } = renderScanner();
-        await act(async () => {
-            capturedCallback?.({ getText: () => "9780141182605" });
-        });
+        await triggerScan();
         expect(onScan).toHaveBeenCalledWith("9780141182605");
         expect(onClose).toHaveBeenCalled();
-        await waitFor(() => {
-            expect(mockStop).toHaveBeenCalled();
-        });
     });
 
-    it("stops scanner even if decode callback runs before controls resolve", async () => {
-        let resolveControls: ((value: { stop: jest.Mock }) => void) | null = null;
-        mockDecodeFromVideoDevice.mockImplementation((_deviceId: unknown, _el: unknown, cb: ScanCallback) => {
-            capturedCallback = cb;
-            return new Promise((resolve) => {
-                resolveControls = resolve;
-            });
-        });
-
-        const { onScan, onClose } = renderScanner();
-
-        await act(async () => {
-            capturedCallback?.({ getText: () => "9780306406157" });
-        });
-
-        expect(onScan).toHaveBeenCalledWith("9780306406157");
-        expect(onClose).toHaveBeenCalled();
-        expect(mockStop).not.toHaveBeenCalled();
-
-        await act(async () => {
-            resolveControls?.(mockControls);
-        });
-
-        await waitFor(() => {
-            expect(mockStop).toHaveBeenCalledTimes(1);
-        });
+    it("stops stream tracks after successful scan", async () => {
+        mockDecodeFromCanvas.mockResolvedValueOnce({getText: () => "9780141182605"});
+        renderScanner();
+        await triggerScan();
+        expect(mockTrackStop).toHaveBeenCalled();
     });
 
-    it("ignores null results (normal 'not found yet' frames)", async () => {
+    it("does not call onScan when no barcode found (NotFoundException)", async () => {
         const { onScan } = renderScanner();
-        await act(async () => {
-            capturedCallback?.(null);
-        });
+        await triggerScan();
         expect(onScan).not.toHaveBeenCalled();
     });
 
     it("shows permission denied message when camera is blocked", async () => {
-        const permissionError = Object.assign(new Error("Permission denied"), { name: "NotAllowedError" });
-        mockDecodeFromVideoDevice.mockReturnValue(Promise.reject(permissionError));
+        const err = new Error("Permission denied");
+        err.name = "NotAllowedError";
+        mockGetUserMedia.mockRejectedValue(err);
 
         renderScanner();
         await waitFor(() => {
@@ -136,8 +154,7 @@ describe("BarcodeScanner", () => {
     });
 
     it("shows generic error message for other camera errors", async () => {
-        const genericError = new Error("Device not found");
-        mockDecodeFromVideoDevice.mockReturnValue(Promise.reject(genericError));
+        mockGetUserMedia.mockRejectedValue(new Error("Device not found"));
 
         renderScanner();
         await waitFor(() => {
@@ -151,16 +168,20 @@ describe("BarcodeScanner", () => {
         expect(onClose).toHaveBeenCalled();
     });
 
-    it("stops scanner on unmount", async () => {
+    it("stops stream tracks on unmount / close", async () => {
         const { rerender } = renderScanner();
+        // Let getUserMedia resolve so stream is captured
+        await act(async () => {
+            await Promise.resolve();
+            await Promise.resolve();
+        });
+
         rerender(
             <LanguageProvider initialLanguage="en">
                 <BarcodeScanner open={false} onClose={jest.fn()} onScan={jest.fn()} />
             </LanguageProvider>
         );
-        await waitFor(() => {
-            expect(mockStop).toHaveBeenCalled();
-        });
+        expect(mockTrackStop).toHaveBeenCalled();
     });
 
     it("renders correctly in Farsi (RTL)", () => {
@@ -175,11 +196,17 @@ describe("BarcodeScanner", () => {
     it("initializes reader with TRY_HARDER and barcode formats", () => {
         renderScanner();
         expect(MockReader).toHaveBeenCalled();
-        const hints = MockReader.mock.calls[0][0] as Map<DecodeHintType, any>;
+        const hints = MockReader.mock.calls[0][0] as Map<DecodeHintType, unknown>;
         expect(hints.get(DecodeHintType.TRY_HARDER)).toBe(true);
-        const formats = hints.get(DecodeHintType.POSSIBLE_FORMATS);
+        const formats = hints.get(DecodeHintType.POSSIBLE_FORMATS) as BarcodeFormat[];
         expect(formats).toContain(BarcodeFormat.QR_CODE);
         expect(formats).toContain(BarcodeFormat.EAN_13);
         expect(formats).toContain(BarcodeFormat.CODE_128);
+    });
+
+    it("does not call getUserMedia in insecure context", () => {
+        Object.defineProperty(window, "isSecureContext", {value: false, configurable: true});
+        renderScanner();
+        expect(mockGetUserMedia).not.toHaveBeenCalled();
     });
 });
