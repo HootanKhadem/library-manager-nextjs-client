@@ -1,6 +1,7 @@
 import React from "react";
 import {act, fireEvent, render, screen, waitFor} from "@testing-library/react";
 import {BrowserMultiFormatReader} from "@zxing/browser";
+import {BarcodeFormat, DecodeHintType} from "@zxing/library";
 import {BarcodeScanner} from "@/src/components/ui/BarcodeScanner";
 import {LanguageProvider} from "@/src/lib/i18n/context";
 
@@ -169,5 +170,16 @@ describe("BarcodeScanner", () => {
             </LanguageProvider>
         );
         expect(screen.getByText("اسکن بارکد")).toBeInTheDocument();
+    });
+
+    it("initializes reader with TRY_HARDER and barcode formats", () => {
+        renderScanner();
+        expect(MockReader).toHaveBeenCalled();
+        const hints = MockReader.mock.calls[0][0] as Map<DecodeHintType, any>;
+        expect(hints.get(DecodeHintType.TRY_HARDER)).toBe(true);
+        const formats = hints.get(DecodeHintType.POSSIBLE_FORMATS);
+        expect(formats).toContain(BarcodeFormat.QR_CODE);
+        expect(formats).toContain(BarcodeFormat.EAN_13);
+        expect(formats).toContain(BarcodeFormat.CODE_128);
     });
 });
