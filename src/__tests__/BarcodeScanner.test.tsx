@@ -1,53 +1,38 @@
 import React from "react";
-import {act, fireEvent, render, screen, waitFor} from "@testing-library/react";
+import {act, fireEvent, render, screen} from "@testing-library/react";
 import {BarcodeScanner} from "@/src/components/ui/BarcodeScanner";
 import {LanguageProvider} from "@/src/lib/i18n/context";
 
 // ---------------------------------------------------------------------------
-// Mock @ericblade/quagga2 (dynamic import)
+// Mock react-barcode-scanner/polyfill (no-op side-effect import)
 // ---------------------------------------------------------------------------
-type QuaggaInitCb = (err: Error | null) => void;
-type QuaggaDetectedCb = (result: { codeResult: { code: string } }) => void;
+import {BarcodeScanner as Comp} from "react-barcode-scanner";
 
-let mockInit: jest.Mock;
-let mockStart: jest.Mock;
-let mockStop: jest.Mock;
-let mockOnDetected: jest.Mock;
-let capturedDetectedCb: QuaggaDetectedCb | null = null;
+jest.mock("react-barcode-scanner/polyfill", () => ({}));
 
-jest.mock("@ericblade/quagga2", () => ({
-    __esModule: true,
-    default: {
-        get init() {
-            return mockInit;
-        },
-        get start() {
-            return mockStart;
-        },
-        get stop() {
-            return mockStop;
-        },
-        get onDetected() {
-            return mockOnDetected;
-        },
+// ---------------------------------------------------------------------------
+// Mock react-barcode-scanner — captures onCapture so tests can trigger it
+// ---------------------------------------------------------------------------
+type DetectedBarcode = { rawValue: string };
+type OnCaptureFn = (barcodes: DetectedBarcode[]) => void;
+
+let capturedOnCapture: OnCaptureFn | null = null;
+
+jest.mock("react-barcode-scanner", () => ({
+    BarcodeScanner: (props: { onCapture?: OnCaptureFn }) => {
+        capturedOnCapture = props.onCapture ?? null;
+        return React.createElement("div", {"data-testid": "scanner-view"});
     },
 }));
 
-beforeEach(() => {
-    capturedDetectedCb = null;
-
-    Object.defineProperty(window, "isSecureContext", {value: true, configurable: true});
-
-    mockInit = jest.fn((_config: unknown, cb: QuaggaInitCb) => cb(null));
-    mockStart = jest.fn();
-    mockStop = jest.fn();
-    mockOnDetected = jest.fn((cb: QuaggaDetectedCb) => {
-        capturedDetectedCb = cb;
-    });
-});
-
-afterEach(() => {
-    jest.clearAllMocks();
+// ---------------------------------------------------------------------------
+// Mock next/dynamic — runs loader synchronously via require
+// ---------------------------------------------------------------------------
+jest.mock("next/dynamic", () => () => {
+    return function DynamicWrapper(props: Record<string, unknown>) {
+        
+        return React.createElement(Comp, props);
+    };
 });
 
 // ---------------------------------------------------------------------------
@@ -64,14 +49,13 @@ function renderScanner(props: Partial<React.ComponentProps<typeof BarcodeScanner
     return { onClose, onScan, rerender };
 }
 
-// Flush dynamic import + init callback + state updates
-async function flushInit() {
-    await act(async () => {
-        await Promise.resolve();
-        await Promise.resolve();
-        await Promise.resolve();
-    });
-}
+beforeEach(() => {
+    capturedOnCapture = null;
+});
+
+afterEach(() => {
+    jest.clearAllMocks();
+});
 
 // ---------------------------------------------------------------------------
 // Tests
@@ -98,65 +82,51 @@ describe("BarcodeScanner", () => {
         expect(screen.getByRole("status")).toHaveTextContent(/scanning/i);
     });
 
-    it("initializes and starts Quagga on open", async () => {
+    it("mounts scanner view when open", () => {
         renderScanner();
-        await flushInit();
-        expect(mockInit).toHaveBeenCalled();
-        expect(mockStart).toHaveBeenCalled();
+        expect(screen.getByTestId("scanner-view")).toBeInTheDocument();
     });
 
-    it("calls onScan with decoded text then calls onClose", async () => {
+    it("calls onScan with decoded value then calls onClose", async () => {
         const { onScan, onClose } = renderScanner();
-        await flushInit();
 
         await act(async () => {
-            capturedDetectedCb?.({codeResult: {code: "9780141182605"}});
+            capturedOnCapture?.([{rawValue: "9780141182605"}]);
         });
 
         expect(onScan).toHaveBeenCalledWith("9780141182605");
         expect(onClose).toHaveBeenCalled();
     });
 
-    it("stops Quagga after successful scan", async () => {
-        renderScanner();
-        await flushInit();
+    it("ignores empty barcode array", async () => {
+        const {onScan} = renderScanner();
 
         await act(async () => {
-            capturedDetectedCb?.({codeResult: {code: "9780141182605"}});
-        });
-
-        expect(mockStop).toHaveBeenCalled();
-    });
-
-    it("ignores empty code results", async () => {
-        const { onScan } = renderScanner();
-        await flushInit();
-
-        await act(async () => {
-            capturedDetectedCb?.({codeResult: {code: ""}});
+            capturedOnCapture?.([]);
         });
 
         expect(onScan).not.toHaveBeenCalled();
     });
 
-    it("shows permission denied message when camera is blocked", async () => {
-        const err = new Error("Permission denied");
-        err.name = "NotAllowedError";
-        mockInit = jest.fn((_config: unknown, cb: QuaggaInitCb) => cb(err));
+    it("ignores barcode with empty rawValue", async () => {
+        const { onScan } = renderScanner();
 
-        renderScanner();
-        await waitFor(() => {
-            expect(screen.getByRole("status")).toHaveTextContent(/camera access denied/i);
+        await act(async () => {
+            capturedOnCapture?.([{rawValue: ""}]);
         });
+
+        expect(onScan).not.toHaveBeenCalled();
     });
 
-    it("shows generic error message for other init errors", async () => {
-        mockInit = jest.fn((_config: unknown, cb: QuaggaInitCb) => cb(new Error("Device not found")));
+    it("only fires onScan once even if onCapture fires multiple times", async () => {
+        const {onScan} = renderScanner();
 
-        renderScanner();
-        await waitFor(() => {
-            expect(screen.getByRole("status")).toHaveTextContent(/could not read barcode/i);
+        await act(async () => {
+            capturedOnCapture?.([{rawValue: "9780141182605"}]);
+            capturedOnCapture?.([{rawValue: "9780141182605"}]);
         });
+
+        expect(onScan).toHaveBeenCalledTimes(1);
     });
 
     it("calls onClose when the close button is clicked", () => {
@@ -165,18 +135,9 @@ describe("BarcodeScanner", () => {
         expect(onClose).toHaveBeenCalled();
     });
 
-    it("stops Quagga on unmount after init", async () => {
-        const { rerender } = renderScanner();
-        await flushInit();
-
-        rerender(
-            <LanguageProvider initialLanguage="en">
-                <BarcodeScanner open={false} onClose={jest.fn()} onScan={jest.fn()} />
-            </LanguageProvider>
-        );
-
-        await flushInit();
-        expect(mockStop).toHaveBeenCalled();
+    it("does not mount scanner view when closed", () => {
+        renderScanner({open: false});
+        expect(screen.queryByTestId("scanner-view")).toBeNull();
     });
 
     it("renders correctly in Farsi (RTL)", () => {
@@ -186,12 +147,5 @@ describe("BarcodeScanner", () => {
             </LanguageProvider>
         );
         expect(screen.getByText("اسکن بارکد")).toBeInTheDocument();
-    });
-
-    it("does not call getUserMedia / init in insecure context", async () => {
-        Object.defineProperty(window, "isSecureContext", {value: false, configurable: true});
-        renderScanner();
-        await flushInit();
-        expect(mockInit).not.toHaveBeenCalled();
     });
 });

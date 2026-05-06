@@ -1,9 +1,22 @@
 "use client";
 
-import {useCallback, useEffect, useRef, useState} from "react";
+import {useCallback, useRef} from "react";
+import dynamic from "next/dynamic";
 import {ScanLine} from "lucide-react";
 import {Modal, ModalBody, ModalCloseButton, ModalHeader} from "@/src/components/ui/Modal";
 import {useLanguage} from "@/src/lib/i18n/context";
+
+interface DetectedBarcode {
+    rawValue: string;
+}
+
+const BarcodeScannerView = dynamic(
+    async () => {
+        await import("react-barcode-scanner/polyfill");
+        return import("react-barcode-scanner").then((m) => m.BarcodeScanner);
+    },
+    {ssr: false}
+);
 
 interface BarcodeScannerProps {
     open: boolean;
@@ -13,112 +26,24 @@ interface BarcodeScannerProps {
 
 export function BarcodeScanner({ open, onClose, onScan }: BarcodeScannerProps) {
     const { t } = useLanguage();
-    const containerRef = useRef<HTMLDivElement>(null);
-    const onScanRef = useRef(onScan);
-    const onCloseRef = useRef(onClose);
-    useEffect(() => { onScanRef.current = onScan; });
-    useEffect(() => { onCloseRef.current = onClose; });
+    const scannedRef = useRef(false);
 
-    const [scanState, setScanState] = useState<"scanning" | "denied" | "error" | "insecure">("scanning");
+    const handleCapture = useCallback(
+        (barcodes: DetectedBarcode[]) => {
+            if (scannedRef.current || barcodes.length === 0) return;
+            const code = barcodes[0].rawValue;
+            if (!code) return;
+            scannedRef.current = true;
+            onScan(code);
+            onClose();
+        },
+        [onScan, onClose]
+    );
+
     const handleClose = useCallback(() => {
-        setScanState("scanning");
-        onCloseRef.current();
-    }, []);
-
-    useEffect(() => {
-        if (!open || !containerRef.current) return;
-        if (!window.isSecureContext) {
-            setScanState("insecure");
-            return;
-        }
-
-        let stopped = false;
-        let initialized = false;
-
-        const start = async () => {
-            try {
-                const {default: Quagga} = await import("@ericblade/quagga2");
-                if (stopped) return;
-
-                await new Promise<void>((resolve, reject) => {
-                    Quagga.init(
-                        {
-                            inputStream: {
-                                type: "LiveStream",
-                                target: containerRef.current!,
-                                constraints: {
-                                    facingMode: {ideal: "environment"},
-                                    width: {min: 640},
-                                    height: {min: 480},
-                                },
-                            },
-                            locator: {patchSize: "medium", halfSample: true},
-                            numOfWorkers: 0,
-                            decoder: {
-                                readers: [
-                                    "ean_reader",
-                                    "ean_8_reader",
-                                    "code_128_reader",
-                                    "code_39_reader",
-                                    "upc_reader",
-                                    "upc_e_reader",
-                                ],
-                            },
-                            locate: true,
-                        },
-                        (err) => (err ? reject(err) : resolve())
-                    );
-                });
-
-                initialized = true;
-                if (stopped) {
-                    Quagga.stop();
-                    return;
-                }
-
-                Quagga.start();
-                setScanState("scanning");
-
-                Quagga.onDetected((result) => {
-                    const code = result.codeResult.code;
-                    if (!code || stopped) return;
-                    stopped = true;
-                    Quagga.stop();
-                    onScanRef.current(code);
-                    handleClose();
-                });
-            } catch (err: unknown) {
-                if (stopped) return;
-                const isPermission =
-                    err instanceof Error &&
-                    (err.name === "NotAllowedError" || err.message?.includes("Permission"));
-                setScanState(isPermission ? "denied" : "error");
-            }
-        };
-
-        start();
-
-        return () => {
-            stopped = true;
-            if (initialized) {
-                import("@ericblade/quagga2")
-                    .then(({default: Quagga}) => {
-                        try {
-                            Quagga.stop();
-                        } catch { /* ignore */
-                        }
-                    })
-                    .catch(() => { /* ignore */
-                    });
-            }
-        };
-    }, [open, handleClose]);
-
-    const statusText =
-        scanState === "denied" ? t.barcodeScanner.permissionDenied :
-            scanState === "insecure" ? t.barcodeScanner.insecureContext :
-                scanState === "error" ? t.barcodeScanner.error :
-                    t.barcodeScanner.scanning;
+        scannedRef.current = false;
+        onClose();
+    }, [onClose]);
 
     return (
         <Modal open={open} onClose={handleClose} className="max-w-sm" data-testid="barcode-scanner">
@@ -137,22 +62,29 @@ export function BarcodeScanner({ open, onClose, onScan }: BarcodeScannerProps) {
             <ModalBody>
                 <div className="flex flex-col items-center gap-3">
                     <div
-                        ref={containerRef}
-                        className="relative w-full aspect-video rounded-xl overflow-hidden bg-stone-900 [&_video]:absolute [&_video]:inset-0 [&_video]:w-full [&_video]:h-full [&_video]:object-cover [&_canvas]:absolute [&_canvas]:inset-0 [&_canvas]:w-full [&_canvas]:h-full"
+                        className="relative w-full aspect-video rounded-xl overflow-hidden bg-stone-900 [&_video]:absolute [&_video]:inset-0 [&_video]:w-full [&_video]:h-full [&_video]:object-cover"
                         data-testid="barcode-container"
                     >
+                        {open && (
+                            <BarcodeScannerView
+                                options={{
+                                    formats: ["ean_13", "ean_8", "code_128", "code_39", "upc_a", "upc_e"],
+                                    delay: 500,
+                                }}
+                                trackConstraints={{
+                                    facingMode: {ideal: "environment"},
+                                    width: {min: 640},
+                                    height: {min: 480},
+                                }}
+                                onCapture={handleCapture}
+                            />
+                        )}
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
                             <div className="w-3/4 h-1/3 border-2 border-accent rounded-lg opacity-80"/>
                         </div>
                     </div>
-                    <p
-                        role="status"
-                        className={[
-                            "text-xs text-center",
-                            scanState === "scanning" ? "text-muted" : "text-(--destructive)",
-                        ].join(" ")}
-                    >
-                        {statusText}
+                    <p role="status" className="text-xs text-center text-muted">
+                        {t.barcodeScanner.scanning}
                     </p>
                 </div>
             </ModalBody>
