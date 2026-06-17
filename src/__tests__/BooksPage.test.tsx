@@ -55,3 +55,52 @@ describe("BooksPage component", () => {
         expect(screen.getByText(new RegExp(`${BOOKS.length} volumes`))).toBeInTheDocument();
     });
 });
+
+describe("BooksPage — empty and error states", () => {
+    beforeEach(() => jest.clearAllMocks());
+
+    it("shows 'Your library is empty' when books array is empty and filter is All", () => {
+        render(<BooksPage books={[]} onBookClick={jest.fn()} onAddBook={jest.fn()} />);
+        expect(screen.getByText("Your library is empty")).toBeInTheDocument();
+    });
+
+    it("shows 'No books match this filter' when filtered result is empty", () => {
+        const books = [
+            {
+                id: "1", title: "Dune", author: "Herbert", year: 1965,
+                genre: "Sci-Fi", status: "Owned" as const,
+            },
+        ];
+        render(<BooksPage books={books} onBookClick={jest.fn()} onAddBook={jest.fn()} />);
+        fireEvent.click(screen.getByText(/lent out/i));
+        expect(screen.getByText("No books match this filter")).toBeInTheDocument();
+    });
+
+    it("shows error state when isError is true", () => {
+        render(
+            <BooksPage
+                books={[]}
+                onBookClick={jest.fn()}
+                onAddBook={jest.fn()}
+                isError
+                onRetry={jest.fn()}
+            />
+        );
+        expect(screen.getByText("Something went wrong")).toBeInTheDocument();
+    });
+
+    it("calls onRetry when retry button clicked in error state", () => {
+        const onRetry = jest.fn();
+        render(
+            <BooksPage
+                books={[]}
+                onBookClick={jest.fn()}
+                onAddBook={jest.fn()}
+                isError
+                onRetry={onRetry}
+            />
+        );
+        fireEvent.click(screen.getByRole("button", { name: /try again/i }));
+        expect(onRetry).toHaveBeenCalledTimes(1);
+    });
+});

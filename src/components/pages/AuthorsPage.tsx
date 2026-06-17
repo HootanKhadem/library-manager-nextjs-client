@@ -10,13 +10,18 @@ import { StatusBadge } from "@/src/components/ui/StatusBadge";
 import { StarRating } from "@/src/components/ui/StarRating";
 import { GenreTag } from "@/src/components/ui/GenreTag";
 import { Avatar } from "@/src/components/ui/Avatar";
+import { Users, BookOpen } from "lucide-react";
+import { EmptyState } from "@/src/components/ui/EmptyState";
+import { ErrorState } from "@/src/components/ui/ErrorState";
 
 interface AuthorsPageProps {
     authors: Author[];
     borgesWorks: Book[];
+    isError?: boolean;
+    onRetry?: () => void;
 }
 
-export default function AuthorsPage({ authors, borgesWorks }: AuthorsPageProps) {
+export default function AuthorsPage({ authors, borgesWorks, isError, onRetry }: AuthorsPageProps) {
     const { t } = useLanguage();
 
     return (
@@ -27,11 +32,27 @@ export default function AuthorsPage({ authors, borgesWorks }: AuthorsPageProps) 
             />
 
             {/* Author grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-6">
-                {authors.map((author) => (
-                    <AuthorCard key={author.id} author={author} />
-                ))}
-            </div>
+            {isError ? (
+                <ErrorState
+                    heading={t.common.errorHeading}
+                    description={t.common.errorDescription}
+                    retryLabel={t.common.retry}
+                    onRetry={onRetry}
+                />
+            ) : authors.length === 0 ? (
+                <EmptyState
+                    heading={t.authors.emptyAuthors}
+                    description={t.authors.emptyAuthorsDesc}
+                    icon={<Users className="h-6 w-6" />}
+                    className="mb-6"
+                />
+            ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-6">
+                    {authors.map((author) => (
+                        <AuthorCard key={author.id} author={author} />
+                    ))}
+                </div>
+            )}
 
             {/* Complete works */}
             <Card>
@@ -52,25 +73,40 @@ export default function AuthorsPage({ authors, borgesWorks }: AuthorsPageProps) 
                             <Th>{t.authors.colNotes}</Th>
                         </tr>
                     </DataTableHead>
-                    <DataTableBody>
-                        {borgesWorks.map((book) => (
-                            <DataTableRow key={book.id}>
-                                <Td>
-                                    <span className="font-medium text-[var(--foreground)]">{book.title}</span>
-                                </Td>
-                                <Td className="tabular-nums text-[var(--muted)]">{book.year}</Td>
-                                <Td><GenreTag genre={book.genre} /></Td>
-                                <Td><StatusBadge status={book.status} overdue={book.overdue} /></Td>
-                                <Td>
-                                    {book.rating
-                                        ? <StarRating value={book.rating} />
-                                        : <span className="text-[var(--muted-foreground)]">—</span>
-                                    }
-                                </Td>
-                                <Td className="text-xs text-[var(--muted)] italic">{book.notes ?? ""}</Td>
-                            </DataTableRow>
-                        ))}
-                    </DataTableBody>
+                    {borgesWorks.length === 0 ? (
+                        <tbody>
+                            <tr>
+                                <td colSpan={6}>
+                                    <EmptyState
+                                        heading={t.authors.emptyWorks}
+                                        description={t.authors.emptyWorksDesc}
+                                        icon={<BookOpen className="h-6 w-6" />}
+                                        className="py-10"
+                                    />
+                                </td>
+                            </tr>
+                        </tbody>
+                    ) : (
+                        <DataTableBody>
+                            {borgesWorks.map((book) => (
+                                <DataTableRow key={book.id}>
+                                    <Td>
+                                        <span className="font-medium text-[var(--foreground)]">{book.title}</span>
+                                    </Td>
+                                    <Td className="tabular-nums text-[var(--muted)]">{book.year}</Td>
+                                    <Td><GenreTag genre={book.genre} /></Td>
+                                    <Td><StatusBadge status={book.status} overdue={book.overdue} /></Td>
+                                    <Td>
+                                        {book.rating
+                                            ? <StarRating value={book.rating} />
+                                            : <span className="text-[var(--muted-foreground)]">—</span>
+                                        }
+                                    </Td>
+                                    <Td className="text-xs text-[var(--muted)] italic">{book.notes ?? ""}</Td>
+                                </DataTableRow>
+                            ))}
+                        </DataTableBody>
+                    )}
                 </DataTable>
             </Card>
         </div>

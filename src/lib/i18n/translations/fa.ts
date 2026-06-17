@@ -50,6 +50,9 @@ const fa: Translations = {
         noResults: "نتیجه‌ای یافت نشد.",
         overdue: "تأخیر دارد",
         dash: "—",
+        errorHeading: "مشکلی پیش آمد",
+        errorDescription: "اتصال به سرور ممکن نشد. اتصال اینترنت خود را بررسی و دوباره تلاش کنید.",
+        retry: "تلاش مجدد",
     },
 
     sidebar: {
@@ -100,6 +103,11 @@ const fa: Translations = {
         activityLent: "{title} به {person} امانت داده شد",
         activityAdded: "{title} به مجموعه اضافه شد",
         activityReturned: "{person} کتاب {title} را برگرداند",
+        kpiErrorShort: "بارگذاری ناموفق",
+        recentlyAddedEmpty: "هنوز کتابی اضافه نشده",
+        recentlyAddedEmptyDesc: "کتاب‌هایی که اضافه می‌کنید اینجا نمایش داده می‌شوند.",
+        activityEmpty: "فعالیت اخیری وجود ندارد",
+        activityEmptyDesc: "فعالیت‌ها پس از امانت یا بازگشت کتاب نمایش داده می‌شوند.",
     },
 
     books: {
@@ -117,6 +125,10 @@ const fa: Translations = {
         colStatus: "وضعیت",
         colLentTo: "امانت به",
         colRating: "امتیاز",
+        emptyFiltered: "کتابی با این فیلتر یافت نشد",
+        emptyFilteredDesc: "فیلتر وضعیت دیگری را امتحان کنید.",
+        emptyAll: "کتابخانه شما خالی است",
+        emptyAllDesc: "اولین کتاب خود را اضافه کنید.",
     },
 
     lent: {
@@ -131,6 +143,7 @@ const fa: Translations = {
         remind: "یادآوری",
         overdueWarning: "⚠ {date} — تأخیر دارد",
         emptyState: "در حال حاضر هیچ کتابی امانت داده نشده است.",
+        emptyOverdue: "هیچ کتاب دیرکردی وجود ندارد",
     },
 
     authors: {
@@ -148,6 +161,10 @@ const fa: Translations = {
         colStatus: "وضعیت",
         colRating: "امتیاز",
         colNotes: "یادداشت",
+        emptyAuthors: "هنوز نویسنده‌ای ثبت نشده",
+        emptyAuthorsDesc: "نویسندگان با افزودن کتاب‌ها به‌طور خودکار نمایش داده می‌شوند.",
+        emptyWorks: "اثری یافت نشد",
+        emptyWorksDesc: "هیچ کتابی از این نویسنده در مجموعه شما وجود ندارد.",
     },
 
     settings: {

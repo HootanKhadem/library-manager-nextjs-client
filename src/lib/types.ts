@@ -71,3 +71,49 @@ export interface NewBookFormData {
     description: string;
     notes: string;
 }
+
+// ── Dashboard API response types ────────────────────────────────────────────
+
+export interface BookStats {
+    totalBooks: number;
+    addedThisMonth: number;
+}
+
+export interface LentOutStats {
+    totalLentOut: number;
+    uniqueLendees: number;
+}
+
+export interface OverdueStats {
+    totalOverdue: number;
+}
+
+export interface DashboardBook {
+    id: number;
+    name: string;
+    author: string;
+    genre: string | null;
+    status: string | null;
+    rating: number | null;
+}
+
+export interface ActivityEntry {
+    id: number;
+    action: "LENT" | "RETURNED" | "ADDED" | "REMOVED" | "UPDATED";
+    bookName: string | null;
+    memberName: string | null;
+    occurredAt: string | null;
+}
+
+// ── Lending API response type ────────────────────────────────────────────────
+
+export interface ActiveLending {
+    id: number;
+    bookId: number;
+    memberId: number;
+    userId: number | null;
+    lentDate: string;
+    expectedReturnDate: string | null;
+    actualReturnDate: string | null;
+    status: "ACTIVE" | "OVERDUE" | "RETURNED";
+}

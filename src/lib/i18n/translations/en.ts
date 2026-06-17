@@ -29,6 +29,9 @@ const en: Translations = {
         noResults: "No results found.",
         overdue: "Overdue",
         dash: "—",
+        errorHeading: "Something went wrong",
+        errorDescription: "Could not reach the server. Check your connection and try again.",
+        retry: "Try again",
     },
 
     sidebar: {
@@ -80,6 +83,11 @@ const en: Translations = {
         activityLent: "Lent {title} to {person}",
         activityAdded: "Added {title} to collection",
         activityReturned: "{person} returned {title}",
+        kpiErrorShort: "Failed to load",
+        recentlyAddedEmpty: "No books added yet",
+        recentlyAddedEmptyDesc: "Books you add to your library will appear here.",
+        activityEmpty: "No recent activity",
+        activityEmptyDesc: "Activity appears when you lend or return books.",
     },
 
     books: {
@@ -97,6 +105,10 @@ const en: Translations = {
         colStatus: "Status",
         colLentTo: "Lent To",
         colRating: "Rating",
+        emptyFiltered: "No books match this filter",
+        emptyFilteredDesc: "Try a different status filter.",
+        emptyAll: "Your library is empty",
+        emptyAllDesc: "Add your first book to get started.",
     },
 
     lent: {
@@ -111,6 +123,7 @@ const en: Translations = {
         remind: "Remind",
         overdueWarning: "⚠ {date} — Overdue",
         emptyState: "No books are currently lent out.",
+        emptyOverdue: "No overdue books",
     },
 
     authors: {
@@ -128,6 +141,10 @@ const en: Translations = {
         colStatus: "Status",
         colRating: "Rating",
         colNotes: "Notes",
+        emptyAuthors: "No authors yet",
+        emptyAuthorsDesc: "Authors appear automatically as you add books.",
+        emptyWorks: "No works found",
+        emptyWorksDesc: "No books by this author in your collection.",
     },
 
     settings: {
