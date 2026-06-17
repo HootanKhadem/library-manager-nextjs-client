@@ -55,6 +55,9 @@ export interface Translations {
         noResults: string;
         overdue: string;
         dash: string; // em-dash placeholder "—"
+        errorHeading: string;
+        errorDescription: string;
+        retry: string;
     };
 
     // ── Sidebar ─────────────────────────────────────────────────────────────────
@@ -108,6 +111,11 @@ export interface Translations {
         activityLent: string;      // "Lent {title} to {person}"
         activityAdded: string;     // "Added {title} to collection"
         activityReturned: string;  // "{person} returned {title}"
+        kpiErrorShort: string;
+        recentlyAddedEmpty: string;
+        recentlyAddedEmptyDesc: string;
+        activityEmpty: string;
+        activityEmptyDesc: string;
     };
 
     // ── All Books page ──────────────────────────────────────────────────────────
@@ -126,6 +134,10 @@ export interface Translations {
         colStatus: string;
         colLentTo: string;
         colRating: string;
+        emptyFiltered: string;
+        emptyFilteredDesc: string;
+        emptyAll: string;
+        emptyAllDesc: string;
     };
 
     // ── Lent page ───────────────────────────────────────────────────────────────
@@ -141,6 +153,7 @@ export interface Translations {
         remind: string;
         overdueWarning: string;
         emptyState: string;
+        emptyOverdue: string;
     };
 
     // ── Authors page ─────────────────────────────────────────────────────────────
@@ -159,6 +172,10 @@ export interface Translations {
         colStatus: string;
         colRating: string;
         colNotes: string;
+        emptyAuthors: string;
+        emptyAuthorsDesc: string;
+        emptyWorks: string;
+        emptyWorksDesc: string;
     };
 
     // ── Settings page ────────────────────────────────────────────────────────────
