@@ -84,7 +84,7 @@ describe("LentPage", () => {
             calls++;
             if (calls === 1) return Promise.reject(new Error("fail"));
             return Promise.resolve({ ok: true, json: () => Promise.resolve(MOCK_LENDINGS) });
-        });
+        }) as unknown as typeof fetch;
         render(<LentPage />);
         await waitFor(() => screen.getByRole("button", { name: /try again/i }));
         fireEvent.click(screen.getByRole("button", { name: /try again/i }));
