@@ -8,6 +8,7 @@ import { PageHeader } from "@/src/components/ui/Topbar";
 import { Button } from "@/src/components/ui/Button";
 import { DataTable, DataTableHead, DataTableBody, DataTableRow, Th, Td } from "@/src/components/ui/DataTable";
 import { EmptyState } from "@/src/components/ui/EmptyState";
+import { ErrorState } from "@/src/components/ui/ErrorState";
 import { StatusBadge } from "@/src/components/ui/StatusBadge";
 import { StarRating } from "@/src/components/ui/StarRating";
 import { GenreTag } from "@/src/components/ui/GenreTag";
@@ -16,9 +17,11 @@ interface BooksPageProps {
     books: Book[];
     onBookClick: (book: Book) => void;
     onAddBook: () => void;
+    isError?: boolean;
+    onRetry?: () => void;
 }
 
-export default function BooksPage({ books, onBookClick, onAddBook }: BooksPageProps) {
+export default function BooksPage({ books, onBookClick, onAddBook, isError, onRetry }: BooksPageProps) {
     const { t } = useLanguage();
     const [activeFilter, setActiveFilter] = useState<BookStatus | "All">("All");
     const filtered = activeFilter === "All" ? books : books.filter((b) => b.status === activeFilter);
@@ -59,12 +62,28 @@ export default function BooksPage({ books, onBookClick, onAddBook }: BooksPagePr
                 }
             />
 
-            {filtered.length === 0 ? (
-                <EmptyState
-                    heading={t.common.noResults}
-                    icon={<BookOpen className="h-6 w-6" />}
-                    action={<Button variant="primary" size="sm" onClick={onAddBook}>{t.sidebar.addNewBook}</Button>}
+            {isError ? (
+                <ErrorState
+                    heading={t.common.errorHeading}
+                    description={t.common.errorDescription}
+                    retryLabel={t.common.retry}
+                    onRetry={onRetry}
                 />
+            ) : filtered.length === 0 ? (
+                activeFilter === "All" ? (
+                    <EmptyState
+                        heading={t.books.emptyAll}
+                        description={t.books.emptyAllDesc}
+                        icon={<BookOpen className="h-6 w-6" />}
+                        action={<Button variant="primary" size="sm" onClick={onAddBook}>{t.sidebar.addNewBook}</Button>}
+                    />
+                ) : (
+                    <EmptyState
+                        heading={t.books.emptyFiltered}
+                        description={t.books.emptyFilteredDesc}
+                        icon={<BookOpen className="h-6 w-6" />}
+                    />
+                )
             ) : (
                 <DataTable>
                     <DataTableHead>
