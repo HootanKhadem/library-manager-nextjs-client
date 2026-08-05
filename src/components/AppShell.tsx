@@ -8,7 +8,7 @@ import BookDetailModal from '@/src/components/BookDetailModal';
 import AddBookModal from '@/src/components/AddBookModal';
 
 export default function AppShell({children}: { children: React.ReactNode }) {
-    const {selectedBook, setSelectedBook, showAddModal, setShowAddModal, addBook} = useLibrary();
+    const {selectedBook, setSelectedBook, showAddModal, setShowAddModal, addBook, markBookLent} = useLibrary();
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     return (
@@ -29,7 +29,10 @@ export default function AppShell({children}: { children: React.ReactNode }) {
                 <BookDetailModal
                     book={selectedBook}
                     onClose={() => setSelectedBook(null)}
-                    onLent={() => setSelectedBook(null)}
+                    onLent={() => {
+                        if (selectedBook) markBookLent(selectedBook.id);
+                        setSelectedBook(null);
+                    }}
                 />
             )}
             {showAddModal && (

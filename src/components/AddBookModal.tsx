@@ -41,7 +41,7 @@ export default function AddBookModal({ onClose, onAdd }: AddBookModalProps) {
             setForm(EMPTY_FORM);
             onClose();
         } else {
-            setError("Something went wrong. Please try again.");
+            setError(t.common.errorHeading);
         }
     }
 

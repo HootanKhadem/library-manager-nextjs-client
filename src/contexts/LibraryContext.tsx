@@ -7,6 +7,7 @@ import {BOOKS} from '@/src/lib/data';
 interface LibraryContextValue {
     books: Book[];
     addBook: (data: NewBookFormData) => Promise<{ ok: boolean }>;
+    markBookLent: (bookId: string) => void;
     selectedBook: Book | null;
     setSelectedBook: (book: Book | null) => void;
     showAddModal: boolean;
@@ -33,9 +34,7 @@ export function LibraryProvider({children}: { children: ReactNode }) {
             publisher: data.publisher,
             quantity: parseInt(data.quantity) || 1,
             ...(data.rating ? { rating: parseInt(data.rating) } : {}),
-            ...(data.status === 'Owned' || data.status === 'Lent Out'
-                ? { status: data.status === 'Owned' ? 'OWNED' : 'LENT_OUT' }
-                : {}),
+            ...(data.status === 'Owned' ? { status: 'OWNED' } : {}),
         };
 
         let res: Response;
@@ -70,10 +69,15 @@ export function LibraryProvider({children}: { children: ReactNode }) {
         return { ok: true };
     }, []);
 
+    const markBookLent = useCallback((bookId: string) => {
+        setBooks(prev => prev.map(b => (b.id === bookId ? { ...b, status: 'Lent Out' } : b)));
+    }, []);
+
     const value = useMemo(
         () => ({
             books,
             addBook,
+            markBookLent,
             selectedBook,
             setSelectedBook,
             showAddModal,
@@ -81,7 +85,7 @@ export function LibraryProvider({children}: { children: ReactNode }) {
             searchQuery,
             setSearchQuery
         }),
-        [books, addBook, selectedBook, showAddModal, searchQuery],
+        [books, addBook, markBookLent, selectedBook, showAddModal, searchQuery],
     );
 
     return <LibraryContext.Provider value={value}>{children}</LibraryContext.Provider>;

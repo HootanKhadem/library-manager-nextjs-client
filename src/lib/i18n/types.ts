@@ -218,6 +218,7 @@ export interface Translations {
         btnLend: string;
         labelLendTo: string;
         selectMember: string;
+        noMembers: string;
     };
 
     // ── Add book modal ────────────────────────────────────────────────────────────

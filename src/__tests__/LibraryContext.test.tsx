@@ -72,4 +72,73 @@ describe("LibraryContext.addBook", () => {
         await waitFor(() => expect(global.fetch).toHaveBeenCalled());
         expect(screen.getAllByRole("listitem").length).toBe(before);
     });
+
+    it("does not include status in POST body when status is Lent Out", async () => {
+        (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true, status: 201, json: () => Promise.resolve({ id: 99 }) });
+        const TestHarness = () => {
+            const { addBook } = useLibrary();
+            return <button onClick={() => addBook({ ...FORM, status: "Lent Out" })}>add</button>;
+        };
+        render(<LibraryProvider><TestHarness /></LibraryProvider>);
+        await userEvent.click(screen.getByText("add"));
+        await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+        const [, opts] = (global.fetch as jest.Mock).mock.calls[0];
+        const body = JSON.parse(opts.body);
+        expect(body).not.toHaveProperty("status");
+    });
+});
+
+describe("LibraryContext.markBookLent", () => {
+    beforeEach(() => { global.fetch = jest.fn(); });
+    afterEach(() => { jest.resetAllMocks(); });
+
+    it("updates the matching book's status to 'Lent Out' in local state", async () => {
+        function LentHarness() {
+            const { books, markBookLent } = useLibrary();
+            const target = books[0];
+            return (
+                <div>
+                    <button onClick={() => markBookLent(target.id)}>mark-lent</button>
+                    <ul>
+                        {books.map((b) => (
+                            <li key={b.id}>{b.title}: {b.status}</li>
+                        ))}
+                    </ul>
+                </div>
+            );
+        }
+        render(<LibraryProvider><LentHarness /></LibraryProvider>);
+        const before = screen.getAllByRole("listitem")[0].textContent;
+        await userEvent.click(screen.getByText("mark-lent"));
+        await waitFor(() => {
+            expect(screen.getAllByRole("listitem")[0].textContent).toContain("Lent Out");
+        });
+        expect(screen.getAllByRole("listitem")[0].textContent).not.toBe(before);
+    });
+
+    it("does not change other books' status", async () => {
+        function LentHarness() {
+            const { books, markBookLent } = useLibrary();
+            const target = books[0];
+            return (
+                <div>
+                    <button onClick={() => markBookLent(target.id)}>mark-lent</button>
+                    <ul>
+                        {books.map((b) => (
+                            <li key={b.id}>{b.title}: {b.status}</li>
+                        ))}
+                    </ul>
+                </div>
+            );
+        }
+        render(<LibraryProvider><LentHarness /></LibraryProvider>);
+        const otherBefore = screen.getAllByRole("listitem")[1]?.textContent;
+        await userEvent.click(screen.getByText("mark-lent"));
+        await waitFor(() => {
+            expect(screen.getAllByRole("listitem")[0].textContent).toContain("Lent Out");
+        });
+        if (otherBefore !== undefined) {
+            expect(screen.getAllByRole("listitem")[1].textContent).toBe(otherBefore);
+        }
+    });
 });

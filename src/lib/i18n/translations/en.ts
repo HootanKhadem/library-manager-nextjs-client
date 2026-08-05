@@ -185,6 +185,7 @@ const en: Translations = {
         btnLend: "Lend This Book",
         labelLendTo: "Lend to",
         selectMember: "Select a member",
+        noMembers: "No members yet.",
     },
 
     addBook: {

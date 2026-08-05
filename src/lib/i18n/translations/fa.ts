@@ -205,6 +205,7 @@ const fa: Translations = {
         btnLend: "امانت دادن",
         labelLendTo: "امانت به",
         selectMember: "انتخاب عضو",
+        noMembers: "هنوز عضوی وجود ندارد.",
     },
 
     addBook: {

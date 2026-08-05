@@ -19,16 +19,19 @@ interface BookDetailModalProps {
 export default function BookDetailModal({ book, onClose, onLent }: BookDetailModalProps) {
     const { t } = useLanguage();
     const [members, setMembers] = useState<{ id: number; name: string }[]>([]);
+    const [membersLoaded, setMembersLoaded] = useState(false);
     const [memberId, setMemberId] = useState<string>("");
     const [lending, setLending] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (!book) return;
+        setMembersLoaded(false);
         fetch("/api/member")
             .then((res) => (res.ok ? res.json() : []))
             .then(setMembers)
-            .catch(() => setMembers([]));
+            .catch(() => setMembers([]))
+            .finally(() => setMembersLoaded(true));
     }, [book]);
 
     if (!book) return null;
@@ -50,10 +53,10 @@ export default function BookDetailModal({ book, onClose, onLent }: BookDetailMod
             if (res.ok) {
                 onLent?.();
             } else {
-                setError("Something went wrong. Please try again.");
+                setError(t.common.errorHeading);
             }
         } catch {
-            setError("Something went wrong. Please try again.");
+            setError(t.common.errorHeading);
         } finally {
             setLending(false);
         }
@@ -94,10 +97,15 @@ export default function BookDetailModal({ book, onClose, onLent }: BookDetailMod
                                 <option key={m.id} value={m.id}>{m.name}</option>
                             ))}
                         </select>
-                        {error && (
-                            <p role="alert" className="mt-2 text-sm text-[var(--destructive)]">{error}</p>
-                        )}
                     </div>
+                )}
+
+                {membersLoaded && members.length === 0 && (
+                    <p className="mb-4 text-sm text-[var(--muted)]">{t.bookDetail.noMembers}</p>
+                )}
+
+                {error && (
+                    <p role="alert" className="mb-4 text-sm text-[var(--destructive)]">{error}</p>
                 )}
 
                 {/* Meta grid */}
