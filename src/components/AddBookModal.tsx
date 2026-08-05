@@ -17,7 +17,7 @@ interface AddBookModalProps {
 
 const EMPTY_FORM: NewBookFormData = {
     title: "", author: "", year: "", genre: "", status: "Owned",
-    publisher: "", isbn: "", pages: "", rating: "", description: "", notes: "",
+    publisher: "", isbn: "", pages: "", quantity: "1", rating: "", description: "", notes: "",
 };
 
 export default function AddBookModal({ onClose, onAdd }: AddBookModalProps) {
@@ -153,6 +153,14 @@ export default function AddBookModal({ onClose, onAdd }: AddBookModalProps) {
                         value={form.pages}
                         onChange={handleChange}
                         placeholder={t.addBook.fieldPagesPlaceholder}
+                    />
+                    <Input
+                        label={t.addBook.fieldQuantity}
+                        name="quantity"
+                        type="number"
+                        value={form.quantity}
+                        onChange={handleChange}
+                        placeholder="1"
                     />
                     <Select label={t.addBook.fieldRating} name="rating" value={form.rating} onChange={handleChange}>
                         <option value="">{t.addBook.fieldRatingDefault}</option>

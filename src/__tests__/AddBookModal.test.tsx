@@ -72,4 +72,9 @@ describe("AddBookModal component", () => {
         const dialog = screen.getByRole("dialog");
         expect(dialog).toHaveAttribute("aria-modal", "true");
     });
+
+    it("renders a quantity field defaulting to 1", () => {
+        render(<AddBookModal onClose={jest.fn()} onAdd={jest.fn()} />);
+        expect(screen.getByLabelText(/quantity/i)).toHaveValue(1);
+    });
 });

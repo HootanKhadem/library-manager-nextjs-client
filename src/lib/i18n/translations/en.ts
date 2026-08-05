@@ -203,6 +203,7 @@ const en: Translations = {
         fieldIsbnPlaceholder: "978-…",
         fieldPages: "Pages",
         fieldPagesPlaceholder: "e.g. 824",
+        fieldQuantity: "Quantity",
         fieldRating: "Rating",
         fieldRatingDefault: "— unrated —",
         fieldDescription: "Description / Synopsis",

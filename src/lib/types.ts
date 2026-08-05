@@ -67,6 +67,7 @@ export interface NewBookFormData {
     publisher: string;
     isbn: string;
     pages: string;
+    quantity: string;
     rating: string;
     description: string;
     notes: string;

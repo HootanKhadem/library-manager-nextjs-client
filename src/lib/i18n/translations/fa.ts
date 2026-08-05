@@ -223,6 +223,7 @@ const fa: Translations = {
         fieldIsbnPlaceholder: "978-…",
         fieldPages: "تعداد صفحات",
         fieldPagesPlaceholder: "مثلاً: ۸۲۴",
+        fieldQuantity: "تعداد",
         fieldRating: "امتیاز",
         fieldRatingDefault: "— بدون امتیاز —",
         fieldDescription: "توضیحات / خلاصه",

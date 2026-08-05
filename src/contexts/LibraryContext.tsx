@@ -6,7 +6,7 @@ import {BOOKS} from '@/src/lib/data';
 
 interface LibraryContextValue {
     books: Book[];
-    addBook: (data: NewBookFormData) => void;
+    addBook: (data: NewBookFormData) => Promise<{ ok: boolean }>;
     selectedBook: Book | null;
     setSelectedBook: (book: Book | null) => void;
     showAddModal: boolean;
@@ -23,9 +23,34 @@ export function LibraryProvider({children}: { children: ReactNode }) {
     const [showAddModal, setShowAddModal] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
 
-    const addBook = useCallback((data: NewBookFormData) => {
+    const addBook = useCallback(async (data: NewBookFormData): Promise<{ ok: boolean }> => {
+        const payload = {
+            name: data.title,
+            author: { name: data.author, image: '' },
+            pages: parseInt(data.pages) || 0,
+            isbn: data.isbn,
+            publishedDate: data.year,
+            publisher: data.publisher,
+            quantity: parseInt(data.quantity) || 1,
+            ...(data.rating ? { rating: parseInt(data.rating) } : {}),
+        };
+
+        let res: Response;
+        try {
+            res = await fetch('/api/book', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+        } catch {
+            return { ok: false };
+        }
+
+        if (!res.ok) return { ok: false };
+        const created: { id: number } = await res.json().catch(() => ({ id: Date.now() }));
+
         const newBook: Book = {
-            id: `book-${Date.now()}`,
+            id: String(created.id),
             title: data.title,
             author: data.author,
             year: parseInt(data.year) || new Date().getFullYear(),
@@ -39,6 +64,7 @@ export function LibraryProvider({children}: { children: ReactNode }) {
             notes: data.notes || undefined,
         };
         setBooks(prev => [newBook, ...prev]);
+        return { ok: true };
     }, []);
 
     const value = useMemo(

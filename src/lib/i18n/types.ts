@@ -237,6 +237,7 @@ export interface Translations {
         fieldIsbnPlaceholder: string;
         fieldPages: string;
         fieldPagesPlaceholder: string;
+        fieldQuantity: string;
         fieldRating: string;
         fieldRatingDefault: string;
         fieldDescription: string;
