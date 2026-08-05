@@ -26,7 +26,11 @@ export default function AppShell({children}: { children: React.ReactNode }) {
             </main>
 
             {selectedBook && (
-                <BookDetailModal book={selectedBook} onClose={() => setSelectedBook(null)}/>
+                <BookDetailModal
+                    book={selectedBook}
+                    onClose={() => setSelectedBook(null)}
+                    onLent={() => setSelectedBook(null)}
+                />
             )}
             {showAddModal && (
                 <AddBookModal

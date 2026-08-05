@@ -1,4 +1,5 @@
-import {fireEvent, render, screen} from "@testing-library/react";
+import {fireEvent, render, screen, waitFor} from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import BookDetailModal from "@/src/components/BookDetailModal";
 import {Book} from "@/src/lib/types";
 
@@ -21,6 +22,14 @@ const mockBook: Book = {
 };
 
 describe("BookDetailModal component", () => {
+    beforeEach(() => {
+        global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200, json: () => Promise.resolve([]) });
+    });
+
+    afterEach(() => {
+        jest.resetAllMocks();
+    });
+
     it("renders null when book is null", () => {
         const {container} = render(<BookDetailModal book={null} onClose={jest.fn()}/>);
         expect(container).toBeEmptyDOMElement();
@@ -92,5 +101,23 @@ describe("BookDetailModal component", () => {
         render(<BookDetailModal book={mockBook} onClose={jest.fn()}/>);
         const dialog = screen.getByRole("dialog");
         expect(dialog).toHaveAttribute("aria-modal", "true");
+    });
+
+    it("fetches members and lends the book when Lend is clicked", async () => {
+        (global.fetch as jest.Mock)
+            .mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve([{ id: 3, name: "Sofia K." }]) })
+            .mockResolvedValueOnce({ ok: true, status: 201, json: () => Promise.resolve({ id: 9, status: "ACTIVE" }) });
+
+        const onLent = jest.fn();
+        render(<BookDetailModal book={{ ...mockBook, id: "42" }} onClose={jest.fn()} onLent={onLent} />);
+
+        await waitFor(() => expect(screen.getByLabelText(/lend to/i)).toBeInTheDocument());
+        await userEvent.selectOptions(screen.getByLabelText(/lend to/i), "3");
+        await userEvent.click(screen.getByRole("button", { name: /lend/i }));
+
+        await waitFor(() => expect(onLent).toHaveBeenCalled());
+        const [url, opts] = (global.fetch as jest.Mock).mock.calls[1];
+        expect(url).toBe("/api/lending");
+        expect(JSON.parse(opts.body)).toMatchObject({ bookId: 42, memberId: 3 });
     });
 });

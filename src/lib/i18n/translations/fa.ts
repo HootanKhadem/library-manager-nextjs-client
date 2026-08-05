@@ -203,6 +203,8 @@ const fa: Translations = {
         btnDelete: "حذف",
         btnClose: "بستن",
         btnLend: "امانت دادن",
+        labelLendTo: "امانت به",
+        selectMember: "انتخاب عضو",
     },
 
     addBook: {

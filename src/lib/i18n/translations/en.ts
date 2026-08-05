@@ -183,6 +183,8 @@ const en: Translations = {
         btnDelete: "Delete",
         btnClose: "Close",
         btnLend: "Lend This Book",
+        labelLendTo: "Lend to",
+        selectMember: "Select a member",
     },
 
     addBook: {

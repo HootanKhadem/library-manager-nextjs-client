@@ -216,6 +216,8 @@ export interface Translations {
         btnDelete: string;
         btnClose: string;
         btnLend: string;
+        labelLendTo: string;
+        selectMember: string;
     };
 
     // ── Add book modal ────────────────────────────────────────────────────────────
