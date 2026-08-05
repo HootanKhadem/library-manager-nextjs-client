@@ -21,6 +21,7 @@ export default function BookDetailModal({ book, onClose, onLent }: BookDetailMod
     const [members, setMembers] = useState<{ id: number; name: string }[]>([]);
     const [memberId, setMemberId] = useState<string>("");
     const [lending, setLending] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (!book) return;
@@ -35,6 +36,7 @@ export default function BookDetailModal({ book, onClose, onLent }: BookDetailMod
     async function handleLend() {
         if (!memberId) return;
         setLending(true);
+        setError(null);
         try {
             const res = await fetch("/api/lending", {
                 method: "POST",
@@ -45,7 +47,13 @@ export default function BookDetailModal({ book, onClose, onLent }: BookDetailMod
                     lentDate: new Date().toISOString().slice(0, 10),
                 }),
             });
-            if (res.ok) onLent?.();
+            if (res.ok) {
+                onLent?.();
+            } else {
+                setError("Something went wrong. Please try again.");
+            }
+        } catch {
+            setError("Something went wrong. Please try again.");
         } finally {
             setLending(false);
         }
@@ -86,6 +94,9 @@ export default function BookDetailModal({ book, onClose, onLent }: BookDetailMod
                                 <option key={m.id} value={m.id}>{m.name}</option>
                             ))}
                         </select>
+                        {error && (
+                            <p role="alert" className="mt-2 text-sm text-[var(--destructive)]">{error}</p>
+                        )}
                     </div>
                 )}
 

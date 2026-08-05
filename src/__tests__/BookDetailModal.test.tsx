@@ -120,4 +120,23 @@ describe("BookDetailModal component", () => {
         expect(url).toBe("/api/lending");
         expect(JSON.parse(opts.body)).toMatchObject({ bookId: 42, memberId: 3 });
     });
+
+    it("shows an inline error and keeps the modal open when lending fails", async () => {
+        (global.fetch as jest.Mock)
+            .mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve([{ id: 3, name: "Sofia K." }]) })
+            .mockResolvedValueOnce({ ok: false, status: 404, json: () => Promise.resolve({ message: "Not found" }) });
+
+        const onClose = jest.fn();
+        const onLent = jest.fn();
+        render(<BookDetailModal book={{ ...mockBook, id: "999" }} onClose={onClose} onLent={onLent} />);
+
+        await waitFor(() => expect(screen.getByLabelText(/lend to/i)).toBeInTheDocument());
+        await userEvent.selectOptions(screen.getByLabelText(/lend to/i), "3");
+        await userEvent.click(screen.getByRole("button", { name: /lend/i }));
+
+        expect(await screen.findByRole("alert")).toHaveTextContent(/something went wrong/i);
+        expect(onLent).not.toHaveBeenCalled();
+        expect(onClose).not.toHaveBeenCalled();
+        expect(screen.getByRole("dialog")).toBeInTheDocument();
+    });
 });
