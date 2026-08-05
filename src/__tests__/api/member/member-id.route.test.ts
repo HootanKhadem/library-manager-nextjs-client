@@ -63,6 +63,14 @@ describe("DELETE /api/member/[id]", () => {
         expect(res.status).toBe(204);
     });
 
+    it("requests the correct backend path", async () => {
+        (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true, status: 204 });
+        await DELETE(makeDeleteReq("tok"), ctx("1"));
+        const [url, opts] = (global.fetch as jest.Mock).mock.calls[0];
+        expect(url).toBe("http://backend/api/member/1");
+        expect(opts.method).toBe("DELETE");
+    });
+
     it("returns 503 when the backend is unreachable", async () => {
         (global.fetch as jest.Mock).mockRejectedValueOnce(new Error("fetch failed"));
         const res = await DELETE(makeDeleteReq("tok"), ctx("1"));
