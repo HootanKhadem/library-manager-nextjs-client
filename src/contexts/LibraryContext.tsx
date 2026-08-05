@@ -33,6 +33,9 @@ export function LibraryProvider({children}: { children: ReactNode }) {
             publisher: data.publisher,
             quantity: parseInt(data.quantity) || 1,
             ...(data.rating ? { rating: parseInt(data.rating) } : {}),
+            ...(data.status === 'Owned' || data.status === 'Lent Out'
+                ? { status: data.status === 'Owned' ? 'OWNED' : 'LENT_OUT' }
+                : {}),
         };
 
         let res: Response;

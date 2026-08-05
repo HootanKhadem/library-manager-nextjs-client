@@ -33,7 +33,7 @@ export default function AppShell({children}: { children: React.ReactNode }) {
                     onClose={() => setShowAddModal(false)}
                     onAdd={async (data) => {
                         const result = await addBook(data);
-                        if (result.ok) setShowAddModal(false);
+                        return result.ok;
                     }}
                 />
             )}

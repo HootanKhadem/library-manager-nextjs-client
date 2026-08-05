@@ -12,7 +12,7 @@ import {BarcodeScanner} from "@/src/components/ui/BarcodeScanner";
 
 interface AddBookModalProps {
     onClose: () => void;
-    onAdd: (book: NewBookFormData) => void;
+    onAdd: (book: NewBookFormData) => Promise<boolean>;
 }
 
 const EMPTY_FORM: NewBookFormData = {
@@ -24,16 +24,25 @@ export default function AddBookModal({ onClose, onAdd }: AddBookModalProps) {
     const { t } = useLanguage();
     const [form, setForm] = useState<NewBookFormData>(EMPTY_FORM);
     const [scannerOpen, setScannerOpen] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
         setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     }
 
-    function handleSubmit() {
+    async function handleSubmit() {
         if (!form.title.trim() || !form.author.trim()) return;
-        onAdd(form);
-        setForm(EMPTY_FORM);
-        onClose();
+        setSubmitting(true);
+        setError(null);
+        const ok = await onAdd(form);
+        setSubmitting(false);
+        if (ok) {
+            setForm(EMPTY_FORM);
+            onClose();
+        } else {
+            setError("Something went wrong. Please try again.");
+        }
     }
 
     const genreOptions: { value: string; label: string }[] = [
@@ -191,11 +200,17 @@ export default function AddBookModal({ onClose, onAdd }: AddBookModalProps) {
                         />
                     </div>
                 </div>
+
+                {error && (
+                    <p role="alert" className="mt-4 text-sm text-[var(--destructive)]">{error}</p>
+                )}
             </ModalBody>
 
             <ModalFooter>
                 <Button variant="secondary" size="sm" onClick={onClose}>{t.addBook.btnCancel}</Button>
-                <Button variant="primary"   size="sm" onClick={handleSubmit}>{t.addBook.btnAdd}</Button>
+                <Button variant="primary" size="sm" onClick={handleSubmit} disabled={submitting} loading={submitting}>
+                    {t.addBook.btnAdd}
+                </Button>
             </ModalFooter>
         </Modal>
     );

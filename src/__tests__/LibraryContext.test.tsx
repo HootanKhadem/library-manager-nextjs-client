@@ -39,6 +39,7 @@ describe("LibraryContext.addBook", () => {
             publisher: "Chilton",
             quantity: 1,
             rating: 5,
+            status: "OWNED",
         });
     });
 

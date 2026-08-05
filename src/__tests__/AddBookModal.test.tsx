@@ -1,9 +1,9 @@
-import {fireEvent, render, screen} from "@testing-library/react";
+import {fireEvent, render, screen, waitFor} from "@testing-library/react";
 import AddBookModal from "@/src/components/AddBookModal";
 
 describe("AddBookModal component", () => {
     const onClose = jest.fn();
-    const onAdd = jest.fn();
+    const onAdd = jest.fn().mockResolvedValue(true);
 
     beforeEach(() => jest.clearAllMocks());
 
@@ -46,7 +46,7 @@ describe("AddBookModal component", () => {
         expect(onAdd).not.toHaveBeenCalled();
     });
 
-    it("calls onAdd with form data when both title and author are provided", () => {
+    it("calls onAdd with form data when both title and author are provided", async () => {
         render(<AddBookModal onClose={onClose} onAdd={onAdd}/>);
         fireEvent.change(screen.getByPlaceholderText(/The Brothers Karamazov/i), {
             target: {value: "Dune"},
@@ -58,7 +58,35 @@ describe("AddBookModal component", () => {
         expect(onAdd).toHaveBeenCalledWith(
             expect.objectContaining({title: "Dune", author: "Frank Herbert"})
         );
-        expect(onClose).toHaveBeenCalled();
+        await waitFor(() => expect(onClose).toHaveBeenCalled());
+    });
+
+    it("stays open and shows an inline error when onAdd resolves false", async () => {
+        const failingOnAdd = jest.fn().mockResolvedValue(false);
+        render(<AddBookModal onClose={onClose} onAdd={failingOnAdd}/>);
+        fireEvent.change(screen.getByPlaceholderText(/The Brothers Karamazov/i), {
+            target: {value: "Dune"},
+        });
+        fireEvent.change(screen.getByPlaceholderText(/Fyodor Dostoevsky/i), {
+            target: {value: "Frank Herbert"},
+        });
+        fireEvent.click(screen.getByRole("button", {name: /Add to Library/i}));
+        expect(await screen.findByRole("alert")).toHaveTextContent(/something went wrong/i);
+        expect(onClose).not.toHaveBeenCalled();
+        expect(screen.getByRole("dialog")).toBeInTheDocument();
+    });
+
+    it("closes when onAdd resolves true", async () => {
+        const succeedingOnAdd = jest.fn().mockResolvedValue(true);
+        render(<AddBookModal onClose={onClose} onAdd={succeedingOnAdd}/>);
+        fireEvent.change(screen.getByPlaceholderText(/The Brothers Karamazov/i), {
+            target: {value: "Dune"},
+        });
+        fireEvent.change(screen.getByPlaceholderText(/Fyodor Dostoevsky/i), {
+            target: {value: "Frank Herbert"},
+        });
+        fireEvent.click(screen.getByRole("button", {name: /Add to Library/i}));
+        await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
     });
 
     it("closes on Escape key press", () => {
