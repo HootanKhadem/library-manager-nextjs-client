@@ -43,6 +43,20 @@ describe("LibraryContext.addBook", () => {
         });
     });
 
+    it("does not include status in POST body when status is Wishlist", async () => {
+        (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true, status: 201, json: () => Promise.resolve({ id: 99 }) });
+        const TestHarness = () => {
+            const { addBook } = useLibrary();
+            return <button onClick={() => addBook({ ...FORM, status: "Wishlist" })}>add</button>;
+        };
+        render(<LibraryProvider><TestHarness /></LibraryProvider>);
+        await userEvent.click(screen.getByText("add"));
+        await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+        const [, opts] = (global.fetch as jest.Mock).mock.calls[0];
+        const body = JSON.parse(opts.body);
+        expect(body).not.toHaveProperty("status");
+    });
+
     it("prepends the new book using the backend-assigned id on success", async () => {
         (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true, status: 201, json: () => Promise.resolve({ id: 99 }) });
         render(<LibraryProvider><Harness /></LibraryProvider>);
