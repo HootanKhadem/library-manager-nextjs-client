@@ -90,7 +90,7 @@ export default function LentPage() {
             {!loading && !error && displayed.length > 0 && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {displayed.map((lending) => (
-                        <LendCard key={lending.id} lending={lending} />
+                        <LendCard key={lending.id} lending={lending} onReturned={load} />
                     ))}
                 </div>
             )}
@@ -98,9 +98,28 @@ export default function LentPage() {
     );
 }
 
-function LendCard({ lending }: { lending: ActiveLending }) {
+function LendCard({ lending, onReturned }: { lending: ActiveLending; onReturned: () => void }) {
     const { t } = useLanguage();
     const isOverdue = lending.status === "OVERDUE";
+    const [returning, setReturning] = useState(false);
+    const [returnError, setReturnError] = useState(false);
+
+    async function handleReturn() {
+        setReturning(true);
+        setReturnError(false);
+        try {
+            const res = await fetch(`/api/lending/${lending.id}/return`, { method: "PUT" });
+            if (res.ok) {
+                onReturned();
+            } else {
+                setReturnError(true);
+            }
+        } catch {
+            setReturnError(true);
+        } finally {
+            setReturning(false);
+        }
+    }
 
     return (
         <Card className={isOverdue ? "border-[var(--destructive)]/40" : ""}>
@@ -130,9 +149,13 @@ function LendCard({ lending }: { lending: ActiveLending }) {
                         danger={isOverdue}
                     />
                 </div>
+
+                {returnError && (
+                    <p role="alert" className="mt-3 text-xs text-[var(--destructive)]">{t.common.errorHeading}</p>
+                )}
             </CardBody>
             <CardFooter className="gap-2">
-                <Button variant="primary" size="sm" className="flex-1 justify-center">
+                <Button variant="primary" size="sm" className="flex-1 justify-center" onClick={handleReturn} disabled={returning}>
                     {t.lent.markReturned}
                 </Button>
                 <Button variant="secondary" size="sm" className="flex-1 justify-center">

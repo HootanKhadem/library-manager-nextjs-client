@@ -1,4 +1,5 @@
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import LentPage from "@/src/components/pages/LentPage";
 
 const MOCK_LENDINGS = [
@@ -109,5 +110,20 @@ describe("LentPage", () => {
         await waitFor(() => {
             expect(screen.getByText("No overdue books")).toBeInTheDocument();
         });
+    });
+
+    it("marks a lending as returned and refetches the list", async () => {
+        (global.fetch as jest.Mock)
+            .mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve([{ id: 9, bookId: 1, memberId: 2, lentDate: "2026-08-01", expectedReturnDate: null, actualReturnDate: null, status: "ACTIVE" }]) })
+            .mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve({ id: 9, status: "RETURNED" }) })
+            .mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve([]) });
+
+        render(<LentPage />);
+        await waitFor(() => expect(screen.getByText(/mark returned/i)).toBeInTheDocument());
+
+        await userEvent.click(screen.getByText(/mark returned/i));
+
+        await waitFor(() => expect(global.fetch).toHaveBeenNthCalledWith(2, "/api/lending/9/return", expect.objectContaining({ method: "PUT" })));
+        await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(3));
     });
 });
