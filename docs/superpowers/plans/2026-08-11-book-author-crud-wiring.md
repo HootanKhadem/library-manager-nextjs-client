@@ -376,14 +376,83 @@ git commit -m "feat: add backend DTO types and book/author mapping layer"
 - Modify: `src/app/api/book/route.ts`
 - Modify: `src/app/api/author/route.ts`
 - Modify: `src/app/api/book/[id]/route.ts`
+- Modify: `src/__tests__/api/book/book.route.test.ts`
+- Modify: `src/__tests__/api/book/book-id.route.test.ts`
+- Modify: `src/__tests__/api/author/author.route.test.ts`
 
 **Interfaces:**
 - Consumes: nothing new (same `process.env.API_BASE_URL` proxy pattern already used by every other route handler in the codebase).
 - Produces: `GET /api/book?page=&pageSize=`, `GET /api/author?page=&pageSize=`, `PUT /api/book/:id`, `DELETE /api/book/:id` — consumed by `LibraryContext` (Task 4) and `BookDetailModal` (Task 6).
 
-No existing `route.ts` file in this codebase has an automated test (checked every handler under `src/app/api/`) — this task follows that convention and verifies with manual `curl` checks instead of Jest, since the auth-check-then-401 behavior is deterministic without a running backend.
+**Correction to plan research:** an earlier plan (`docs/superpowers/plans/2026-08-05-backend-api-integration.md`) already established a route-test convention at `src/__tests__/api/<resource>/*.route.test.ts` — see `src/__tests__/api/genre/genre.route.test.ts` and `genre-id.route.test.ts` for the reference pattern (`/** @jest-environment node */`, import the handler directly, build a `NextRequest` via a small helper, a `ctx(id)` helper for dynamic-route params, assert on `res.status`/forwarded URL/method/body/Authorization header). `book.route.test.ts`, `book-id.route.test.ts`, and `author.route.test.ts` already exist (covering `POST`/`GET`-by-id) — this task follows the established convention and extends those files with Jest tests for the new handlers, the same way every other BFF route in this codebase is tested.
 
-- [ ] **Step 1: Add `GET` to `src/app/api/book/route.ts`**
+- [ ] **Step 1: Write the failing tests for `GET /api/book`**
+
+In `src/__tests__/api/book/book.route.test.ts`, change the import line from:
+
+```ts
+import { POST } from "@/src/app/api/book/route";
+```
+
+to:
+
+```ts
+import { GET, POST } from "@/src/app/api/book/route";
+```
+
+Then append this new `describe` block at the end of the file:
+
+```ts
+function makeGetReq(url: string, token?: string): NextRequest {
+    return new NextRequest(url, {
+        headers: token ? { Cookie: `access_token=${token}` } : {},
+    });
+}
+
+describe("GET /api/book", () => {
+    beforeEach(() => { process.env.API_BASE_URL = "http://backend"; global.fetch = jest.fn(); });
+    afterEach(() => { jest.resetAllMocks(); });
+
+    it("returns 401 when access_token cookie is absent", async () => {
+        const res = await GET(makeGetReq("http://localhost/api/book"));
+        expect(res.status).toBe(401);
+    });
+
+    it("forwards page and pageSize query params to the backend", async () => {
+        (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve({ items: [], page: 2, pageSize: 20, totalItems: 0, totalPages: 1 }) });
+        await GET(makeGetReq("http://localhost/api/book?page=2&pageSize=20", "tok"));
+        const [url, opts] = (global.fetch as jest.Mock).mock.calls[0];
+        expect(url).toBe("http://backend/api/book?page=2&pageSize=20");
+        expect(opts.headers.Authorization).toBe("Bearer tok");
+    });
+
+    it("requests the backend with no query string when none is given", async () => {
+        (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve({ items: [], page: 1, pageSize: 20, totalItems: 0, totalPages: 1 }) });
+        await GET(makeGetReq("http://localhost/api/book", "tok"));
+        const [url] = (global.fetch as jest.Mock).mock.calls[0];
+        expect(url).toBe("http://backend/api/book");
+    });
+
+    it("proxies the 200 response from the backend", async () => {
+        const page = { items: [{ id: 1, name: "Dune" }], page: 1, pageSize: 20, totalItems: 1, totalPages: 1 };
+        (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve(page) });
+        const res = await GET(makeGetReq("http://localhost/api/book?page=1&pageSize=20", "tok"));
+        expect(res.status).toBe(200);
+        expect(await res.json()).toEqual(page);
+    });
+
+    it("returns 503 when the backend is unreachable", async () => {
+        (global.fetch as jest.Mock).mockRejectedValueOnce(new Error("fetch failed"));
+        const res = await GET(makeGetReq("http://localhost/api/book", "tok"));
+        expect(res.status).toBe(503);
+    });
+});
+```
+
+Run: `npm test -- book.route.test.ts`
+Expected: FAIL with `'GET' is not exported from '@/src/app/api/book/route'` (or similar).
+
+- [ ] **Step 2: Add `GET` to `src/app/api/book/route.ts`**
 
 Append to the existing file (after the `POST` export):
 
@@ -408,7 +477,69 @@ export async function GET(req: NextRequest) {
 }
 ```
 
-- [ ] **Step 2: Add `GET` to `src/app/api/author/route.ts`**
+Run: `npm test -- book.route.test.ts`
+Expected: PASS (all `GET /api/book` tests, plus the pre-existing `POST /api/book` tests, green).
+
+- [ ] **Step 3: Write the failing tests for `GET /api/author`**
+
+In `src/__tests__/api/author/author.route.test.ts`, change the import line from:
+
+```ts
+import { POST } from "@/src/app/api/author/route";
+```
+
+to:
+
+```ts
+import { GET, POST } from "@/src/app/api/author/route";
+```
+
+Then append this new `describe` block at the end of the file:
+
+```ts
+function makeGetReq(url: string, token?: string): NextRequest {
+    return new NextRequest(url, {
+        headers: token ? { Cookie: `access_token=${token}` } : {},
+    });
+}
+
+describe("GET /api/author", () => {
+    beforeEach(() => { process.env.API_BASE_URL = "http://backend"; global.fetch = jest.fn(); });
+    afterEach(() => { jest.resetAllMocks(); });
+
+    it("returns 401 when access_token cookie is absent", async () => {
+        const res = await GET(makeGetReq("http://localhost/api/author"));
+        expect(res.status).toBe(401);
+    });
+
+    it("forwards page and pageSize query params to the backend", async () => {
+        (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve({ items: [], page: 2, pageSize: 20, totalItems: 0, totalPages: 1 }) });
+        await GET(makeGetReq("http://localhost/api/author?page=2&pageSize=20", "tok"));
+        const [url, opts] = (global.fetch as jest.Mock).mock.calls[0];
+        expect(url).toBe("http://backend/api/author?page=2&pageSize=20");
+        expect(opts.headers.Authorization).toBe("Bearer tok");
+    });
+
+    it("proxies the 200 response from the backend", async () => {
+        const page = { items: [{ id: 1, name: "Jorge Luis Borges" }], page: 1, pageSize: 20, totalItems: 1, totalPages: 1 };
+        (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve(page) });
+        const res = await GET(makeGetReq("http://localhost/api/author?page=1&pageSize=20", "tok"));
+        expect(res.status).toBe(200);
+        expect(await res.json()).toEqual(page);
+    });
+
+    it("returns 503 when the backend is unreachable", async () => {
+        (global.fetch as jest.Mock).mockRejectedValueOnce(new Error("fetch failed"));
+        const res = await GET(makeGetReq("http://localhost/api/author", "tok"));
+        expect(res.status).toBe(503);
+    });
+});
+```
+
+Run: `npm test -- author.route.test.ts`
+Expected: FAIL with `'GET' is not exported from '@/src/app/api/author/route'` (or similar).
+
+- [ ] **Step 4: Add `GET` to `src/app/api/author/route.ts`**
 
 Append to the existing file (after the `POST` export):
 
@@ -433,7 +564,116 @@ export async function GET(req: NextRequest) {
 }
 ```
 
-- [ ] **Step 3: Add `PUT` and `DELETE` to `src/app/api/book/[id]/route.ts`**
+Run: `npm test -- author.route.test.ts`
+Expected: PASS (all `GET /api/author` tests, plus the pre-existing `POST /api/author` tests, green).
+
+- [ ] **Step 5: Write the failing tests for `PUT`/`DELETE` `/api/book/[id]`**
+
+In `src/__tests__/api/book/book-id.route.test.ts`, change the import line from:
+
+```ts
+import { GET } from "@/src/app/api/book/[id]/route";
+```
+
+to:
+
+```ts
+import { GET, PUT, DELETE } from "@/src/app/api/book/[id]/route";
+```
+
+The file already defines a `ctx(id: string)` helper for the `GET` tests — reuse it. Append this at the end of the file:
+
+```ts
+function makePutReq(body: object, token?: string): NextRequest {
+    return new NextRequest("http://localhost/api/book/42", {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Cookie: `access_token=${token}` } : {}),
+        },
+        body: JSON.stringify(body),
+    });
+}
+
+function makeDeleteReq(token?: string): NextRequest {
+    return new NextRequest("http://localhost/api/book/42", {
+        method: "DELETE",
+        headers: token ? { Cookie: `access_token=${token}` } : {},
+    });
+}
+
+describe("PUT /api/book/[id]", () => {
+    beforeEach(() => { process.env.API_BASE_URL = "http://backend"; global.fetch = jest.fn(); });
+    afterEach(() => { jest.resetAllMocks(); });
+
+    it("returns 401 when access_token cookie is absent", async () => {
+        const res = await PUT(makePutReq({ name: "Dune" }), ctx("42"));
+        expect(res.status).toBe(401);
+    });
+
+    it("forwards the body to the correct backend path", async () => {
+        (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve({ id: 42, name: "Dune" }) });
+        await PUT(makePutReq({ name: "Dune" }, "tok"), ctx("42"));
+        const [url, opts] = (global.fetch as jest.Mock).mock.calls[0];
+        expect(url).toBe("http://backend/api/book/42");
+        expect(opts.method).toBe("PUT");
+        expect(JSON.parse(opts.body)).toEqual({ name: "Dune" });
+    });
+
+    it("propagates a 404 from the backend", async () => {
+        (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: false, status: 404, json: () => Promise.resolve({ message: "Book not found" }) });
+        const res = await PUT(makePutReq({ name: "Dune" }, "tok"), ctx("999"));
+        expect(res.status).toBe(404);
+    });
+
+    it("returns 503 when the backend is unreachable", async () => {
+        (global.fetch as jest.Mock).mockRejectedValueOnce(new Error("fetch failed"));
+        const res = await PUT(makePutReq({ name: "Dune" }, "tok"), ctx("42"));
+        expect(res.status).toBe(503);
+    });
+});
+
+describe("DELETE /api/book/[id]", () => {
+    beforeEach(() => { process.env.API_BASE_URL = "http://backend"; global.fetch = jest.fn(); });
+    afterEach(() => { jest.resetAllMocks(); });
+
+    it("returns 401 when access_token cookie is absent", async () => {
+        const res = await DELETE(makeDeleteReq(), ctx("42"));
+        expect(res.status).toBe(401);
+    });
+
+    it("returns 204 with no body on successful deletion", async () => {
+        (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true, status: 204 });
+        const res = await DELETE(makeDeleteReq("tok"), ctx("42"));
+        expect(res.status).toBe(204);
+    });
+
+    it("requests the correct backend path", async () => {
+        (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true, status: 204 });
+        await DELETE(makeDeleteReq("tok"), ctx("42"));
+        const [url, opts] = (global.fetch as jest.Mock).mock.calls[0];
+        expect(url).toBe("http://backend/api/book/42");
+        expect(opts.method).toBe("DELETE");
+    });
+
+    it("propagates a 409 conflict from the backend", async () => {
+        (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: false, status: 409, json: () => Promise.resolve({ message: "Book has lending history" }) });
+        const res = await DELETE(makeDeleteReq("tok"), ctx("42"));
+        expect(res.status).toBe(409);
+    });
+
+    it("returns 503 when the backend is unreachable", async () => {
+        (global.fetch as jest.Mock).mockRejectedValueOnce(new Error("fetch failed"));
+        const res = await DELETE(makeDeleteReq("tok"), ctx("42"));
+        expect(res.status).toBe(503);
+    });
+});
+```
+
+Run: `npm test -- book-id.route.test.ts`
+Expected: FAIL with `'PUT' is not exported` / `'DELETE' is not exported` (or similar).
+
+- [ ] **Step 6: Add `PUT` and `DELETE` to `src/app/api/book/[id]/route.ts`**
 
 Append to the existing file (after the `GET` export):
 
@@ -484,25 +724,18 @@ export async function DELETE(req: NextRequest, context: { params: Promise<{ id: 
 }
 ```
 
-- [ ] **Step 4: Manually verify all four handlers reject unauthenticated requests**
+Run: `npm test -- book-id.route.test.ts`
+Expected: PASS (all `PUT`/`DELETE` tests, plus the pre-existing `GET /api/book/[id]` tests, green).
 
-Run: `npm run dev` (in the background)
+- [ ] **Step 7: Run the full route test suite for this task**
 
-Then:
+Run: `npm test -- src/__tests__/api/book src/__tests__/api/author`
+Expected: PASS — all test files under both directories green.
 
-```bash
-curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3000/api/book
-curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3000/api/author
-curl -s -o /dev/null -w "%{http_code}\n" -X PUT http://localhost:3000/api/book/1
-curl -s -o /dev/null -w "%{http_code}\n" -X DELETE http://localhost:3000/api/book/1
-```
-
-Expected: all four print `401` (no `access_token` cookie sent). Stop the dev server afterward.
-
-- [ ] **Step 5: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
-git add src/app/api/book/route.ts src/app/api/author/route.ts src/app/api/book/\[id\]/route.ts
+git add src/app/api/book/route.ts src/app/api/author/route.ts src/app/api/book/\[id\]/route.ts src/__tests__/api/book/book.route.test.ts src/__tests__/api/book/book-id.route.test.ts src/__tests__/api/author/author.route.test.ts
 git commit -m "feat: add GET book/author list and PUT/DELETE book BFF routes"
 ```
 
