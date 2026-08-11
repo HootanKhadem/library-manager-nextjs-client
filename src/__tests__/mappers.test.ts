@@ -4,6 +4,7 @@ import {
     mapBackendAuthorToAuthor,
     mapBackendBookToBook,
     mapBackendStatusToBookStatus,
+    mapBookStatusToBackendStatus,
 } from "@/src/lib/mappers";
 import { BackendAuthor, BackendBook, BackendGenre, Book } from "@/src/lib/types";
 
@@ -23,6 +24,17 @@ describe("mapBackendStatusToBookStatus", () => {
 
     it("falls back to 'Owned' for undefined", () => {
         expect(mapBackendStatusToBookStatus(undefined)).toBe("Owned");
+    });
+});
+
+describe("mapBookStatusToBackendStatus", () => {
+    it.each([
+        ["Owned", "OWNED"],
+        ["Lent Out", "LENT_OUT"],
+        ["Wishlist", "WISHLIST"],
+        ["Read", "READ"],
+    ] as const)("maps %s to %s", (frontend, backend) => {
+        expect(mapBookStatusToBackendStatus(frontend)).toBe(backend);
     });
 });
 
@@ -86,6 +98,18 @@ describe("mapBackendBookToBook", () => {
     it("falls back to 'Other' when genreId is undefined", () => {
         const book = mapBackendBookToBook({ ...backendBook, genreId: undefined }, genreMap);
         expect(book.genre).toBe("Other");
+    });
+
+    it("does not throw and falls back to an empty author name when author is missing", () => {
+        const malformed = { ...backendBook, author: undefined } as unknown as BackendBook;
+        expect(() => mapBackendBookToBook(malformed, genreMap)).not.toThrow();
+        expect(mapBackendBookToBook(malformed, genreMap).author).toBe("");
+    });
+
+    it("does not throw and falls back to an empty author name when author.name is not a string", () => {
+        const malformed = { ...backendBook, author: { id: 7, name: undefined } } as unknown as BackendBook;
+        expect(() => mapBackendBookToBook(malformed, genreMap)).not.toThrow();
+        expect(mapBackendBookToBook(malformed, genreMap).author).toBe("");
     });
 });
 

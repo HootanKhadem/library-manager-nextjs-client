@@ -15,9 +15,20 @@ const STATUS_BACKEND_TO_FRONTEND: Record<string, BookStatus> = {
     READ: "Read",
 };
 
+const STATUS_FRONTEND_TO_BACKEND: Record<BookStatus, string> = {
+    Owned: "OWNED",
+    "Lent Out": "LENT_OUT",
+    Wishlist: "WISHLIST",
+    Read: "READ",
+};
+
 export function mapBackendStatusToBookStatus(status: string | undefined): BookStatus {
     if (!status) return "Owned";
     return STATUS_BACKEND_TO_FRONTEND[status] ?? "Owned";
+}
+
+export function mapBookStatusToBackendStatus(status: BookStatus): string {
+    return STATUS_FRONTEND_TO_BACKEND[status];
 }
 
 export function extractYear(publishedDate: string | undefined): number {
@@ -29,7 +40,7 @@ export function mapBackendBookToBook(b: BackendBook, genreMap: Map<number, strin
     return {
         id: String(b.id),
         title: b.name,
-        author: b.author.name,
+        author: b.author && typeof b.author.name === "string" ? b.author.name : "",
         year: extractYear(b.publishedDate),
         genre: (b.genreId !== undefined ? genreMap.get(b.genreId) : undefined) ?? "Other",
         status: mapBackendStatusToBookStatus(b.status),

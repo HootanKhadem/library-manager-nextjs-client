@@ -7,7 +7,7 @@ import BooksPage from '@/src/components/pages/BooksPage';
 export default function BooksRoute() {
     const {
         books, searchQuery, setSelectedBook, setShowAddModal,
-        booksLoading, booksError, page, totalPages, setPage, refetchBooks,
+        booksLoading, booksError, page, totalPages, totalItems, setPage, refetchBooks,
     } = useLibrary();
 
     const filtered = filterBooks(books, searchQuery);
@@ -23,6 +23,7 @@ export default function BooksRoute() {
             page={page}
             totalPages={totalPages}
             onPageChange={setPage}
+            totalItems={totalItems}
         />
     );
 }

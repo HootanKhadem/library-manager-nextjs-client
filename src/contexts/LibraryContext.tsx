@@ -2,7 +2,7 @@
 
 import {createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState} from 'react';
 import {Author, BackendAuthor, BackendBook, BackendGenre, Book, NewBookFormData, PagedResponse} from '@/src/lib/types';
-import {mapBackendAuthorToAuthor, mapBackendBookToBook} from '@/src/lib/mappers';
+import {mapBackendAuthorToAuthor, mapBackendBookToBook, mapBookStatusToBackendStatus} from '@/src/lib/mappers';
 
 const PAGE_SIZE = 20;
 
@@ -64,6 +64,26 @@ function buildBookPayload(data: NewBookFormData) {
     };
 }
 
+// Used only by updateBook/PUT. Unlike buildBookPayload (POST), this always includes `status`
+// (mapped for all 4 frontend statuses, not just "Owned") so a PUT never silently drops the
+// book's status. genreId is still omitted when genuinely unset (NaN/0), but is otherwise
+// always included so an unrelated edit doesn't wipe out the book's genre.
+function buildBookUpdatePayload(data: NewBookFormData) {
+    const genreId = Number(data.genre);
+    return {
+        name: data.title,
+        author: { name: data.author, image: '' },
+        pages: parseInt(data.pages) || 0,
+        isbn: data.isbn,
+        publishedDate: data.year,
+        publisher: data.publisher,
+        quantity: parseInt(data.quantity) || 1,
+        ...(data.rating ? { rating: parseInt(data.rating) } : {}),
+        status: mapBookStatusToBackendStatus(data.status),
+        ...(genreId ? { genreId } : {}),
+    };
+}
+
 async function fetchGenres(): Promise<BackendGenre[]> {
     try {
         const res = await fetch('/api/genre');
@@ -85,7 +105,7 @@ async function fetchBookPage(pageNum: number, genreMap: Map<number, string>): Pr
     }
     if (!res.ok) return { ok: false };
     const data: PagedResponse<BackendBook> | null = await res.json().catch(() => null);
-    if (!data) return { ok: false };
+    if (!data || !Array.isArray(data.items)) return { ok: false };
     return {
         ok: true,
         items: data.items.map((b) => mapBackendBookToBook(b, genreMap)),
@@ -105,7 +125,7 @@ async function fetchAuthorPage(pageNum: number): Promise<
     }
     if (!res.ok) return { ok: false };
     const data: PagedResponse<BackendAuthor> | null = await res.json().catch(() => null);
-    if (!data) return { ok: false };
+    if (!data || !Array.isArray(data.items)) return { ok: false };
     return { ok: true, items: data.items, totalPages: data.totalPages, totalItems: data.totalItems };
 }
 
@@ -209,7 +229,13 @@ export function LibraryProvider({children}: { children: ReactNode }) {
         if (!res.ok) return { ok: false };
         const created: BackendBook | null = await res.json().catch(() => null);
         if (!created) return { ok: false };
-        setBooks((prev) => [mapBackendBookToBook(created, genreMap), ...prev]);
+        let mapped: Book;
+        try {
+            mapped = mapBackendBookToBook(created, genreMap);
+        } catch {
+            return { ok: false };
+        }
+        setBooks((prev) => [mapped, ...prev]);
         return { ok: true };
     }, [genreMap]);
 
@@ -219,7 +245,7 @@ export function LibraryProvider({children}: { children: ReactNode }) {
             res = await fetch(`/api/book/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(buildBookPayload(data)),
+                body: JSON.stringify(buildBookUpdatePayload(data)),
             });
         } catch {
             return { ok: false };
@@ -227,7 +253,12 @@ export function LibraryProvider({children}: { children: ReactNode }) {
         if (!res.ok) return { ok: false };
         const updated: BackendBook | null = await res.json().catch(() => null);
         if (!updated) return { ok: false };
-        const mapped = mapBackendBookToBook(updated, genreMap);
+        let mapped: Book;
+        try {
+            mapped = mapBackendBookToBook(updated, genreMap);
+        } catch {
+            return { ok: false };
+        }
         setBooks((prev) => prev.map((b) => (b.id === id ? mapped : b)));
         return { ok: true };
     }, [genreMap]);

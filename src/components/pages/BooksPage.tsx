@@ -24,15 +24,17 @@ interface BooksPageProps {
     page?: number;
     totalPages?: number;
     onPageChange?: (page: number) => void;
+    totalItems?: number;
 }
 
 export default function BooksPage({
     books, onBookClick, onAddBook, isError, onRetry,
-    isLoading = false, page = 1, totalPages = 1, onPageChange = () => {},
+    isLoading = false, page = 1, totalPages = 1, onPageChange = () => {}, totalItems,
 }: BooksPageProps) {
     const { t } = useLanguage();
     const [activeFilter, setActiveFilter] = useState<BookStatus | "All">("All");
     const filtered = activeFilter === "All" ? books : books.filter((b) => b.status === activeFilter);
+    const displayCount = totalItems ?? books.length;
 
     const FILTERS: { value: BookStatus | "All"; label: string }[] = [
         { value: "All",      label: t.books.filterAll },
@@ -45,7 +47,7 @@ export default function BooksPage({
         <div data-testid="books-page">
             <PageHeader
                 title={t.books.title}
-                subtitle={interpolate(t.books.subtitle, { count: String(books.length) })}
+                subtitle={interpolate(t.books.subtitle, { count: String(displayCount) })}
                 action={
                     <div className="flex items-center gap-2 flex-wrap">
                         {FILTERS.map(({ value, label }) => (

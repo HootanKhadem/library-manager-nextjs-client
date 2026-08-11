@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { LibraryProvider, useLibrary } from "@/src/contexts/LibraryContext";
@@ -248,6 +249,131 @@ describe("LibraryContext.updateBook", () => {
         await userEvent.click(screen.getByText("update"));
         await waitFor(() => expect((global.fetch as jest.Mock).mock.calls.some(([, o]: [string, RequestInit]) => o?.method === "PUT")).toBe(true));
         expect(screen.getByText("Dune")).toBeInTheDocument();
+    });
+
+    // Regression coverage for Finding 1: PUT must never conditionally drop `status`,
+    // unlike POST (see the addBook describe block above, which asserts the opposite
+    // for Wishlist/Lent Out and must keep passing unchanged).
+    it.each([
+        ["Wishlist", "WISHLIST"],
+        ["Lent Out", "LENT_OUT"],
+        ["Read", "READ"],
+        ["Owned", "OWNED"],
+    ] as const)("includes status:%s -> %s in the PUT body", async (frontendStatus, backendStatus) => {
+        setupFetchMock({
+            "GET /api/book?page=1&pageSize=20": () => jsonResponse(200, { items: [SAMPLE_BOOK], page: 1, pageSize: 20, totalItems: 1, totalPages: 1 }),
+            "PUT /api/book/42": () => jsonResponse(200, SAMPLE_BOOK),
+        });
+        function UpdateHarness() {
+            const { updateBook } = useLibrary();
+            return <button onClick={() => updateBook("42", { ...FORM, status: frontendStatus })}>update</button>;
+        }
+        render(<LibraryProvider><UpdateHarness /></LibraryProvider>);
+        await waitFor(() => expect(screen.getByText("update")).toBeInTheDocument());
+        await userEvent.click(screen.getByText("update"));
+        await waitFor(() => expect((global.fetch as jest.Mock).mock.calls.some(([, o]: [string, RequestInit]) => o?.method === "PUT")).toBe(true));
+        const [, opts] = (global.fetch as jest.Mock).mock.calls.find(([, o]: [string, RequestInit]) => o?.method === "PUT")!;
+        const body = JSON.parse(opts.body);
+        expect(body.status).toBe(backendStatus);
+    });
+
+    it("includes genreId in the PUT body when a genre is selected", async () => {
+        setupFetchMock({
+            "GET /api/book?page=1&pageSize=20": () => jsonResponse(200, { items: [SAMPLE_BOOK], page: 1, pageSize: 20, totalItems: 1, totalPages: 1 }),
+            "PUT /api/book/42": () => jsonResponse(200, SAMPLE_BOOK),
+        });
+        function UpdateHarness() {
+            const { updateBook } = useLibrary();
+            // FORM.genre is "Science Fiction" (a name, not an id) so Number(genre) is NaN there —
+            // use a numeric genre id here to exercise the "genre is set" branch.
+            return <button onClick={() => updateBook("42", { ...FORM, genre: "3" })}>update</button>;
+        }
+        render(<LibraryProvider><UpdateHarness /></LibraryProvider>);
+        await waitFor(() => expect(screen.getByText("update")).toBeInTheDocument());
+        await userEvent.click(screen.getByText("update"));
+        await waitFor(() => expect((global.fetch as jest.Mock).mock.calls.some(([, o]: [string, RequestInit]) => o?.method === "PUT")).toBe(true));
+        const [, opts] = (global.fetch as jest.Mock).mock.calls.find(([, o]: [string, RequestInit]) => o?.method === "PUT")!;
+        expect(JSON.parse(opts.body)).toMatchObject({ genreId: 3 });
+    });
+
+    // Regression coverage for Finding 2: a 2xx response whose body isn't full BackendBook
+    // shape (missing author.name) must not throw out of updateBook — it should resolve
+    // { ok: false } so callers like AddBookModal can always clear their loading state.
+    it("resolves { ok: false } instead of throwing when mapping the PUT response body throws", async () => {
+        setupFetchMock({
+            "GET /api/book?page=1&pageSize=20": () => jsonResponse(200, { items: [SAMPLE_BOOK], page: 1, pageSize: 20, totalItems: 1, totalPages: 1 }),
+            "PUT /api/book/42": () =>
+                Promise.resolve({
+                    ok: true,
+                    status: 200,
+                    json: () => Promise.resolve({ id: 42, get author(): never { throw new Error("malformed"); } }),
+                }),
+        });
+        function UpdateHarness() {
+            const { updateBook } = useLibrary();
+            const [result, setResult] = useState<string>("pending");
+            return (
+                <div>
+                    <button onClick={async () => setResult(String((await updateBook("42", FORM)).ok))}>update</button>
+                    <span data-testid="result">{result}</span>
+                </div>
+            );
+        }
+        render(<LibraryProvider><UpdateHarness /></LibraryProvider>);
+        await waitFor(() => expect(screen.getByText("update")).toBeInTheDocument());
+        await userEvent.click(screen.getByText("update"));
+        await waitFor(() => expect(screen.getByTestId("result")).toHaveTextContent("false"));
+    });
+});
+
+describe("LibraryContext malformed-response guards", () => {
+    afterEach(() => jest.resetAllMocks());
+
+    it("sets booksError instead of hanging in loading when the book page body has no items array", async () => {
+        setupFetchMock({ "GET /api/book?page=1&pageSize=20": () => jsonResponse(200, {}) });
+        function ErrorHarness() {
+            const { booksLoading, booksError } = useLibrary();
+            return <span data-testid="state">{booksLoading ? "loading" : booksError ? "error" : "ok"}</span>;
+        }
+        render(<LibraryProvider><ErrorHarness /></LibraryProvider>);
+        await waitFor(() => expect(screen.getByTestId("state")).toHaveTextContent("error"));
+    });
+
+    it("sets authorsError instead of hanging in loading when the author page body has no items array", async () => {
+        setupFetchMock({ "GET /api/author?page=1&pageSize=20": () => jsonResponse(200, {}) });
+        function AuthorErrorHarness() {
+            const { authorsLoading, authorsError } = useLibrary();
+            return <span data-testid="state">{authorsLoading ? "loading" : authorsError ? "error" : "ok"}</span>;
+        }
+        render(<LibraryProvider><AuthorErrorHarness /></LibraryProvider>);
+        await waitFor(() => expect(screen.getByTestId("state")).toHaveTextContent("error"));
+    });
+
+    it("resolves { ok: false } instead of throwing when mapping the POST response body throws", async () => {
+        // A body whose `author` getter throws simulates any unexpected-shape response that
+        // would otherwise crash mapBackendBookToBook — addBook must catch it, not propagate it.
+        setupFetchMock({
+            "POST /api/book": () =>
+                Promise.resolve({
+                    ok: true,
+                    status: 201,
+                    json: () => Promise.resolve({ id: 99, get author(): never { throw new Error("malformed"); } }),
+                }),
+        });
+        function AddErrorHarness() {
+            const { addBook } = useLibrary();
+            const [result, setResult] = useState<string>("pending");
+            return (
+                <div>
+                    <button onClick={async () => setResult(String((await addBook(FORM)).ok))}>add</button>
+                    <span data-testid="result">{result}</span>
+                </div>
+            );
+        }
+        render(<LibraryProvider><AddErrorHarness /></LibraryProvider>);
+        await waitFor(() => expect(screen.getByText("add")).toBeInTheDocument());
+        await userEvent.click(screen.getByText("add"));
+        await waitFor(() => expect(screen.getByTestId("result")).toHaveTextContent("false"));
     });
 });
 
