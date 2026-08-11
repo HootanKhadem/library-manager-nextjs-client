@@ -53,6 +53,8 @@ const fa: Translations = {
         errorHeading: "مشکلی پیش آمد",
         errorDescription: "اتصال به سرور ممکن نشد. اتصال اینترنت خود را بررسی و دوباره تلاش کنید.",
         retry: "تلاش مجدد",
+        prev: "قبلی",
+        next: "بعدی",
     },
 
     sidebar: {

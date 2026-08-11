@@ -52,3 +52,23 @@ describe("AuthorsPage — empty and error states", () => {
         expect(onRetry).toHaveBeenCalledTimes(1);
     });
 });
+
+describe("AuthorsPage — loading and pagination", () => {
+    it("shows loading text when isLoading and no authors yet", () => {
+        render(<AuthorsPage authors={[]} borgesWorks={[]} isLoading />);
+        expect(screen.getByText("Loading…")).toBeInTheDocument();
+    });
+
+    it("renders pagination controls when totalPages > 1", () => {
+        render(
+            <AuthorsPage
+                authors={MOCK_AUTHORS}
+                borgesWorks={MOCK_WORKS}
+                page={1}
+                totalPages={3}
+                onPageChange={jest.fn()}
+            />
+        );
+        expect(screen.getByRole("navigation", { name: "Pagination" })).toBeInTheDocument();
+    });
+});

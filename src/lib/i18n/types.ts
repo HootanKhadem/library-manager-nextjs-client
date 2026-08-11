@@ -58,6 +58,8 @@ export interface Translations {
         errorHeading: string;
         errorDescription: string;
         retry: string;
+        prev: string;
+        next: string;
     };
 
     // ── Sidebar ─────────────────────────────────────────────────────────────────

@@ -104,3 +104,40 @@ describe("BooksPage — empty and error states", () => {
         expect(onRetry).toHaveBeenCalledTimes(1);
     });
 });
+
+describe("BooksPage — loading and pagination", () => {
+    it("shows loading text when isLoading and no books yet", () => {
+        render(<BooksPage books={[]} onBookClick={jest.fn()} onAddBook={jest.fn()} isLoading />);
+        expect(screen.getByText("Loading…")).toBeInTheDocument();
+    });
+
+    it("renders pagination controls when totalPages > 1", () => {
+        render(
+            <BooksPage
+                books={BOOKS}
+                onBookClick={jest.fn()}
+                onAddBook={jest.fn()}
+                page={1}
+                totalPages={3}
+                onPageChange={jest.fn()}
+            />
+        );
+        expect(screen.getByRole("navigation", { name: "Pagination" })).toBeInTheDocument();
+    });
+
+    it("calls onPageChange when a page button is clicked", () => {
+        const onPageChange = jest.fn();
+        render(
+            <BooksPage
+                books={BOOKS}
+                onBookClick={jest.fn()}
+                onAddBook={jest.fn()}
+                page={1}
+                totalPages={3}
+                onPageChange={onPageChange}
+            />
+        );
+        fireEvent.click(screen.getByRole("button", { name: "2" }));
+        expect(onPageChange).toHaveBeenCalledWith(2);
+    });
+});

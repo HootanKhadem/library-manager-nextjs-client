@@ -32,6 +32,8 @@ const en: Translations = {
         errorHeading: "Something went wrong",
         errorDescription: "Could not reach the server. Check your connection and try again.",
         retry: "Try again",
+        prev: "Previous",
+        next: "Next",
     },
 
     sidebar: {

@@ -13,15 +13,23 @@ import { Avatar } from "@/src/components/ui/Avatar";
 import { Users, BookOpen } from "lucide-react";
 import { EmptyState } from "@/src/components/ui/EmptyState";
 import { ErrorState } from "@/src/components/ui/ErrorState";
+import Pagination from "@/src/components/ui/Pagination";
 
 interface AuthorsPageProps {
     authors: Author[];
     borgesWorks: Book[];
     isError?: boolean;
     onRetry?: () => void;
+    isLoading?: boolean;
+    page?: number;
+    totalPages?: number;
+    onPageChange?: (page: number) => void;
 }
 
-export default function AuthorsPage({ authors, borgesWorks, isError, onRetry }: AuthorsPageProps) {
+export default function AuthorsPage({
+    authors, borgesWorks, isError, onRetry,
+    isLoading = false, page = 1, totalPages = 1, onPageChange = () => {},
+}: AuthorsPageProps) {
     const { t } = useLanguage();
 
     return (
@@ -31,7 +39,6 @@ export default function AuthorsPage({ authors, borgesWorks, isError, onRetry }: 
                 subtitle={interpolate(t.authors.subtitle, { count: String(authors.length) })}
             />
 
-            {/* Author grid */}
             {isError ? (
                 <ErrorState
                     heading={t.common.errorHeading}
@@ -39,6 +46,8 @@ export default function AuthorsPage({ authors, borgesWorks, isError, onRetry }: 
                     retryLabel={t.common.retry}
                     onRetry={onRetry}
                 />
+            ) : isLoading && authors.length === 0 ? (
+                <p className="py-16 text-center text-sm text-[var(--muted)] mb-6">{t.common.loading}</p>
             ) : authors.length === 0 ? (
                 <EmptyState
                     heading={t.authors.emptyAuthors}
@@ -47,14 +56,23 @@ export default function AuthorsPage({ authors, borgesWorks, isError, onRetry }: 
                     className="mb-6"
                 />
             ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-6">
-                    {authors.map((author) => (
-                        <AuthorCard key={author.id} author={author} />
-                    ))}
-                </div>
+                <>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-4">
+                        {authors.map((author) => (
+                            <AuthorCard key={author.id} author={author} />
+                        ))}
+                    </div>
+                    <Pagination
+                        page={page}
+                        totalPages={totalPages}
+                        onPageChange={onPageChange}
+                        prevLabel={t.common.prev}
+                        nextLabel={t.common.next}
+                    />
+                    <div className="mb-6" />
+                </>
             )}
 
-            {/* Complete works */}
             <Card>
                 <CardHeader>
                     <span className="text-sm font-semibold text-[var(--foreground)]">
