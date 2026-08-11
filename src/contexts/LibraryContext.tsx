@@ -1,6 +1,6 @@
 'use client';
 
-import {createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState} from 'react';
+import {createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState} from 'react';
 import {Author, BackendAuthor, BackendBook, BackendGenre, Book, NewBookFormData, PagedResponse} from '@/src/lib/types';
 import {mapBackendAuthorToAuthor, mapBackendBookToBook} from '@/src/lib/mappers';
 
@@ -130,12 +130,20 @@ export function LibraryProvider({children}: { children: ReactNode }) {
     const [editingBook, setEditingBook] = useState<Book | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
 
+    // Monotonic request counters: guard against an in-flight loadBooks/loadAuthors call
+    // whose response resolves after a newer call has already started (out-of-order network
+    // resolution when paging quickly). Only the response matching the latest request id is committed.
+    const booksRequestIdRef = useRef(0);
+    const authorsRequestIdRef = useRef(0);
+
     const genreMap = useMemo(() => buildGenreMap(genres), [genres]);
 
     const loadBooks = useCallback(async (pageNum: number, map: Map<number, string>) => {
+        const requestId = ++booksRequestIdRef.current;
         setBooksLoading(true);
         setBooksError(false);
         const result = await fetchBookPage(pageNum, map);
+        if (requestId !== booksRequestIdRef.current) return; // a newer request has since started; discard this stale response
         if (!result.ok) {
             setBooksError(true);
             setBooksLoading(false);
@@ -149,9 +157,11 @@ export function LibraryProvider({children}: { children: ReactNode }) {
     }, []);
 
     const loadAuthors = useCallback(async (pageNum: number) => {
+        const requestId = ++authorsRequestIdRef.current;
         setAuthorsLoading(true);
         setAuthorsError(false);
         const result = await fetchAuthorPage(pageNum);
+        if (requestId !== authorsRequestIdRef.current) return; // a newer request has since started; discard this stale response
         if (!result.ok) {
             setAuthorsError(true);
             setAuthorsLoading(false);

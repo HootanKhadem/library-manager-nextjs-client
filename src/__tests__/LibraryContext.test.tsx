@@ -70,6 +70,62 @@ describe("LibraryContext initial load", () => {
         render(<LibraryProvider><ErrorHarness /></LibraryProvider>);
         await waitFor(() => expect(screen.getByTestId("state")).toHaveTextContent("error"));
     });
+
+    it("sets authorsError when the author list fetch fails", async () => {
+        setupFetchMock({ "GET /api/author?page=1&pageSize=20": () => jsonResponse(500, {}) });
+        function AuthorErrorHarness() {
+            const { authorsLoading, authorsError } = useLibrary();
+            return <span data-testid="state">{authorsLoading ? "loading" : authorsError ? "error" : "ok"}</span>;
+        }
+        render(<LibraryProvider><AuthorErrorHarness /></LibraryProvider>);
+        await waitFor(() => expect(screen.getByTestId("state")).toHaveTextContent("error"));
+    });
+});
+
+describe("LibraryContext pagination race", () => {
+    afterEach(() => jest.resetAllMocks());
+
+    it("discards a stale page-2 response that resolves after a newer page-3 request", async () => {
+        let resolvePage2: (value: unknown) => void = () => {};
+        const page2Promise = new Promise((resolve) => { resolvePage2 = resolve; });
+        setupFetchMock({
+            "GET /api/book?page=2&pageSize=20": () => page2Promise as Promise<unknown>,
+            "GET /api/book?page=3&pageSize=20": () =>
+                jsonResponse(200, { items: [SAMPLE_BOOK_2], page: 3, pageSize: 20, totalItems: 2, totalPages: 3 }),
+        });
+        function PageHarness() {
+            const { books, page, setPage } = useLibrary();
+            return (
+                <div>
+                    <span data-testid="page">{page}</span>
+                    <button onClick={() => setPage(2)}>page2</button>
+                    <button onClick={() => setPage(3)}>page3</button>
+                    <ul>{books.map((b) => <li key={b.id}>{b.title}</li>)}</ul>
+                </div>
+            );
+        }
+        render(<LibraryProvider><PageHarness /></LibraryProvider>);
+        await waitFor(() => expect(screen.getByTestId("page")).toHaveTextContent("1"));
+
+        await userEvent.click(screen.getByText("page2"));
+        await userEvent.click(screen.getByText("page3"));
+
+        await waitFor(() => expect(screen.getByTestId("page")).toHaveTextContent("3"));
+        expect(screen.getByText("Ficciones")).toBeInTheDocument();
+
+        // Now let the stale page-2 request resolve after page-3 already committed.
+        resolvePage2({
+            ok: true,
+            status: 200,
+            json: () => Promise.resolve({ items: [SAMPLE_BOOK], page: 2, pageSize: 20, totalItems: 2, totalPages: 3 }),
+        });
+
+        // Give the stale response's microtasks (and React's own scheduling) a chance to run, then assert it did NOT win.
+        await new Promise((r) => setTimeout(r, 50));
+        expect(screen.getByTestId("page")).toHaveTextContent("3");
+        expect(screen.getByText("Ficciones")).toBeInTheDocument();
+        expect(screen.queryByText("Dune")).not.toBeInTheDocument();
+    });
 });
 
 describe("LibraryContext.addBook", () => {
