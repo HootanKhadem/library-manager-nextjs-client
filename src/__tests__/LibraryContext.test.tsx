@@ -1,12 +1,41 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { LibraryProvider, useLibrary } from "@/src/contexts/LibraryContext";
-import { NewBookFormData } from "@/src/lib/types";
+import { BackendBook, NewBookFormData, PagedResponse } from "@/src/lib/types";
 
 const FORM: NewBookFormData = {
     title: "Dune", author: "Frank Herbert", year: "1965", genre: "Science Fiction", status: "Owned",
     publisher: "Chilton", isbn: "123", pages: "412", quantity: "1", rating: "5", description: "", notes: "",
 };
+
+const EMPTY_PAGE: PagedResponse<unknown> = { items: [], page: 1, pageSize: 20, totalItems: 0, totalPages: 1 };
+
+const SAMPLE_BOOK: BackendBook = {
+    id: 42, name: "Dune", author: { id: 1, name: "Frank Herbert" }, pages: 412,
+    isbn: "123", publishedDate: "1965", publisher: "Chilton", quantity: 3, rating: 5, status: "OWNED",
+};
+
+const SAMPLE_BOOK_2: BackendBook = {
+    id: 43, name: "Ficciones", author: { id: 2, name: "Jorge Luis Borges" }, pages: 174,
+    isbn: "456", publishedDate: "1944", publisher: "Sur", quantity: 1, status: "OWNED",
+};
+
+function jsonResponse(status: number, body: unknown) {
+    return Promise.resolve({ ok: status >= 200 && status < 300, status, json: () => Promise.resolve(body) });
+}
+
+type FetchHandler = (url: string, opts?: RequestInit) => Promise<unknown>;
+
+function setupFetchMock(extra: Record<string, FetchHandler> = {}) {
+    global.fetch = jest.fn((url: string, opts?: RequestInit) => {
+        const key = `${opts?.method ?? "GET"} ${url}`;
+        if (extra[key]) return extra[key](url, opts);
+        if (url === "/api/genre") return jsonResponse(200, []);
+        if (url.startsWith("/api/book?")) return jsonResponse(200, EMPTY_PAGE);
+        if (url.startsWith("/api/author?")) return jsonResponse(200, EMPTY_PAGE);
+        return Promise.reject(new Error(`unexpected fetch: ${key}`));
+    }) as jest.Mock;
+}
 
 function Harness() {
     const { books, addBook } = useLibrary();
@@ -18,16 +47,46 @@ function Harness() {
     );
 }
 
+describe("LibraryContext initial load", () => {
+    afterEach(() => jest.resetAllMocks());
+
+    it("fetches genres, books, and authors on mount", async () => {
+        setupFetchMock();
+        render(<LibraryProvider><Harness /></LibraryProvider>);
+        await waitFor(() => {
+            const urls = (global.fetch as jest.Mock).mock.calls.map(([u]: [string]) => u);
+            expect(urls).toContain("/api/genre");
+            expect(urls.some((u: string) => u.startsWith("/api/book?"))).toBe(true);
+            expect(urls.some((u: string) => u.startsWith("/api/author?"))).toBe(true);
+        });
+    });
+
+    it("sets booksError when the book list fetch fails", async () => {
+        setupFetchMock({ "GET /api/book?page=1&pageSize=20": () => jsonResponse(500, {}) });
+        function ErrorHarness() {
+            const { booksLoading, booksError } = useLibrary();
+            return <span data-testid="state">{booksLoading ? "loading" : booksError ? "error" : "ok"}</span>;
+        }
+        render(<LibraryProvider><ErrorHarness /></LibraryProvider>);
+        await waitFor(() => expect(screen.getByTestId("state")).toHaveTextContent("error"));
+    });
+});
+
 describe("LibraryContext.addBook", () => {
-    beforeEach(() => { global.fetch = jest.fn(); });
-    afterEach(() => { jest.resetAllMocks(); });
+    afterEach(() => jest.resetAllMocks());
 
     it("POSTs a backend-shaped payload to /api/book", async () => {
-        (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true, status: 201, json: () => Promise.resolve({ id: 99 }) });
+        setupFetchMock({
+            "POST /api/book": () => jsonResponse(201, { ...SAMPLE_BOOK, id: 99 }),
+        });
         render(<LibraryProvider><Harness /></LibraryProvider>);
+        await waitFor(() => expect(screen.getByText("add")).toBeInTheDocument());
         await userEvent.click(screen.getByText("add"));
-        await waitFor(() => expect(global.fetch).toHaveBeenCalled());
-        const [url, opts] = (global.fetch as jest.Mock).mock.calls[0];
+        await waitFor(() => {
+            const postCall = (global.fetch as jest.Mock).mock.calls.find(([, o]: [string, RequestInit]) => o?.method === "POST");
+            expect(postCall).toBeDefined();
+        });
+        const [url, opts] = (global.fetch as jest.Mock).mock.calls.find(([, o]: [string, RequestInit]) => o?.method === "POST")!;
         expect(url).toBe("/api/book");
         const body = JSON.parse(opts.body);
         expect(body).toEqual({
@@ -44,101 +103,142 @@ describe("LibraryContext.addBook", () => {
     });
 
     it("does not include status in POST body when status is Wishlist", async () => {
-        (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true, status: 201, json: () => Promise.resolve({ id: 99 }) });
-        const TestHarness = () => {
+        setupFetchMock({ "POST /api/book": () => jsonResponse(201, { ...SAMPLE_BOOK, id: 99 }) });
+        function WishlistHarness() {
             const { addBook } = useLibrary();
             return <button onClick={() => addBook({ ...FORM, status: "Wishlist" })}>add</button>;
-        };
-        render(<LibraryProvider><TestHarness /></LibraryProvider>);
+        }
+        render(<LibraryProvider><WishlistHarness /></LibraryProvider>);
+        await waitFor(() => expect(screen.getByText("add")).toBeInTheDocument());
         await userEvent.click(screen.getByText("add"));
-        await waitFor(() => expect(global.fetch).toHaveBeenCalled());
-        const [, opts] = (global.fetch as jest.Mock).mock.calls[0];
-        const body = JSON.parse(opts.body);
-        expect(body).not.toHaveProperty("status");
+        await waitFor(() => expect((global.fetch as jest.Mock).mock.calls.some(([, o]: [string, RequestInit]) => o?.method === "POST")).toBe(true));
+        const [, opts] = (global.fetch as jest.Mock).mock.calls.find(([, o]: [string, RequestInit]) => o?.method === "POST")!;
+        expect(JSON.parse(opts.body)).not.toHaveProperty("status");
+    });
+
+    it("does not include status in POST body when status is Lent Out", async () => {
+        setupFetchMock({ "POST /api/book": () => jsonResponse(201, { ...SAMPLE_BOOK, id: 99 }) });
+        function LentOutHarness() {
+            const { addBook } = useLibrary();
+            return <button onClick={() => addBook({ ...FORM, status: "Lent Out" })}>add</button>;
+        }
+        render(<LibraryProvider><LentOutHarness /></LibraryProvider>);
+        await waitFor(() => expect(screen.getByText("add")).toBeInTheDocument());
+        await userEvent.click(screen.getByText("add"));
+        await waitFor(() => expect((global.fetch as jest.Mock).mock.calls.some(([, o]: [string, RequestInit]) => o?.method === "POST")).toBe(true));
+        const [, opts] = (global.fetch as jest.Mock).mock.calls.find(([, o]: [string, RequestInit]) => o?.method === "POST")!;
+        expect(JSON.parse(opts.body)).not.toHaveProperty("status");
     });
 
     it("prepends the new book using the backend-assigned id on success", async () => {
-        (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true, status: 201, json: () => Promise.resolve({ id: 99 }) });
+        setupFetchMock({ "POST /api/book": () => jsonResponse(201, { ...SAMPLE_BOOK, id: 99, name: "Dune" }) });
         render(<LibraryProvider><Harness /></LibraryProvider>);
+        await waitFor(() => expect(screen.getByText("add")).toBeInTheDocument());
         await userEvent.click(screen.getByText("add"));
         await waitFor(() => expect(screen.getByText("Dune")).toBeInTheDocument());
     });
 
     it("does not add the book locally when the request fails", async () => {
-        (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: false, status: 400, json: () => Promise.resolve({ message: "bad" }) });
+        setupFetchMock({ "POST /api/book": () => jsonResponse(400, { message: "bad" }) });
         render(<LibraryProvider><Harness /></LibraryProvider>);
-        const before = screen.getAllByRole("listitem").length;
+        await waitFor(() => expect(screen.getByText("add")).toBeInTheDocument());
+        const before = screen.queryAllByRole("listitem").length;
         await userEvent.click(screen.getByText("add"));
-        await waitFor(() => expect(global.fetch).toHaveBeenCalled());
-        expect(screen.getAllByRole("listitem").length).toBe(before);
+        await waitFor(() => expect((global.fetch as jest.Mock).mock.calls.some(([, o]: [string, RequestInit]) => o?.method === "POST")).toBe(true));
+        expect(screen.queryAllByRole("listitem").length).toBe(before);
+    });
+});
+
+describe("LibraryContext.updateBook", () => {
+    afterEach(() => jest.resetAllMocks());
+
+    it("PUTs a backend-shaped payload and replaces the matching book on success", async () => {
+        setupFetchMock({
+            "GET /api/book?page=1&pageSize=20": () => jsonResponse(200, { items: [SAMPLE_BOOK], page: 1, pageSize: 20, totalItems: 1, totalPages: 1 }),
+            "PUT /api/book/42": () => jsonResponse(200, { ...SAMPLE_BOOK, name: "Dune (Revised)" }),
+        });
+        function UpdateHarness() {
+            const { books, updateBook } = useLibrary();
+            return (
+                <div>
+                    <button onClick={() => updateBook("42", FORM)}>update</button>
+                    <ul>{books.map((b) => <li key={b.id}>{b.title}</li>)}</ul>
+                </div>
+            );
+        }
+        render(<LibraryProvider><UpdateHarness /></LibraryProvider>);
+        await waitFor(() => expect(screen.getByText("Dune")).toBeInTheDocument());
+        await userEvent.click(screen.getByText("update"));
+        await waitFor(() => expect(screen.getByText("Dune (Revised)")).toBeInTheDocument());
+        expect(screen.queryByText("Dune")).not.toBeInTheDocument();
     });
 
-    it("does not include status in POST body when status is Lent Out", async () => {
-        (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true, status: 201, json: () => Promise.resolve({ id: 99 }) });
-        const TestHarness = () => {
-            const { addBook } = useLibrary();
-            return <button onClick={() => addBook({ ...FORM, status: "Lent Out" })}>add</button>;
-        };
-        render(<LibraryProvider><TestHarness /></LibraryProvider>);
-        await userEvent.click(screen.getByText("add"));
-        await waitFor(() => expect(global.fetch).toHaveBeenCalled());
-        const [, opts] = (global.fetch as jest.Mock).mock.calls[0];
-        const body = JSON.parse(opts.body);
-        expect(body).not.toHaveProperty("status");
+    it("leaves the book unchanged when the request fails", async () => {
+        setupFetchMock({
+            "GET /api/book?page=1&pageSize=20": () => jsonResponse(200, { items: [SAMPLE_BOOK], page: 1, pageSize: 20, totalItems: 1, totalPages: 1 }),
+            "PUT /api/book/42": () => jsonResponse(400, { message: "bad" }),
+        });
+        function UpdateHarness() {
+            const { books, updateBook } = useLibrary();
+            return (
+                <div>
+                    <button onClick={() => updateBook("42", FORM)}>update</button>
+                    <ul>{books.map((b) => <li key={b.id}>{b.title}</li>)}</ul>
+                </div>
+            );
+        }
+        render(<LibraryProvider><UpdateHarness /></LibraryProvider>);
+        await waitFor(() => expect(screen.getByText("Dune")).toBeInTheDocument());
+        await userEvent.click(screen.getByText("update"));
+        await waitFor(() => expect((global.fetch as jest.Mock).mock.calls.some(([, o]: [string, RequestInit]) => o?.method === "PUT")).toBe(true));
+        expect(screen.getByText("Dune")).toBeInTheDocument();
+    });
+});
+
+describe("LibraryContext.removeBookLocal", () => {
+    afterEach(() => jest.resetAllMocks());
+
+    it("removes the matching book from local state without touching other books", async () => {
+        setupFetchMock({
+            "GET /api/book?page=1&pageSize=20": () => jsonResponse(200, { items: [SAMPLE_BOOK, SAMPLE_BOOK_2], page: 1, pageSize: 20, totalItems: 2, totalPages: 1 }),
+        });
+        function RemoveHarness() {
+            const { books, removeBookLocal } = useLibrary();
+            return (
+                <div>
+                    <button onClick={() => removeBookLocal("42")}>remove</button>
+                    <ul>{books.map((b) => <li key={b.id}>{b.title}</li>)}</ul>
+                </div>
+            );
+        }
+        render(<LibraryProvider><RemoveHarness /></LibraryProvider>);
+        await waitFor(() => expect(screen.getByText("Dune")).toBeInTheDocument());
+        await userEvent.click(screen.getByText("remove"));
+        await waitFor(() => expect(screen.queryByText("Dune")).not.toBeInTheDocument());
+        expect(screen.getByText("Ficciones")).toBeInTheDocument();
     });
 });
 
 describe("LibraryContext.markBookLent", () => {
-    beforeEach(() => { global.fetch = jest.fn(); });
-    afterEach(() => { jest.resetAllMocks(); });
+    afterEach(() => jest.resetAllMocks());
 
     it("updates the matching book's status to 'Lent Out' in local state", async () => {
+        setupFetchMock({
+            "GET /api/book?page=1&pageSize=20": () => jsonResponse(200, { items: [SAMPLE_BOOK, SAMPLE_BOOK_2], page: 1, pageSize: 20, totalItems: 2, totalPages: 1 }),
+        });
         function LentHarness() {
             const { books, markBookLent } = useLibrary();
-            const target = books[0];
             return (
                 <div>
-                    <button onClick={() => markBookLent(target.id)}>mark-lent</button>
-                    <ul>
-                        {books.map((b) => (
-                            <li key={b.id}>{b.title}: {b.status}</li>
-                        ))}
-                    </ul>
+                    <button onClick={() => markBookLent(books[0].id)}>mark-lent</button>
+                    <ul>{books.map((b) => <li key={b.id}>{b.title}: {b.status}</li>)}</ul>
                 </div>
             );
         }
         render(<LibraryProvider><LentHarness /></LibraryProvider>);
-        const before = screen.getAllByRole("listitem")[0].textContent;
+        await waitFor(() => expect(screen.getAllByRole("listitem")).toHaveLength(2));
         await userEvent.click(screen.getByText("mark-lent"));
-        await waitFor(() => {
-            expect(screen.getAllByRole("listitem")[0].textContent).toContain("Lent Out");
-        });
-        expect(screen.getAllByRole("listitem")[0].textContent).not.toBe(before);
-    });
-
-    it("does not change other books' status", async () => {
-        function LentHarness() {
-            const { books, markBookLent } = useLibrary();
-            const target = books[0];
-            return (
-                <div>
-                    <button onClick={() => markBookLent(target.id)}>mark-lent</button>
-                    <ul>
-                        {books.map((b) => (
-                            <li key={b.id}>{b.title}: {b.status}</li>
-                        ))}
-                    </ul>
-                </div>
-            );
-        }
-        render(<LibraryProvider><LentHarness /></LibraryProvider>);
-        const otherBefore = screen.getAllByRole("listitem")[1]?.textContent;
-        await userEvent.click(screen.getByText("mark-lent"));
-        await waitFor(() => {
-            expect(screen.getAllByRole("listitem")[0].textContent).toContain("Lent Out");
-        });
-        if (otherBefore !== undefined) {
-            expect(screen.getAllByRole("listitem")[1].textContent).toBe(otherBefore);
-        }
+        await waitFor(() => expect(screen.getAllByRole("listitem")[0].textContent).toContain("Lent Out"));
+        expect(screen.getAllByRole("listitem")[1].textContent).toContain("Owned");
     });
 });
