@@ -35,6 +35,7 @@ export interface Book {
     publisher?: string;
     isbn?: string;
     pages?: number;
+    quantity?: number;
     description?: string;
     notes?: string;
     lendingHistory?: LendRecord[];
@@ -117,4 +118,49 @@ export interface ActiveLending {
     expectedReturnDate: string | null;
     actualReturnDate: string | null;
     status: "ACTIVE" | "OVERDUE" | "RETURNED";
+}
+
+// ── Paginated list / backend DTO types ──────────────────────────────────────
+
+export interface PagedResponse<T> {
+    items: T[];
+    page: number;
+    pageSize: number;
+    totalItems: number;
+    totalPages: number;
+}
+
+export interface BackendAuthorRef {
+    id?: number;
+    name: string;
+    image?: string;
+}
+
+export interface BackendBook {
+    id: number;
+    name: string;
+    author: BackendAuthorRef;
+    translator?: string;
+    pages: number;
+    isbn: string;
+    publishedDate: string;
+    publisher: string;
+    quantity: number;
+    image?: string;
+    genreId?: number;
+    rating?: number;
+    status?: string;
+    userId?: number;
+}
+
+export interface BackendAuthor {
+    id: number;
+    name: string;
+    image: string;
+    userId?: number;
+}
+
+export interface BackendGenre {
+    id: number;
+    name: string;
 }
