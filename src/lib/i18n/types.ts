@@ -224,6 +224,7 @@ export interface Translations {
     // ── Add book modal ────────────────────────────────────────────────────────────
     addBook: {
         title: string;
+        titleEdit: string;
         subtitle: string;
         fieldTitle: string;
         fieldTitlePlaceholder: string;

@@ -1,5 +1,6 @@
 import {fireEvent, render, screen, waitFor} from "@testing-library/react";
 import AddBookModal from "@/src/components/AddBookModal";
+import { NewBookFormData } from "@/src/lib/types";
 
 describe("AddBookModal component", () => {
     const onClose = jest.fn();
@@ -104,5 +105,44 @@ describe("AddBookModal component", () => {
     it("renders a quantity field defaulting to 1", () => {
         render(<AddBookModal onClose={jest.fn()} onAdd={jest.fn()} />);
         expect(screen.getByLabelText(/quantity/i)).toHaveValue(1);
+    });
+});
+
+describe("AddBookModal edit mode", () => {
+    const onClose = jest.fn();
+    const onAdd = jest.fn().mockResolvedValue(true);
+    const genres = [{ id: 1, name: "Fiction" }, { id: 2, name: "Mystery" }];
+    const initialData: NewBookFormData = {
+        title: "Dune", author: "Frank Herbert", year: "1965", genre: "1", status: "Owned",
+        publisher: "Chilton", isbn: "123", pages: "412", quantity: "3", rating: "5", description: "", notes: "",
+    };
+
+    beforeEach(() => jest.clearAllMocks());
+
+    it("renders the edit heading and Save Changes button", () => {
+        render(<AddBookModal onClose={onClose} onAdd={onAdd} mode="edit" initialData={initialData} genres={genres} />);
+        expect(screen.getByRole("heading", { name: "Edit Book" })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Save Changes" })).toBeInTheDocument();
+    });
+
+    it("pre-fills form fields from initialData", () => {
+        render(<AddBookModal onClose={onClose} onAdd={onAdd} mode="edit" initialData={initialData} genres={genres} />);
+        expect(screen.getByPlaceholderText(/The Brothers Karamazov/i)).toHaveValue("Dune");
+        expect(screen.getByPlaceholderText(/Fyodor Dostoevsky/i)).toHaveValue("Frank Herbert");
+        expect(screen.getByLabelText(/quantity/i)).toHaveValue(3);
+    });
+
+    it("renders genre options from the genres prop", () => {
+        render(<AddBookModal onClose={onClose} onAdd={onAdd} mode="edit" initialData={initialData} genres={genres} />);
+        expect(screen.getByRole("option", { name: "Fiction" })).toBeInTheDocument();
+        expect(screen.getByRole("option", { name: "Mystery" })).toBeInTheDocument();
+    });
+
+    it("calls onAdd with edited form data on save", async () => {
+        render(<AddBookModal onClose={onClose} onAdd={onAdd} mode="edit" initialData={initialData} genres={genres} />);
+        fireEvent.change(screen.getByPlaceholderText(/The Brothers Karamazov/i), { target: { value: "Dune Messiah" } });
+        fireEvent.click(screen.getByRole("button", { name: "Save Changes" }));
+        expect(onAdd).toHaveBeenCalledWith(expect.objectContaining({ title: "Dune Messiah", author: "Frank Herbert" }));
+        await waitFor(() => expect(onClose).toHaveBeenCalled());
     });
 });

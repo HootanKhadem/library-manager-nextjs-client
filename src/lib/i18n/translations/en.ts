@@ -190,6 +190,7 @@ const en: Translations = {
 
     addBook: {
         title: "Add New Book",
+        titleEdit: "Edit Book",
         subtitle: "Catalogue a new volume to your library",
         fieldTitle: "Title *",
         fieldTitlePlaceholder: "e.g. The Brothers Karamazov",

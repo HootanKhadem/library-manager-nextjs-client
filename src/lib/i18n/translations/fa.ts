@@ -210,6 +210,7 @@ const fa: Translations = {
 
     addBook: {
         title: "افزودن کتاب جدید",
+        titleEdit: "ویرایش کتاب",
         subtitle: "یک جلد جدید به کتابخانه‌تان اضافه کنید",
         fieldTitle: "عنوان *",
         fieldTitlePlaceholder: "مثلاً: برادران کارامازوف",
