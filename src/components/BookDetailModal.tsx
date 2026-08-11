@@ -14,14 +14,18 @@ interface BookDetailModalProps {
     book: Book | null;
     onClose: () => void;
     onLent?: () => void;
+    onEdit?: () => void;
+    onDeleted?: () => void;
 }
 
-export default function BookDetailModal({ book, onClose, onLent }: BookDetailModalProps) {
+export default function BookDetailModal({ book, onClose, onLent, onEdit, onDeleted }: BookDetailModalProps) {
     const { t } = useLanguage();
     const [members, setMembers] = useState<{ id: number; name: string }[]>([]);
     const [membersLoaded, setMembersLoaded] = useState(false);
     const [memberId, setMemberId] = useState<string>("");
     const [lending, setLending] = useState(false);
+    const [confirmingDelete, setConfirmingDelete] = useState(false);
+    const [deleting, setDeleting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
@@ -59,6 +63,32 @@ export default function BookDetailModal({ book, onClose, onLent }: BookDetailMod
             setError(t.common.errorHeading);
         } finally {
             setLending(false);
+        }
+    }
+
+    async function handleDeleteClick() {
+        if (!confirmingDelete) {
+            setConfirmingDelete(true);
+            return;
+        }
+        setDeleting(true);
+        setError(null);
+        try {
+            const res = await fetch(`/api/book/${book!.id}`, { method: "DELETE" });
+            if (res.ok) {
+                onDeleted?.();
+            } else if (res.status === 409) {
+                setError(t.bookDetail.errorDeleteConflict);
+                setConfirmingDelete(false);
+            } else {
+                setError(t.common.errorHeading);
+                setConfirmingDelete(false);
+            }
+        } catch {
+            setError(t.common.errorHeading);
+            setConfirmingDelete(false);
+        } finally {
+            setDeleting(false);
         }
     }
 
@@ -108,7 +138,6 @@ export default function BookDetailModal({ book, onClose, onLent }: BookDetailMod
                     <p role="alert" className="mb-4 text-sm text-[var(--destructive)]">{error}</p>
                 )}
 
-                {/* Meta grid */}
                 <div className="grid grid-cols-3 gap-4 mb-5">
                     <MetaItem label={t.bookDetail.labelStatus}>
                         <StatusBadge status={book.status} overdue={book.overdue} />
@@ -195,7 +224,10 @@ export default function BookDetailModal({ book, onClose, onLent }: BookDetailMod
             </ModalBody>
 
             <ModalFooter>
-                <Button variant="danger"    size="sm">{t.bookDetail.btnDelete}</Button>
+                <Button variant="danger" size="sm" onClick={handleDeleteClick} disabled={deleting} loading={deleting}>
+                    {confirmingDelete ? t.bookDetail.btnConfirmDelete : t.bookDetail.btnDelete}
+                </Button>
+                <Button variant="secondary" size="sm" onClick={onEdit}>{t.bookDetail.btnEdit}</Button>
                 <Button variant="secondary" size="sm" onClick={onClose}>{t.bookDetail.btnClose}</Button>
                 <Button variant="primary"   size="sm" onClick={handleLend} disabled={!memberId || lending}>{t.bookDetail.btnLend}</Button>
             </ModalFooter>

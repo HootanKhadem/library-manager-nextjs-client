@@ -214,6 +214,9 @@ export interface Translations {
         colDateReturned: string;
         colCondition: string;
         btnDelete: string;
+        btnConfirmDelete: string;
+        btnEdit: string;
+        errorDeleteConflict: string;
         btnClose: string;
         btnLend: string;
         labelLendTo: string;

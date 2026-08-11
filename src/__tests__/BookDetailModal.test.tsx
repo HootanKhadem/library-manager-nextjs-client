@@ -140,3 +140,54 @@ describe("BookDetailModal component", () => {
         expect(screen.getByRole("dialog")).toBeInTheDocument();
     });
 });
+
+describe("BookDetailModal edit and delete", () => {
+    beforeEach(() => {
+        global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200, json: () => Promise.resolve([]) });
+    });
+
+    afterEach(() => {
+        jest.resetAllMocks();
+    });
+
+    it("calls onEdit when the Edit button is clicked", () => {
+        const onEdit = jest.fn();
+        render(<BookDetailModal book={mockBook} onClose={jest.fn()} onEdit={onEdit} />);
+        fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+        expect(onEdit).toHaveBeenCalledTimes(1);
+    });
+
+    it("shows a confirm state on the first Delete click without calling the API", async () => {
+        render(<BookDetailModal book={mockBook} onClose={jest.fn()} />);
+        fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+        expect(await screen.findByRole("button", { name: "Confirm Delete?" })).toBeInTheDocument();
+        expect(global.fetch).toHaveBeenCalledTimes(1); // only the members fetch
+    });
+
+    it("deletes the book and calls onDeleted on the second click", async () => {
+        (global.fetch as jest.Mock)
+            .mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve([]) })
+            .mockResolvedValueOnce({ ok: true, status: 204, json: () => Promise.resolve(null) });
+        const onDeleted = jest.fn();
+        render(<BookDetailModal book={{ ...mockBook, id: "42" }} onClose={jest.fn()} onDeleted={onDeleted} />);
+        fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+        await userEvent.click(await screen.findByRole("button", { name: "Confirm Delete?" }));
+        await waitFor(() => expect(onDeleted).toHaveBeenCalledTimes(1));
+        const [url, opts] = (global.fetch as jest.Mock).mock.calls[1];
+        expect(url).toBe("/api/book/42");
+        expect(opts.method).toBe("DELETE");
+    });
+
+    it("shows a conflict message and does not call onDeleted on 409", async () => {
+        (global.fetch as jest.Mock)
+            .mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve([]) })
+            .mockResolvedValueOnce({ ok: false, status: 409, json: () => Promise.resolve({ message: "conflict" }) });
+        const onDeleted = jest.fn();
+        render(<BookDetailModal book={mockBook} onClose={jest.fn()} onDeleted={onDeleted} />);
+        fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+        await userEvent.click(await screen.findByRole("button", { name: "Confirm Delete?" }));
+        expect(await screen.findByRole("alert")).toHaveTextContent("This book has lending history and can't be deleted.");
+        expect(onDeleted).not.toHaveBeenCalled();
+        expect(screen.getByRole("dialog")).toBeInTheDocument();
+    });
+});
