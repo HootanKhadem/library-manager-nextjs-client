@@ -1,6 +1,6 @@
 /** @jest-environment node */
 import { NextRequest } from "next/server";
-import { POST } from "@/src/app/api/book/route";
+import { GET, POST } from "@/src/app/api/book/route";
 
 function makeReq(body: object, token?: string): NextRequest {
     return new NextRequest("http://localhost/api/book", {
@@ -49,5 +49,50 @@ describe("POST /api/book", () => {
         (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: false, status: 400, json: () => Promise.resolve({ message: "Invalid book" }) });
         const res = await POST(makeReq({ name: "" }, "tok"));
         expect(res.status).toBe(400);
+    });
+});
+
+function makeGetReq(url: string, token?: string): NextRequest {
+    return new NextRequest(url, {
+        headers: token ? { Cookie: `access_token=${token}` } : {},
+    });
+}
+
+describe("GET /api/book", () => {
+    beforeEach(() => { process.env.API_BASE_URL = "http://backend"; global.fetch = jest.fn(); });
+    afterEach(() => { jest.resetAllMocks(); });
+
+    it("returns 401 when access_token cookie is absent", async () => {
+        const res = await GET(makeGetReq("http://localhost/api/book"));
+        expect(res.status).toBe(401);
+    });
+
+    it("forwards page and pageSize query params to the backend", async () => {
+        (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve({ items: [], page: 2, pageSize: 20, totalItems: 0, totalPages: 1 }) });
+        await GET(makeGetReq("http://localhost/api/book?page=2&pageSize=20", "tok"));
+        const [url, opts] = (global.fetch as jest.Mock).mock.calls[0];
+        expect(url).toBe("http://backend/api/book?page=2&pageSize=20");
+        expect(opts.headers.Authorization).toBe("Bearer tok");
+    });
+
+    it("requests the backend with no query string when none is given", async () => {
+        (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve({ items: [], page: 1, pageSize: 20, totalItems: 0, totalPages: 1 }) });
+        await GET(makeGetReq("http://localhost/api/book", "tok"));
+        const [url] = (global.fetch as jest.Mock).mock.calls[0];
+        expect(url).toBe("http://backend/api/book");
+    });
+
+    it("proxies the 200 response from the backend", async () => {
+        const page = { items: [{ id: 1, name: "Dune" }], page: 1, pageSize: 20, totalItems: 1, totalPages: 1 };
+        (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve(page) });
+        const res = await GET(makeGetReq("http://localhost/api/book?page=1&pageSize=20", "tok"));
+        expect(res.status).toBe(200);
+        expect(await res.json()).toEqual(page);
+    });
+
+    it("returns 503 when the backend is unreachable", async () => {
+        (global.fetch as jest.Mock).mockRejectedValueOnce(new Error("fetch failed"));
+        const res = await GET(makeGetReq("http://localhost/api/book", "tok"));
+        expect(res.status).toBe(503);
     });
 });
