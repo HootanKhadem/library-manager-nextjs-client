@@ -1,5 +1,6 @@
 import {fireEvent, render, screen} from "@testing-library/react";
 import Sidebar from "@/src/components/Sidebar";
+import {usePathname} from "next/navigation";
 
 jest.mock("next/navigation", () => ({
     usePathname: jest.fn(() => "/dashboard"),
@@ -11,16 +12,14 @@ jest.mock("@/src/contexts/LibraryContext", () => ({
     useLibrary: jest.fn(() => ({setShowAddModal: mockSetShowAddModal})),
 }));
 
-import {usePathname} from "next/navigation";
-
 const defaultProps = {isOpen: false, onClose: jest.fn()};
 
 describe("Sidebar component", () => {
     beforeEach(() => jest.clearAllMocks());
 
-    it("renders the Librax logo", () => {
+    it("renders the bookwrym logo", () => {
         render(<Sidebar {...defaultProps} />);
-        expect(screen.getByText("Librax")).toBeInTheDocument();
+        expect(screen.getByText("bookwrym")).toBeInTheDocument();
     });
 
     it("renders all navigation items", () => {

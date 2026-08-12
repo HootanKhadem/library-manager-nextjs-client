@@ -83,7 +83,7 @@ export default function LoginPage() {
                                 <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
                             </svg>
                         </div>
-                        <span className="text-[15px] font-semibold text-stone-50 tracking-[-0.2px]">Librax</span>
+                        <span className="text-[15px] font-semibold text-stone-50 tracking-[-0.2px]">bookwrym</span>
                     </div>
 
                     {/* Tagline */}

@@ -17,7 +17,7 @@ const vazirmatn = Vazirmatn({
 });
 
 export const metadata: Metadata = {
-    title: "Librax — Personal Library Manager",
+    title: "bookwrym — Personal Library Manager",
     description: "A personal library manager to catalogue and track your book collection.",
 };
 
