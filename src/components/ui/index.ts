@@ -36,3 +36,9 @@ export { Avatar } from "./Avatar";
 export { Tooltip } from "./Tooltip";
 
 export { BarcodeScanner } from "./BarcodeScanner";
+
+export { Skeleton } from "./Skeleton";
+export type { SkeletonProps } from "./Skeleton";
+
+export { ErrorState } from "./ErrorState";
+export type { ErrorStateProps } from "./ErrorState";

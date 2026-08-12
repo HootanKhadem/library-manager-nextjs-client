@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Book } from "@/src/lib/types";
 import { useLanguage } from "@/src/lib/i18n/context";
 import { Modal, ModalHeader, ModalBody, ModalFooter, ModalCloseButton } from "@/src/components/ui/Modal";
@@ -12,12 +13,84 @@ import { DataTable, DataTableHead, DataTableBody, DataTableRow, Th, Td } from "@
 interface BookDetailModalProps {
     book: Book | null;
     onClose: () => void;
+    onLent?: () => void;
+    onEdit?: () => void;
+    onDeleted?: () => void;
 }
 
-export default function BookDetailModal({ book, onClose }: BookDetailModalProps) {
+export default function BookDetailModal({ book, onClose, onLent, onEdit, onDeleted }: BookDetailModalProps) {
     const { t } = useLanguage();
+    const [members, setMembers] = useState<{ id: number; name: string }[]>([]);
+    const [membersLoaded, setMembersLoaded] = useState(false);
+    const [memberId, setMemberId] = useState<string>("");
+    const [lending, setLending] = useState(false);
+    const [confirmingDelete, setConfirmingDelete] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!book) return;
+        setMembersLoaded(false);
+        fetch("/api/member")
+            .then((res) => (res.ok ? res.json() : []))
+            .then(setMembers)
+            .catch(() => setMembers([]))
+            .finally(() => setMembersLoaded(true));
+    }, [book]);
 
     if (!book) return null;
+
+    async function handleLend() {
+        if (!memberId) return;
+        setLending(true);
+        setError(null);
+        try {
+            const res = await fetch("/api/lending", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    bookId: Number(book!.id),
+                    memberId: Number(memberId),
+                    lentDate: new Date().toISOString().slice(0, 10),
+                }),
+            });
+            if (res.ok) {
+                onLent?.();
+            } else {
+                setError(t.common.errorHeading);
+            }
+        } catch {
+            setError(t.common.errorHeading);
+        } finally {
+            setLending(false);
+        }
+    }
+
+    async function handleDeleteClick() {
+        if (!confirmingDelete) {
+            setConfirmingDelete(true);
+            return;
+        }
+        setDeleting(true);
+        setError(null);
+        try {
+            const res = await fetch(`/api/book/${book!.id}`, { method: "DELETE" });
+            if (res.ok) {
+                onDeleted?.();
+            } else if (res.status === 409) {
+                setError(t.bookDetail.errorDeleteConflict);
+                setConfirmingDelete(false);
+            } else {
+                setError(t.common.errorHeading);
+                setConfirmingDelete(false);
+            }
+        } catch {
+            setError(t.common.errorHeading);
+            setConfirmingDelete(false);
+        } finally {
+            setDeleting(false);
+        }
+    }
 
     return (
         <Modal
@@ -37,7 +110,34 @@ export default function BookDetailModal({ book, onClose }: BookDetailModalProps)
             </ModalHeader>
 
             <ModalBody>
-                {/* Meta grid */}
+                {members.length > 0 && (
+                    <div className="mb-4">
+                        <label className="text-xs font-medium uppercase tracking-wide text-[var(--muted)] mb-1 block" htmlFor="lend-to-select">
+                            {t.bookDetail.labelLendTo}
+                        </label>
+                        <select
+                            id="lend-to-select"
+                            aria-label={t.bookDetail.labelLendTo}
+                            value={memberId}
+                            onChange={(e) => setMemberId(e.target.value)}
+                            className="w-full rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm text-[var(--foreground)]"
+                        >
+                            <option value="">{t.bookDetail.selectMember}</option>
+                            {members.map((m) => (
+                                <option key={m.id} value={m.id}>{m.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                )}
+
+                {membersLoaded && members.length === 0 && (
+                    <p className="mb-4 text-sm text-[var(--muted)]">{t.bookDetail.noMembers}</p>
+                )}
+
+                {error && (
+                    <p role="alert" className="mb-4 text-sm text-[var(--destructive)]">{error}</p>
+                )}
+
                 <div className="grid grid-cols-3 gap-4 mb-5">
                     <MetaItem label={t.bookDetail.labelStatus}>
                         <StatusBadge status={book.status} overdue={book.overdue} />
@@ -124,9 +224,12 @@ export default function BookDetailModal({ book, onClose }: BookDetailModalProps)
             </ModalBody>
 
             <ModalFooter>
-                <Button variant="danger"    size="sm">{t.bookDetail.btnDelete}</Button>
+                <Button variant="danger" size="sm" onClick={handleDeleteClick} disabled={deleting} loading={deleting}>
+                    {confirmingDelete ? t.bookDetail.btnConfirmDelete : t.bookDetail.btnDelete}
+                </Button>
+                <Button variant="secondary" size="sm" onClick={onEdit}>{t.bookDetail.btnEdit}</Button>
                 <Button variant="secondary" size="sm" onClick={onClose}>{t.bookDetail.btnClose}</Button>
-                <Button variant="primary"   size="sm">{t.bookDetail.btnLend}</Button>
+                <Button variant="primary"   size="sm" onClick={handleLend} disabled={!memberId || lending}>{t.bookDetail.btnLend}</Button>
             </ModalFooter>
         </Modal>
     );

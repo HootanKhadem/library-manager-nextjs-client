@@ -8,20 +8,33 @@ import { PageHeader } from "@/src/components/ui/Topbar";
 import { Button } from "@/src/components/ui/Button";
 import { DataTable, DataTableHead, DataTableBody, DataTableRow, Th, Td } from "@/src/components/ui/DataTable";
 import { EmptyState } from "@/src/components/ui/EmptyState";
+import { ErrorState } from "@/src/components/ui/ErrorState";
 import { StatusBadge } from "@/src/components/ui/StatusBadge";
 import { StarRating } from "@/src/components/ui/StarRating";
 import { GenreTag } from "@/src/components/ui/GenreTag";
+import Pagination from "@/src/components/ui/Pagination";
 
 interface BooksPageProps {
     books: Book[];
     onBookClick: (book: Book) => void;
     onAddBook: () => void;
+    isError?: boolean;
+    onRetry?: () => void;
+    isLoading?: boolean;
+    page?: number;
+    totalPages?: number;
+    onPageChange?: (page: number) => void;
+    totalItems?: number;
 }
 
-export default function BooksPage({ books, onBookClick, onAddBook }: BooksPageProps) {
+export default function BooksPage({
+    books, onBookClick, onAddBook, isError, onRetry,
+    isLoading = false, page = 1, totalPages = 1, onPageChange = () => {}, totalItems,
+}: BooksPageProps) {
     const { t } = useLanguage();
     const [activeFilter, setActiveFilter] = useState<BookStatus | "All">("All");
     const filtered = activeFilter === "All" ? books : books.filter((b) => b.status === activeFilter);
+    const displayCount = totalItems ?? books.length;
 
     const FILTERS: { value: BookStatus | "All"; label: string }[] = [
         { value: "All",      label: t.books.filterAll },
@@ -34,7 +47,7 @@ export default function BooksPage({ books, onBookClick, onAddBook }: BooksPagePr
         <div data-testid="books-page">
             <PageHeader
                 title={t.books.title}
-                subtitle={interpolate(t.books.subtitle, { count: String(books.length) })}
+                subtitle={interpolate(t.books.subtitle, { count: String(displayCount) })}
                 action={
                     <div className="flex items-center gap-2 flex-wrap">
                         {FILTERS.map(({ value, label }) => (
@@ -59,63 +72,90 @@ export default function BooksPage({ books, onBookClick, onAddBook }: BooksPagePr
                 }
             />
 
-            {filtered.length === 0 ? (
-                <EmptyState
-                    heading={t.common.noResults}
-                    icon={<BookOpen className="h-6 w-6" />}
-                    action={<Button variant="primary" size="sm" onClick={onAddBook}>{t.sidebar.addNewBook}</Button>}
+            {isError ? (
+                <ErrorState
+                    heading={t.common.errorHeading}
+                    description={t.common.errorDescription}
+                    retryLabel={t.common.retry}
+                    onRetry={onRetry}
                 />
+            ) : isLoading && books.length === 0 ? (
+                <p className="py-16 text-center text-sm text-[var(--muted)]">{t.common.loading}</p>
+            ) : filtered.length === 0 ? (
+                activeFilter === "All" ? (
+                    <EmptyState
+                        heading={t.books.emptyAll}
+                        description={t.books.emptyAllDesc}
+                        icon={<BookOpen className="h-6 w-6" />}
+                        action={<Button variant="primary" size="sm" onClick={onAddBook}>{t.sidebar.addNewBook}</Button>}
+                    />
+                ) : (
+                    <EmptyState
+                        heading={t.books.emptyFiltered}
+                        description={t.books.emptyFilteredDesc}
+                        icon={<BookOpen className="h-6 w-6" />}
+                    />
+                )
             ) : (
-                <DataTable>
-                    <DataTableHead>
-                        <tr>
-                            <Th>#</Th>
-                            <Th>{t.books.colTitle}</Th>
-                            <Th>{t.books.colAuthor}</Th>
-                            <Th>{t.books.colYear}</Th>
-                            <Th>{t.books.colGenre}</Th>
-                            <Th>{t.books.colStatus}</Th>
-                            <Th>{t.books.colLentTo}</Th>
-                            <Th>{t.books.colRating}</Th>
-                        </tr>
-                    </DataTableHead>
-                    <DataTableBody>
-                        {filtered.map((book, i) => (
-                            <DataTableRow
-                                key={book.id}
-                                onClick={() => onBookClick(book)}
-                                className="cursor-pointer"
-                            >
-                                <Td className="text-[var(--muted-foreground)] tabular-nums w-12">
-                                    {String(i + 1).padStart(3, "0")}
-                                </Td>
-                                <Td>
-                                    <span className="font-medium text-[var(--foreground)]">{book.title}</span>
-                                </Td>
-                                <Td className="text-[var(--muted)]">{book.author}</Td>
-                                <Td className="tabular-nums text-[var(--muted)]">{book.year}</Td>
-                                <Td><GenreTag genre={book.genre} /></Td>
-                                <Td><StatusBadge status={book.status} overdue={book.overdue} /></Td>
-                                <Td>
-                                    {book.lentTo ? (
-                                        <span className={book.overdue ? "text-[var(--destructive)] font-medium text-xs" : "text-xs text-[var(--foreground)]"}>
-                                            {book.lentTo}
-                                            {book.overdue && <span className="ms-1 text-[var(--destructive)]">({t.common.overdue})</span>}
-                                        </span>
-                                    ) : (
-                                        <span className="text-[var(--muted-foreground)]">—</span>
-                                    )}
-                                </Td>
-                                <Td>
-                                    {book.rating
-                                        ? <StarRating value={book.rating} />
-                                        : <span className="text-[var(--muted-foreground)]">—</span>
-                                    }
-                                </Td>
-                            </DataTableRow>
-                        ))}
-                    </DataTableBody>
-                </DataTable>
+                <>
+                    <DataTable>
+                        <DataTableHead>
+                            <tr>
+                                <Th>#</Th>
+                                <Th>{t.books.colTitle}</Th>
+                                <Th>{t.books.colAuthor}</Th>
+                                <Th>{t.books.colYear}</Th>
+                                <Th>{t.books.colGenre}</Th>
+                                <Th>{t.books.colStatus}</Th>
+                                <Th>{t.books.colLentTo}</Th>
+                                <Th>{t.books.colRating}</Th>
+                            </tr>
+                        </DataTableHead>
+                        <DataTableBody>
+                            {filtered.map((book, i) => (
+                                <DataTableRow
+                                    key={book.id}
+                                    onClick={() => onBookClick(book)}
+                                    className="cursor-pointer"
+                                >
+                                    <Td className="text-[var(--muted-foreground)] tabular-nums w-12">
+                                        {String(i + 1).padStart(3, "0")}
+                                    </Td>
+                                    <Td>
+                                        <span className="font-medium text-[var(--foreground)]">{book.title}</span>
+                                    </Td>
+                                    <Td className="text-[var(--muted)]">{book.author}</Td>
+                                    <Td className="tabular-nums text-[var(--muted)]">{book.year}</Td>
+                                    <Td><GenreTag genre={book.genre} /></Td>
+                                    <Td><StatusBadge status={book.status} overdue={book.overdue} /></Td>
+                                    <Td>
+                                        {book.lentTo ? (
+                                            <span className={book.overdue ? "text-[var(--destructive)] font-medium text-xs" : "text-xs text-[var(--foreground)]"}>
+                                                {book.lentTo}
+                                                {book.overdue && <span className="ms-1 text-[var(--destructive)]">({t.common.overdue})</span>}
+                                            </span>
+                                        ) : (
+                                            <span className="text-[var(--muted-foreground)]">—</span>
+                                        )}
+                                    </Td>
+                                    <Td>
+                                        {book.rating
+                                            ? <StarRating value={book.rating} />
+                                            : <span className="text-[var(--muted-foreground)]">—</span>
+                                        }
+                                    </Td>
+                                </DataTableRow>
+                            ))}
+                        </DataTableBody>
+                    </DataTable>
+                    <Pagination
+                        page={page}
+                        totalPages={totalPages}
+                        onPageChange={onPageChange}
+                        prevLabel={t.common.prev}
+                        nextLabel={t.common.next}
+                    />
+                </>
             )}
         </div>
     );

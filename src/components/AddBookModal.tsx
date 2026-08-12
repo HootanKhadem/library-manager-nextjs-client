@@ -2,7 +2,7 @@
 
 import {useState} from "react";
 import {ScanLine} from "lucide-react";
-import {BookStatus, NewBookFormData} from "@/src/lib/types";
+import {BackendGenre, BookStatus, NewBookFormData} from "@/src/lib/types";
 import {useLanguage} from "@/src/lib/i18n/context";
 import {Modal, ModalBody, ModalCloseButton, ModalFooter, ModalHeader} from "@/src/components/ui/Modal";
 import {Input} from "@/src/components/ui/Input";
@@ -12,43 +12,41 @@ import {BarcodeScanner} from "@/src/components/ui/BarcodeScanner";
 
 interface AddBookModalProps {
     onClose: () => void;
-    onAdd: (book: NewBookFormData) => void;
+    onAdd: (book: NewBookFormData) => Promise<boolean>;
+    mode?: "add" | "edit";
+    initialData?: NewBookFormData;
+    genres?: BackendGenre[];
 }
 
 const EMPTY_FORM: NewBookFormData = {
     title: "", author: "", year: "", genre: "", status: "Owned",
-    publisher: "", isbn: "", pages: "", rating: "", description: "", notes: "",
+    publisher: "", isbn: "", pages: "", quantity: "1", rating: "", description: "", notes: "",
 };
 
-export default function AddBookModal({ onClose, onAdd }: AddBookModalProps) {
+export default function AddBookModal({ onClose, onAdd, mode = "add", initialData, genres = [] }: AddBookModalProps) {
     const { t } = useLanguage();
-    const [form, setForm] = useState<NewBookFormData>(EMPTY_FORM);
+    const [form, setForm] = useState<NewBookFormData>(initialData ?? EMPTY_FORM);
     const [scannerOpen, setScannerOpen] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
         setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     }
 
-    function handleSubmit() {
+    async function handleSubmit() {
         if (!form.title.trim() || !form.author.trim()) return;
-        onAdd(form);
-        setForm(EMPTY_FORM);
-        onClose();
+        setSubmitting(true);
+        setError(null);
+        const ok = await onAdd(form);
+        setSubmitting(false);
+        if (ok) {
+            setForm(EMPTY_FORM);
+            onClose();
+        } else {
+            setError(t.common.errorHeading);
+        }
     }
-
-    const genreOptions: { value: string; label: string }[] = [
-        { value: "Fiction",        label: t.addBook.genres.fiction },
-        { value: "Non-fiction",    label: t.addBook.genres.nonFiction },
-        { value: "Mystery",        label: t.addBook.genres.mystery },
-        { value: "Science Fiction",label: t.addBook.genres.scienceFiction },
-        { value: "Philosophy",     label: t.addBook.genres.philosophy },
-        { value: "Art Theory",     label: t.addBook.genres.artTheory },
-        { value: "Poetry",         label: t.addBook.genres.poetry },
-        { value: "History",        label: t.addBook.genres.history },
-        { value: "Biography",      label: t.addBook.genres.biography },
-        { value: "Psychology",     label: t.addBook.genres.psychology },
-        { value: "Other",          label: t.addBook.genres.other },
-    ];
 
     const statusOptions: { value: BookStatus; label: string }[] = [
         { value: "Owned",    label: t.addBook.statuses.owned },
@@ -65,11 +63,14 @@ export default function AddBookModal({ onClose, onAdd }: AddBookModalProps) {
         { value: "1", label: t.addBook.ratings.r1 },
     ];
 
+    const heading = mode === "edit" ? t.addBook.titleEdit : t.addBook.title;
+    const submitLabel = mode === "edit" ? t.common.save : t.addBook.btnAdd;
+
     return (
         <Modal open onClose={onClose} className="max-w-[min(640px,95vw)] max-h-[90vh] overflow-y-auto" data-testid="add-book-modal">
             <ModalHeader>
                 <div>
-                    <h2 className="text-base font-semibold text-[var(--foreground)]">{t.addBook.title}</h2>
+                    <h2 className="text-base font-semibold text-[var(--foreground)]">{heading}</h2>
                     <p className="text-xs text-[var(--muted)] mt-0.5">{t.addBook.subtitle}</p>
                 </div>
                 <ModalCloseButton onClose={onClose} aria-label={t.common.close} />
@@ -103,8 +104,8 @@ export default function AddBookModal({ onClose, onAdd }: AddBookModalProps) {
                     />
                     <Select label={t.addBook.fieldGenre} name="genre" value={form.genre} onChange={handleChange}>
                         <option value="">{t.addBook.fieldGenreDefault}</option>
-                        {genreOptions.map(({ value, label }) => (
-                            <option key={value} value={value}>{label}</option>
+                        {genres.map((g) => (
+                            <option key={g.id} value={String(g.id)}>{g.name}</option>
                         ))}
                     </Select>
                     <Select label={t.addBook.fieldStatus} name="status" value={form.status} onChange={handleChange}>
@@ -154,6 +155,14 @@ export default function AddBookModal({ onClose, onAdd }: AddBookModalProps) {
                         onChange={handleChange}
                         placeholder={t.addBook.fieldPagesPlaceholder}
                     />
+                    <Input
+                        label={t.addBook.fieldQuantity}
+                        name="quantity"
+                        type="number"
+                        value={form.quantity}
+                        onChange={handleChange}
+                        placeholder="1"
+                    />
                     <Select label={t.addBook.fieldRating} name="rating" value={form.rating} onChange={handleChange}>
                         <option value="">{t.addBook.fieldRatingDefault}</option>
                         {ratingOptions.map(({ value, label }) => (
@@ -183,11 +192,17 @@ export default function AddBookModal({ onClose, onAdd }: AddBookModalProps) {
                         />
                     </div>
                 </div>
+
+                {error && (
+                    <p role="alert" className="mt-4 text-sm text-[var(--destructive)]">{error}</p>
+                )}
             </ModalBody>
 
             <ModalFooter>
                 <Button variant="secondary" size="sm" onClick={onClose}>{t.addBook.btnCancel}</Button>
-                <Button variant="primary"   size="sm" onClick={handleSubmit}>{t.addBook.btnAdd}</Button>
+                <Button variant="primary" size="sm" onClick={handleSubmit} disabled={submitting} loading={submitting}>
+                    {submitLabel}
+                </Button>
             </ModalFooter>
         </Modal>
     );

@@ -1,53 +1,129 @@
-import {fireEvent, render, screen} from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import LentPage from "@/src/components/pages/LentPage";
-import {getLentBooks} from "@/src/lib/data";
 
-describe("LentPage component", () => {
-    const lentBooks = getLentBooks();
+const MOCK_LENDINGS = [
+    {
+        id: 1, bookId: 5, memberId: 3, userId: 42,
+        lentDate: "2026-06-01", expectedReturnDate: "2026-07-01",
+        actualReturnDate: null, status: "ACTIVE" as const,
+    },
+    {
+        id: 2, bookId: 7, memberId: 4, userId: 42,
+        lentDate: "2026-04-01", expectedReturnDate: "2026-05-01",
+        actualReturnDate: null, status: "OVERDUE" as const,
+    },
+];
 
-    it("renders 'Currently Lent' heading", () => {
-        render(<LentPage lentBooks={lentBooks}/>);
-        expect(screen.getByRole("heading", {name: /Currently Lent/i})).toBeInTheDocument();
+function mockFetch(response: unknown, ok = true) {
+    global.fetch = jest.fn().mockResolvedValue({
+        ok,
+        json: () => Promise.resolve(response),
+    });
+}
+
+function mockFetchReject() {
+    global.fetch = jest.fn().mockRejectedValue(new Error("fetch failed"));
+}
+
+describe("LentPage", () => {
+    beforeEach(() => {
+        global.fetch = jest.fn();
     });
 
-    it("renders all lent book cards by default", () => {
-        render(<LentPage lentBooks={lentBooks}/>);
-        expect(screen.getByText("Orientalism")).toBeInTheDocument();
-        expect(screen.getByText("Ficciones")).toBeInTheDocument();
-        expect(screen.getByText("Invisible Cities")).toBeInTheDocument();
+    afterEach(() => {
+        jest.resetAllMocks();
     });
 
-    it("renders correct lent book count in subtitle", () => {
-        render(<LentPage lentBooks={lentBooks}/>);
-        expect(screen.getByText(new RegExp(`${lentBooks.length} books`))).toBeInTheDocument();
+    it("renders page without crashing", () => {
+        mockFetch(MOCK_LENDINGS);
+        render(<LentPage />);
+        expect(screen.getByTestId("lent-page")).toBeInTheDocument();
     });
 
-    it("shows overdue indicator for overdue books", () => {
-        render(<LentPage lentBooks={lentBooks}/>);
-        const overdueElements = screen.getAllByText(/Overdue/);
-        expect(overdueElements.length).toBeGreaterThan(0);
+    it("shows skeleton cards while loading", () => {
+        global.fetch = jest.fn(() => new Promise(() => {}));
+        render(<LentPage />);
+        expect(screen.getAllByRole("generic").some((el) => el.classList.contains("animate-pulse"))).toBe(true);
     });
 
-    it("filters to show only overdue books when Overdue Only is clicked", () => {
-        render(<LentPage lentBooks={lentBooks}/>);
-        fireEvent.click(screen.getByRole("button", {name: "Overdue Only"}));
-        // Overdue books visible
-        expect(screen.getByText("Invisible Cities")).toBeInTheDocument();
-        // Non-overdue books should not be visible
-        expect(screen.queryByText("Orientalism")).not.toBeInTheDocument();
+    it("shows lending cards after fetch resolves", async () => {
+        mockFetch(MOCK_LENDINGS);
+        render(<LentPage />);
+        await waitFor(() => {
+            expect(screen.getByText("Book #5")).toBeInTheDocument();
+        });
     });
 
-    it("shows all books again when All Lent is clicked after filtering", () => {
-        render(<LentPage lentBooks={lentBooks}/>);
-        fireEvent.click(screen.getByRole("button", {name: "Overdue Only"}));
-        fireEvent.click(screen.getByRole("button", {name: "All Lent"}));
-        expect(screen.getByText("Orientalism")).toBeInTheDocument();
-        expect(screen.getByText("Ficciones")).toBeInTheDocument();
+    it("marks overdue lendings correctly", async () => {
+        mockFetch(MOCK_LENDINGS);
+        render(<LentPage />);
+        await waitFor(() => {
+            expect(screen.getByText(/overdue/i)).toBeInTheDocument();
+        });
     });
 
-    it("renders Mark Returned and Remind buttons for each card", () => {
-        render(<LentPage lentBooks={lentBooks}/>);
-        const markReturnedBtns = screen.getAllByRole("button", {name: /Mark Returned/i});
-        expect(markReturnedBtns.length).toBe(lentBooks.length);
+    it("shows error state when fetch fails", async () => {
+        mockFetchReject();
+        render(<LentPage />);
+        await waitFor(() => {
+            expect(screen.getByText("Something went wrong")).toBeInTheDocument();
+        });
+    });
+
+    it("shows retry button on error", async () => {
+        mockFetchReject();
+        render(<LentPage />);
+        await waitFor(() => {
+            expect(screen.getByRole("button", { name: /try again/i })).toBeInTheDocument();
+        });
+    });
+
+    it("re-fetches when retry button clicked", async () => {
+        let calls = 0;
+        global.fetch = jest.fn(() => {
+            calls++;
+            if (calls === 1) return Promise.reject(new Error("fail"));
+            return Promise.resolve({ ok: true, json: () => Promise.resolve(MOCK_LENDINGS) });
+        }) as unknown as typeof fetch;
+        render(<LentPage />);
+        await waitFor(() => screen.getByRole("button", { name: /try again/i }));
+        fireEvent.click(screen.getByRole("button", { name: /try again/i }));
+        await waitFor(() => {
+            expect(screen.getByText("Book #5")).toBeInTheDocument();
+        });
+    });
+
+    it("shows empty state when no lendings returned", async () => {
+        mockFetch([]);
+        render(<LentPage />);
+        await waitFor(() => {
+            expect(screen.getByText("No books are currently lent out.")).toBeInTheDocument();
+        });
+    });
+
+    it("shows overdue-specific empty state when overdue filter active and no overdue items", async () => {
+        mockFetch([MOCK_LENDINGS[0]]);
+        render(<LentPage />);
+        await waitFor(() => screen.getByText("Book #5"));
+        fireEvent.click(screen.getByText(/overdue only/i));
+        await waitFor(() => {
+            expect(screen.getByText("No overdue books")).toBeInTheDocument();
+        });
+    });
+
+    it("marks a lending as returned and refetches the list", async () => {
+        (global.fetch as jest.Mock)
+            .mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve([{ id: 9, bookId: 1, memberId: 2, lentDate: "2026-08-01", expectedReturnDate: null, actualReturnDate: null, status: "ACTIVE" }]) })
+            .mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve({ id: 9, status: "RETURNED" }) })
+            .mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve([]) });
+
+        render(<LentPage />);
+        await waitFor(() => expect(screen.getByText(/mark returned/i)).toBeInTheDocument());
+
+        await userEvent.click(screen.getByText(/mark returned/i));
+
+        await waitFor(() => expect(global.fetch).toHaveBeenNthCalledWith(2, "/api/lending/9/return", expect.objectContaining({ method: "PUT" })));
+        await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(3));
     });
 });

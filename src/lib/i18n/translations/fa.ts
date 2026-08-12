@@ -50,6 +50,11 @@ const fa: Translations = {
         noResults: "نتیجه‌ای یافت نشد.",
         overdue: "تأخیر دارد",
         dash: "—",
+        errorHeading: "مشکلی پیش آمد",
+        errorDescription: "اتصال به سرور ممکن نشد. اتصال اینترنت خود را بررسی و دوباره تلاش کنید.",
+        retry: "تلاش مجدد",
+        prev: "قبلی",
+        next: "بعدی",
     },
 
     sidebar: {
@@ -100,6 +105,11 @@ const fa: Translations = {
         activityLent: "{title} به {person} امانت داده شد",
         activityAdded: "{title} به مجموعه اضافه شد",
         activityReturned: "{person} کتاب {title} را برگرداند",
+        kpiErrorShort: "بارگذاری ناموفق",
+        recentlyAddedEmpty: "هنوز کتابی اضافه نشده",
+        recentlyAddedEmptyDesc: "کتاب‌هایی که اضافه می‌کنید اینجا نمایش داده می‌شوند.",
+        activityEmpty: "فعالیت اخیری وجود ندارد",
+        activityEmptyDesc: "فعالیت‌ها پس از امانت یا بازگشت کتاب نمایش داده می‌شوند.",
     },
 
     books: {
@@ -117,6 +127,10 @@ const fa: Translations = {
         colStatus: "وضعیت",
         colLentTo: "امانت به",
         colRating: "امتیاز",
+        emptyFiltered: "کتابی با این فیلتر یافت نشد",
+        emptyFilteredDesc: "فیلتر وضعیت دیگری را امتحان کنید.",
+        emptyAll: "کتابخانه شما خالی است",
+        emptyAllDesc: "اولین کتاب خود را اضافه کنید.",
     },
 
     lent: {
@@ -131,6 +145,7 @@ const fa: Translations = {
         remind: "یادآوری",
         overdueWarning: "⚠ {date} — تأخیر دارد",
         emptyState: "در حال حاضر هیچ کتابی امانت داده نشده است.",
+        emptyOverdue: "هیچ کتاب دیرکردی وجود ندارد",
     },
 
     authors: {
@@ -148,6 +163,10 @@ const fa: Translations = {
         colStatus: "وضعیت",
         colRating: "امتیاز",
         colNotes: "یادداشت",
+        emptyAuthors: "هنوز نویسنده‌ای ثبت نشده",
+        emptyAuthorsDesc: "نویسندگان با افزودن کتاب‌ها به‌طور خودکار نمایش داده می‌شوند.",
+        emptyWorks: "اثری یافت نشد",
+        emptyWorksDesc: "هیچ کتابی از این نویسنده در مجموعه شما وجود ندارد.",
     },
 
     settings: {
@@ -184,12 +203,19 @@ const fa: Translations = {
         colDateReturned: "تاریخ بازگشت",
         colCondition: "وضعیت",
         btnDelete: "حذف",
+        btnConfirmDelete: "تأیید حذف؟",
+        btnEdit: "ویرایش",
+        errorDeleteConflict: "این کتاب دارای تاریخچه امانت است و قابل حذف نیست.",
         btnClose: "بستن",
         btnLend: "امانت دادن",
+        labelLendTo: "امانت به",
+        selectMember: "انتخاب عضو",
+        noMembers: "هنوز عضوی وجود ندارد.",
     },
 
     addBook: {
         title: "افزودن کتاب جدید",
+        titleEdit: "ویرایش کتاب",
         subtitle: "یک جلد جدید به کتابخانه‌تان اضافه کنید",
         fieldTitle: "عنوان *",
         fieldTitlePlaceholder: "مثلاً: برادران کارامازوف",
@@ -206,6 +232,7 @@ const fa: Translations = {
         fieldIsbnPlaceholder: "978-…",
         fieldPages: "تعداد صفحات",
         fieldPagesPlaceholder: "مثلاً: ۸۲۴",
+        fieldQuantity: "تعداد",
         fieldRating: "امتیاز",
         fieldRatingDefault: "— بدون امتیاز —",
         fieldDescription: "توضیحات / خلاصه",

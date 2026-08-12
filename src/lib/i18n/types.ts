@@ -55,6 +55,11 @@ export interface Translations {
         noResults: string;
         overdue: string;
         dash: string; // em-dash placeholder "—"
+        errorHeading: string;
+        errorDescription: string;
+        retry: string;
+        prev: string;
+        next: string;
     };
 
     // ── Sidebar ─────────────────────────────────────────────────────────────────
@@ -108,6 +113,11 @@ export interface Translations {
         activityLent: string;      // "Lent {title} to {person}"
         activityAdded: string;     // "Added {title} to collection"
         activityReturned: string;  // "{person} returned {title}"
+        kpiErrorShort: string;
+        recentlyAddedEmpty: string;
+        recentlyAddedEmptyDesc: string;
+        activityEmpty: string;
+        activityEmptyDesc: string;
     };
 
     // ── All Books page ──────────────────────────────────────────────────────────
@@ -126,6 +136,10 @@ export interface Translations {
         colStatus: string;
         colLentTo: string;
         colRating: string;
+        emptyFiltered: string;
+        emptyFilteredDesc: string;
+        emptyAll: string;
+        emptyAllDesc: string;
     };
 
     // ── Lent page ───────────────────────────────────────────────────────────────
@@ -141,6 +155,7 @@ export interface Translations {
         remind: string;
         overdueWarning: string;
         emptyState: string;
+        emptyOverdue: string;
     };
 
     // ── Authors page ─────────────────────────────────────────────────────────────
@@ -159,6 +174,10 @@ export interface Translations {
         colStatus: string;
         colRating: string;
         colNotes: string;
+        emptyAuthors: string;
+        emptyAuthorsDesc: string;
+        emptyWorks: string;
+        emptyWorksDesc: string;
     };
 
     // ── Settings page ────────────────────────────────────────────────────────────
@@ -197,13 +216,20 @@ export interface Translations {
         colDateReturned: string;
         colCondition: string;
         btnDelete: string;
+        btnConfirmDelete: string;
+        btnEdit: string;
+        errorDeleteConflict: string;
         btnClose: string;
         btnLend: string;
+        labelLendTo: string;
+        selectMember: string;
+        noMembers: string;
     };
 
     // ── Add book modal ────────────────────────────────────────────────────────────
     addBook: {
         title: string;
+        titleEdit: string;
         subtitle: string;
         fieldTitle: string;
         fieldTitlePlaceholder: string;
@@ -220,6 +246,7 @@ export interface Translations {
         fieldIsbnPlaceholder: string;
         fieldPages: string;
         fieldPagesPlaceholder: string;
+        fieldQuantity: string;
         fieldRating: string;
         fieldRatingDefault: string;
         fieldDescription: string;
