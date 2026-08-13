@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import {NextRequest, NextResponse} from "next/server";
 
 export async function GET(req: NextRequest) {
     const token = req.cookies.get("access_token")?.value;
@@ -6,7 +6,7 @@ export async function GET(req: NextRequest) {
 
     let res: Response;
     try {
-        res = await fetch(`${process.env.API_BASE_URL}/dashboard/recent-activity?limit=5`, {
+        res = await fetch(`${process.env.API_BASE_URL}/api/dashboard/recent-activity?limit=5`, {
             headers: { Authorization: `Bearer ${token}` },
         });
     } catch {
