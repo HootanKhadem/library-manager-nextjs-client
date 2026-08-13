@@ -85,7 +85,9 @@
       "Bash(node \"C:/Users/Hootan/.claude/plugins/cache/impeccable/impeccable/4.0.4/skills/impeccable/scripts/hook-admin.mjs\" ignore-value design-system-color \"#a8a29e\" --file \"src/app/login/login.module.css\" --reason \"app-shell \\(Operate-mode, stone-400\\) color predates this session's marketing DESIGN.md, out of that doc's stated scope\")",
       "Bash(node \"C:/Users/Hootan/.claude/plugins/cache/impeccable/impeccable/4.0.4/skills/impeccable/scripts/detect.mjs\" --json \"src/app/\\(marketing\\)\" src/app/globals.css)",
       "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('.impeccable/design.json','utf8'\\)\\); console.log\\('design.json valid JSON'\\)\")",
-      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('.impeccable/design.json','utf8'\\)\\); console.log\\('design.json valid'\\)\")"
+      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('.impeccable/design.json','utf8'\\)\\); console.log\\('design.json valid'\\)\")",
+      "Bash(gh pr *)",
+      "Bash(git fetch *)"
     ]
   }
 }
