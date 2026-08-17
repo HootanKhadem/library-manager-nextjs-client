@@ -197,6 +197,7 @@ export interface Translations {
         loan30: string;
         loan60: string;
         loan90: string;
+        saveError: string;
     };
 
     // ── Book detail modal ────────────────────────────────────────────────────────

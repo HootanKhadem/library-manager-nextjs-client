@@ -165,6 +165,7 @@ const en: Translations = {
         loan30: "30 days",
         loan60: "60 days",
         loan90: "90 days",
+        saveError: "Could not save preferences. Please try again.",
     },
 
     bookDetail: {
