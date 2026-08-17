@@ -185,6 +185,7 @@ const fa: Translations = {
         loan30: "۳۰ روز",
         loan60: "۶۰ روز",
         loan90: "۹۰ روز",
+        saveError: "ذخیره تنظیمات انجام نشد. دوباره تلاش کنید.",
     },
 
     bookDetail: {

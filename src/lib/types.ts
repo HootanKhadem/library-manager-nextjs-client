@@ -1,3 +1,5 @@
+import type { Language } from "@/src/lib/i18n/types";
+
 export type BookStatus = "Owned" | "Lent Out" | "Wishlist" | "Read";
 
 export type BookGenre =
@@ -163,4 +165,18 @@ export interface BackendAuthor {
 export interface BackendGenre {
     id: number;
     name: string;
+}
+
+// ── Preferences API response type ───────────────────────────────────────────
+
+export type DateFormat = "DD MMM YYYY" | "MM/DD/YYYY" | "DD/MM/YYYY" | "YYYY-MM-DD";
+
+export interface UserPreference {
+    libraryName?: string;
+    ownerName?: string;
+    description?: string;
+    defaultLoanDurationDays?: number;
+    dateFormat?: DateFormat;
+    language?: Language;
+    modifiedOn?: string;
 }

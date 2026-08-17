@@ -1,11 +1,14 @@
 import {NextRequest, NextResponse} from 'next/server';
 
-const PUBLIC_PATHS = ['/login'];
+// Only these app routes require an authenticated session. Everything else
+// (marketing pages, the landing page at "/", /login) is public by default,
+// so unauthenticated visitors always see the landing page first.
+const PROTECTED_PATHS = ['/dashboard', '/books', '/lent', '/authors', '/settings'];
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
     const {pathname} = req.nextUrl;
 
-    if (PUBLIC_PATHS.some(p => pathname.startsWith(p))) {
+    if (!PROTECTED_PATHS.some(p => pathname.startsWith(p))) {
         return NextResponse.next();
     }
 
