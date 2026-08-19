@@ -312,6 +312,7 @@ export default function LoginPage() {
                         Don&apos;t have an account?{' '}
                         <button
                             type="button"
+                            onClick={() => router.push('/signup')}
                             className="text-rose-600 font-medium no-underline hover:text-rose-700 transition-colors duration-150 bg-transparent border-none p-0 cursor-pointer"
                         >
                             Create one
