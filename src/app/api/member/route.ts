@@ -1,25 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
+import { buildAuthCookieHeader, relayRefreshedAccessToken } from "@/src/app/api/_authFetch";
 
 export async function GET(req: NextRequest) {
-    const token = req.cookies.get("access_token")?.value;
-    if (!token) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    const cookieHeader = buildAuthCookieHeader(req);
+    if (!cookieHeader) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
     let res: Response;
     try {
         res = await fetch(`${process.env.API_BASE_URL}/api/member`, {
-            headers: { Authorization: `Bearer ${token}` },
+            headers: { Cookie: cookieHeader },
         });
     } catch {
         return NextResponse.json({ message: "Unable to reach the server. Please try again." }, { status: 503 });
     }
 
     const data = await res.json().catch(() => []);
-    return NextResponse.json(data, { status: res.status });
+    const response = NextResponse.json(data, { status: res.status });
+    relayRefreshedAccessToken(req, res, response);
+    return response;
 }
 
 export async function POST(req: NextRequest) {
-    const token = req.cookies.get("access_token")?.value;
-    if (!token) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    const cookieHeader = buildAuthCookieHeader(req);
+    if (!cookieHeader) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
     const body = await req.json().catch(() => null);
 
@@ -27,7 +30,7 @@ export async function POST(req: NextRequest) {
     try {
         res = await fetch(`${process.env.API_BASE_URL}/api/member`, {
             method: "POST",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            headers: { "Content-Type": "application/json", Cookie: cookieHeader },
             body: JSON.stringify(body),
         });
     } catch {
@@ -35,5 +38,7 @@ export async function POST(req: NextRequest) {
     }
 
     const data = await res.json().catch(() => ({}));
-    return NextResponse.json(data, { status: res.status });
+    const response = NextResponse.json(data, { status: res.status });
+    relayRefreshedAccessToken(req, res, response);
+    return response;
 }
