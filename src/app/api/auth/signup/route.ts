@@ -1,16 +1,5 @@
 import {NextRequest, NextResponse} from 'next/server';
-
-function cookieBase(req: NextRequest) {
-    // Use HTTPS as the signal, not NODE_ENV. This works correctly in staging
-    // environments served over HTTPS with NODE_ENV !== 'production'.
-    const isHttps = req.url.startsWith('https://');
-    return {
-        httpOnly: true,
-        secure: isHttps,
-        sameSite: 'lax' as const,
-        path: '/',
-    };
-}
+import {cookieBase, REFRESH_MAX_AGE} from '../_cookies';
 
 export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => null);
@@ -53,8 +42,17 @@ export async function POST(req: NextRequest) {
     const base = cookieBase(req);
     const response = NextResponse.json({ok: true}, {status: 201});
 
+    // access_token: always a session cookie (no maxAge) — expires when the
+    // browser closes. The server controls its actual expiry via the JWT claim.
     response.cookies.set('access_token', access_token, base);
-    response.cookies.set('refresh_token', refresh_token, base);
+
+    // refresh_token: signup always implies "stay logged in" (there's no
+    // remember-me checkbox on this form, and AuthContext.signup() persists
+    // the session to localStorage unconditionally), so this must be a
+    // persistent cookie to match — otherwise the client believes the user
+    // is authenticated after a browser restart when the server-side session
+    // has already expired.
+    response.cookies.set('refresh_token', refresh_token, {...base, maxAge: REFRESH_MAX_AGE});
 
     return response;
 }

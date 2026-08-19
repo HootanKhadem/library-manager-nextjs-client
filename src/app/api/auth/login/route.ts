@@ -1,19 +1,5 @@
 import {NextRequest, NextResponse} from 'next/server';
-
-// 7 days — applied to refresh_token when "remember me" is checked
-const REFRESH_MAX_AGE = 60 * 60 * 24 * 7;
-
-function cookieBase(req: NextRequest) {
-    // Use HTTPS as the signal, not NODE_ENV. This works correctly in staging
-    // environments served over HTTPS with NODE_ENV !== 'production'.
-    const isHttps = req.url.startsWith('https://');
-    return {
-        httpOnly: true,
-        secure: isHttps,
-        sameSite: 'lax' as const,
-        path: '/',
-    };
-}
+import {cookieBase, REFRESH_MAX_AGE} from '../_cookies';
 
 export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => null);

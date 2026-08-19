@@ -71,6 +71,19 @@ describe('POST /api/auth/signup', () => {
         expect(res.cookies.get('refresh_token')?.value).toBe('refresh-xyz');
     });
 
+    it('sets maxAge on the refresh_token cookie (signup always implies "stay logged in")', async () => {
+        (global.fetch as jest.Mock).mockResolvedValueOnce({
+            ok: true,
+            json: () => Promise.resolve(MOCK_TOKENS),
+        });
+
+        const res = await POST(makeRequest({name: 'Ada', email: 'ada@example.com', password: 'Passw0rd'}));
+
+        const setCookieHeader = res.headers.get('set-cookie') ?? '';
+        expect(setCookieHeader).toMatch(/max-age=\d+/i);
+        expect(res.cookies.get('refresh_token')?.maxAge).toEqual(expect.any(Number));
+    });
+
     // ── Validation ───────────────────────────────────────────────────────────
 
     it('returns 400 when name is missing', async () => {
