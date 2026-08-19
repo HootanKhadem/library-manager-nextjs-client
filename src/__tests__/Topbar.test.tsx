@@ -9,6 +9,7 @@ jest.mock("@zxing/browser", () => ({
 
 jest.mock("next/navigation", () => ({
     usePathname: jest.fn(() => "/dashboard"),
+    useRouter: jest.fn(() => ({replace: jest.fn()})),
 }));
 
 const mockSetSearchQuery = jest.fn();
@@ -17,6 +18,14 @@ jest.mock("@/src/contexts/LibraryContext", () => ({
     useLibrary: jest.fn(() => ({
         searchQuery: mockSearchQuery,
         setSearchQuery: mockSetSearchQuery,
+    })),
+}));
+
+const mockLogout = jest.fn();
+jest.mock("@/src/contexts/AuthContext", () => ({
+    useAuth: jest.fn(() => ({
+        user: {name: "Ada Lovelace", email: "ada@example.com"},
+        logout: mockLogout,
     })),
 }));
 
@@ -106,6 +115,36 @@ describe("Topbar component", () => {
             const inputs = screen.getAllByRole("searchbox", { name: /search/i });
             fireEvent.change(inputs[inputs.length - 1], { target: { value: "Borges" } });
             expect(mockSetSearchQuery).toHaveBeenCalledWith("Borges");
+        });
+    });
+
+    describe("account menu", () => {
+        it("renders an account button", () => {
+            render(<Topbar {...defaultProps} />);
+            expect(screen.getByRole("button", {name: /account/i})).toBeInTheDocument();
+        });
+
+        it("opens the account menu showing the user's name and Log out when clicked", () => {
+            render(<Topbar {...defaultProps} />);
+            fireEvent.click(screen.getByRole("button", {name: /account/i}));
+            expect(screen.getByText("Ada Lovelace")).toBeInTheDocument();
+            expect(screen.getByRole("menuitem", {name: /log out/i})).toBeInTheDocument();
+        });
+
+        it("calls logout() when Log out is clicked", async () => {
+            mockLogout.mockResolvedValue(undefined);
+            render(<Topbar {...defaultProps} />);
+            fireEvent.click(screen.getByRole("button", {name: /account/i}));
+            fireEvent.click(screen.getByRole("menuitem", {name: /log out/i}));
+            expect(mockLogout).toHaveBeenCalled();
+        });
+
+        it("closes the menu when Escape is pressed", () => {
+            render(<Topbar {...defaultProps} />);
+            fireEvent.click(screen.getByRole("button", {name: /account/i}));
+            expect(screen.getByRole("menu")).toBeInTheDocument();
+            fireEvent.keyDown(document, {key: "Escape"});
+            expect(screen.queryByRole("menu")).not.toBeInTheDocument();
         });
     });
 });

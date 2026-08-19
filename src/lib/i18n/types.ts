@@ -83,6 +83,8 @@ export interface Translations {
     // ── Topbar ──────────────────────────────────────────────────────────────────
     topbar: {
         toggleMenu: string;
+        account: string;
+        logout: string;
         pages: {
             dashboard: [string, string]; // [title, subtitle]
             books: [string, string];

@@ -12,6 +12,7 @@ jest.mock("@/src/contexts/AuthContext", () => ({
 }));
 
 const mockReplace = jest.fn();
+const mockPush = jest.fn();
 
 type AuthState = {
     isAuthenticated?: boolean;
@@ -28,7 +29,7 @@ function setupAuth(overrides: AuthState = {}) {
         logout: jest.fn(),
         ...overrides,
     });
-    (useRouter as jest.Mock).mockReturnValue({replace: mockReplace});
+    (useRouter as jest.Mock).mockReturnValue({replace: mockReplace, push: mockPush});
 }
 
 /** Fill both fields and click submit; wraps in act for async handleSubmit. */
@@ -119,6 +120,12 @@ describe("LoginPage", () => {
         render(<LoginPage/>);
         expect(screen.getByText(/don't have an account/i)).toBeInTheDocument();
         expect(screen.getByRole("button", {name: /create one/i})).toBeInTheDocument();
+    });
+
+    it("navigates to /signup when the create account button is clicked", () => {
+        render(<LoginPage/>);
+        fireEvent.click(screen.getByRole("button", {name: /create one/i}));
+        expect(mockPush).toHaveBeenCalledWith("/signup");
     });
 
     // ── Password toggle ──────────────────────────────────────────────────────
