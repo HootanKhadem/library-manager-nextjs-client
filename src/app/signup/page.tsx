@@ -295,7 +295,7 @@ export default function SignupPage() {
                                 <button
                                     type="button"
                                     className="absolute right-2.75 top-1/2 -translate-y-1/2 flex bg-transparent border-none p-0 text-stone-400 hover:text-stone-700 cursor-pointer transition-colors duration-150"
-                                    aria-label="Toggle password visibility"
+                                    aria-label="Toggle password confirmation visibility"
                                     onClick={() => setShowConfirmPassword(v => !v)}
                                 >
                                     {showConfirmPassword ? (
