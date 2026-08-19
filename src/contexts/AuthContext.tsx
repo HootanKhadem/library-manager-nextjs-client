@@ -50,6 +50,7 @@ export function AuthProvider({children}: { children: ReactNode }) {
         const persisted =
             localStorage.getItem(STORAGE_KEY) === 'true' ||
             sessionStorage.getItem(STORAGE_KEY) === 'true';
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrating auth flag from storage on mount, not a cascading-render loop
         setIsAuthenticated(persisted);
 
         if (persisted) {
