@@ -76,6 +76,8 @@ const fa: Translations = {
 
     topbar: {
         toggleMenu: "نمایش/مخفی منو",
+        account: "حساب کاربری",
+        logout: "خروج",
         pages: {
             dashboard: ["داشبورد", "نمای کلی"],
             books: ["همه کتاب‌ها", "مجموعه کامل شما"],

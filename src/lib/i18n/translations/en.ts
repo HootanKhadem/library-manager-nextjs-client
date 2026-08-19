@@ -55,6 +55,8 @@ const en: Translations = {
 
     topbar: {
         toggleMenu: "Toggle menu",
+        account: "Account",
+        logout: "Log out",
         pages: {
             dashboard: ["Dashboard", "Overview"],
             books: ["All Books", "Your Complete Collection"],
