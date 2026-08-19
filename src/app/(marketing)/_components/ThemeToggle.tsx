@@ -15,6 +15,7 @@ export function ThemeToggle() {
             // localStorage unavailable — fall back to the dark default
         }
         if (stored === 'light') {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrating theme preference from storage on mount
             setTheme('light');
             document.querySelector('.bw-world')?.setAttribute('data-theme', 'light');
         }

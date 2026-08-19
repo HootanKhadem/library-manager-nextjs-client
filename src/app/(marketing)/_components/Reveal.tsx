@@ -21,6 +21,7 @@ export function Reveal({
         if (!el) return;
 
         if (typeof IntersectionObserver === 'undefined') {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setVisible(true);
             return;
         }

@@ -2,13 +2,16 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { LibraryProvider } from "@/src/contexts/LibraryContext";
 import { LanguageProvider } from "@/src/lib/i18n/context";
+import { AuthProvider } from "@/src/contexts/AuthContext";
 import AppShell from "@/src/components/AppShell";
 import BooksRoute from "@/src/app/(app)/books/page";
 import { BackendBook, BackendGenre, PagedResponse } from "@/src/lib/types";
 
-// AppShell composes Sidebar + Topbar, both of which call usePathname().
+// AppShell composes Sidebar + Topbar. Topbar calls usePathname() and, since it
+// now has an account menu with a logout button, useRouter().
 jest.mock("next/navigation", () => ({
     usePathname: jest.fn(() => "/books"),
+    useRouter: jest.fn(() => ({ replace: jest.fn() })),
 }));
 
 // The barcode scanner pulls in a camera-dependent library; it's never opened in these
@@ -69,13 +72,15 @@ function setupFetchMock(extra: Record<string, FetchHandler> = {}) {
 
 function renderApp() {
     return render(
-        <LanguageProvider>
-            <LibraryProvider>
-                <AppShell>
-                    <BooksRoute />
-                </AppShell>
-            </LibraryProvider>
-        </LanguageProvider>
+        <AuthProvider>
+            <LanguageProvider>
+                <LibraryProvider>
+                    <AppShell>
+                        <BooksRoute />
+                    </AppShell>
+                </LibraryProvider>
+            </LanguageProvider>
+        </AuthProvider>
     );
 }
 

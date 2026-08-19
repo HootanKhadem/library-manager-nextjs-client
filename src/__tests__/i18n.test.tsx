@@ -55,6 +55,15 @@ jest.mock("@/src/contexts/LibraryContext", () => ({
     })),
 }));
 
+// Topbar's account menu calls useAuth(); these tests only exercise i18n, so a
+// minimal stub is enough.
+jest.mock("@/src/contexts/AuthContext", () => ({
+    useAuth: jest.fn(() => ({
+        user: {name: "Ada Lovelace", email: "ada@example.com"},
+        logout: jest.fn(),
+    })),
+}));
+
 jest.mock("@zxing/browser", () => ({
     BrowserMultiFormatReader: jest.fn().mockImplementation(() => ({
         decodeFromVideoDevice: jest.fn().mockResolvedValue({stop: jest.fn()}),
