@@ -32,6 +32,12 @@ export function MarketingHeader() {
                 <div className="flex items-center gap-3">
                     <ThemeToggle/>
                     <Link
+                        href="/signup"
+                        className="rounded-full border border-[var(--bw-rib)] px-5 py-2.5 text-[13px] font-semibold text-[var(--bw-ink)] transition-colors duration-200 hover:bg-[var(--bw-bg-raised)]"
+                    >
+                        Sign up
+                    </Link>
+                    <Link
                         href="/login"
                         className="rounded-full bg-[var(--bw-rose)] px-5 py-2.5 text-[13px] font-semibold text-white shadow-[var(--bw-glow-shadow)] transition-transform duration-200 hover:scale-[1.03] active:scale-[0.98]"
                     >
