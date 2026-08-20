@@ -1,18 +1,21 @@
 import {NextRequest, NextResponse} from "next/server";
+import { buildAuthCookieHeader, relayRefreshedAccessToken } from "@/src/app/api/_authFetch";
 
 export async function GET(req: NextRequest) {
-    const token = req.cookies.get("access_token")?.value;
-    if (!token) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    const cookieHeader = buildAuthCookieHeader(req);
+    if (!cookieHeader) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
     let res: Response;
     try {
         res = await fetch(`${process.env.API_BASE_URL}/api/dashboard/stats/lent-out`, {
-            headers: { Authorization: `Bearer ${token}` },
+            headers: { Cookie: cookieHeader },
         });
     } catch {
         return NextResponse.json({ message: "Unable to reach the server. Please try again." }, { status: 503 });
     }
 
     const data = await res.json().catch(() => ({}));
-    return NextResponse.json(data, { status: res.status });
+    const response = NextResponse.json(data, { status: res.status });
+    relayRefreshedAccessToken(req, res, response);
+    return response;
 }

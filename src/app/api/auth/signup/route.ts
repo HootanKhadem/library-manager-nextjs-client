@@ -1,5 +1,5 @@
 import {NextRequest, NextResponse} from 'next/server';
-import {cookieBase, REFRESH_MAX_AGE} from '../_cookies';
+import {cookieBase, extractCookieValue, REFRESH_MAX_AGE} from '../_cookies';
 
 export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => null);
@@ -37,7 +37,16 @@ export async function POST(req: NextRequest) {
         );
     }
 
-    const {access_token, refresh_token} = await apiRes.json();
+    const setCookieHeaders = apiRes.headers.getSetCookie();
+    const access_token = extractCookieValue(setCookieHeaders, 'access_token');
+    const refresh_token = extractCookieValue(setCookieHeaders, 'refresh_token');
+
+    if (!access_token || !refresh_token) {
+        return NextResponse.json(
+            {message: 'Unable to create account.'},
+            {status: 502}
+        );
+    }
 
     const base = cookieBase(req);
     const response = NextResponse.json({ok: true}, {status: 201});

@@ -2,7 +2,22 @@
 import {NextRequest} from 'next/server';
 import {POST} from '@/src/app/api/auth/signup/route';
 
-const MOCK_TOKENS = {access_token: 'access-abc', refresh_token: 'refresh-xyz'};
+// The real backend never returns tokens in the JSON body — only via raw
+// Set-Cookie response headers (library-manager-backend's refresh-token-flow
+// design: cookies are the only place tokens live).
+const MOCK_BODY = {name: 'Ada', email: 'ada@example.com', role: 'USER'};
+const MOCK_SET_COOKIE_HEADERS = [
+    'access_token=access-abc; Path=/; Secure; HttpOnly; SameSite=None',
+    'refresh_token=refresh-xyz; Expires=Wed, 26 Aug 2026 12:43:45 GMT; Path=/; Secure; HttpOnly; SameSite=None',
+];
+
+function mockApiRes() {
+    return {
+        ok: true,
+        json: () => Promise.resolve(MOCK_BODY),
+        headers: {getSetCookie: () => MOCK_SET_COOKIE_HEADERS},
+    };
+}
 
 function makeRequest(body: object): NextRequest {
     return new NextRequest('http://localhost/api/auth/signup', {
@@ -24,10 +39,7 @@ describe('POST /api/auth/signup', () => {
     // ── Success path ──────────────────────────────────────────────────────────
 
     it('returns 201 with { ok: true } when the API creates the account', async () => {
-        (global.fetch as jest.Mock).mockResolvedValueOnce({
-            ok: true,
-            json: () => Promise.resolve(MOCK_TOKENS),
-        });
+        (global.fetch as jest.Mock).mockResolvedValueOnce(mockApiRes());
 
         const res = await POST(makeRequest({name: 'Ada', email: 'ada@example.com', password: 'Passw0rd'}));
 
@@ -36,10 +48,7 @@ describe('POST /api/auth/signup', () => {
     });
 
     it('forwards name, email, and password to the external API', async () => {
-        (global.fetch as jest.Mock).mockResolvedValueOnce({
-            ok: true,
-            json: () => Promise.resolve(MOCK_TOKENS),
-        });
+        (global.fetch as jest.Mock).mockResolvedValueOnce(mockApiRes());
 
         await POST(makeRequest({name: 'Ada', email: 'ada@example.com', password: 'Passw0rd'}));
 
@@ -50,10 +59,7 @@ describe('POST /api/auth/signup', () => {
     });
 
     it('sets access_token as an httpOnly cookie on success', async () => {
-        (global.fetch as jest.Mock).mockResolvedValueOnce({
-            ok: true,
-            json: () => Promise.resolve(MOCK_TOKENS),
-        });
+        (global.fetch as jest.Mock).mockResolvedValueOnce(mockApiRes());
 
         const res = await POST(makeRequest({name: 'Ada', email: 'ada@example.com', password: 'Passw0rd'}));
 
@@ -61,10 +67,7 @@ describe('POST /api/auth/signup', () => {
     });
 
     it('sets refresh_token as an httpOnly cookie on success', async () => {
-        (global.fetch as jest.Mock).mockResolvedValueOnce({
-            ok: true,
-            json: () => Promise.resolve(MOCK_TOKENS),
-        });
+        (global.fetch as jest.Mock).mockResolvedValueOnce(mockApiRes());
 
         const res = await POST(makeRequest({name: 'Ada', email: 'ada@example.com', password: 'Passw0rd'}));
 
@@ -72,10 +75,7 @@ describe('POST /api/auth/signup', () => {
     });
 
     it('sets maxAge on the refresh_token cookie (signup always implies "stay logged in")', async () => {
-        (global.fetch as jest.Mock).mockResolvedValueOnce({
-            ok: true,
-            json: () => Promise.resolve(MOCK_TOKENS),
-        });
+        (global.fetch as jest.Mock).mockResolvedValueOnce(mockApiRes());
 
         const res = await POST(makeRequest({name: 'Ada', email: 'ada@example.com', password: 'Passw0rd'}));
 
@@ -141,6 +141,22 @@ describe('POST /api/auth/signup', () => {
 
         const res = await POST(makeRequest({name: 'Ada', email: 'ada@example.com', password: 'Passw0rd'}));
 
+        expect(res.cookies.get('access_token')).toBeUndefined();
+        expect(res.cookies.get('refresh_token')).toBeUndefined();
+    });
+
+    // ── Malformed upstream response ─────────────────────────────────────────
+
+    it('returns 502 when the API responds ok but sends no auth cookies', async () => {
+        (global.fetch as jest.Mock).mockResolvedValueOnce({
+            ok: true,
+            json: () => Promise.resolve(MOCK_BODY),
+            headers: {getSetCookie: () => []},
+        });
+
+        const res = await POST(makeRequest({name: 'Ada', email: 'ada@example.com', password: 'Passw0rd'}));
+
+        expect(res.status).toBe(502);
         expect(res.cookies.get('access_token')).toBeUndefined();
         expect(res.cookies.get('refresh_token')).toBeUndefined();
     });
