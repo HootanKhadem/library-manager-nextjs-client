@@ -24,6 +24,25 @@ describe('buildAuthCookieHeader', () => {
     it('includes both when both are present', () => {
         expect(buildAuthCookieHeader(makeReq('access_token=abc; refresh_token=xyz'))).toBe('access_token=abc; refresh_token=xyz');
     });
+
+    it('percent-encodes a semicolon in the token value instead of letting it inject an extra cookie pair', () => {
+        const malicious = 'a; refresh_token=forged-token';
+        const header = buildAuthCookieHeader(makeReq(`access_token=${encodeURIComponent(malicious)}`));
+        expect(header).toBe(`access_token=${encodeURIComponent(malicious)}`);
+        expect(header).not.toContain('refresh_token=forged-token');
+    });
+
+    it('percent-encodes CRLF in the token value instead of forwarding it raw', () => {
+        const malicious = 'a\r\nX-Evil: yes';
+        const header = buildAuthCookieHeader(makeReq(`access_token=${encodeURIComponent(malicious)}`));
+        expect(header).toBe(`access_token=${encodeURIComponent(malicious)}`);
+        expect(header).not.toContain('\r\n');
+    });
+
+    it('is a no-op for a realistic JWT-shaped value (unreserved characters only)', () => {
+        const jwt = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U';
+        expect(buildAuthCookieHeader(makeReq(`access_token=${jwt}`))).toBe(`access_token=${jwt}`);
+    });
 });
 
 describe('relayRefreshedAccessToken', () => {

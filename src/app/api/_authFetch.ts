@@ -12,8 +12,8 @@ export function buildAuthCookieHeader(req: NextRequest): string | null {
     const refresh = req.cookies.get('refresh_token')?.value;
     if (!access && !refresh) return null;
     return [
-        access ? `access_token=${access}` : null,
-        refresh ? `refresh_token=${refresh}` : null,
+        access ? `access_token=${encodeURIComponent(access)}` : null,
+        refresh ? `refresh_token=${encodeURIComponent(refresh)}` : null,
     ].filter((part): part is string => part !== null).join('; ');
 }
 
