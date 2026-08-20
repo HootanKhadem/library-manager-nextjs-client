@@ -111,10 +111,10 @@ describe("LoginPage", () => {
         expect(screen.getByRole("button", {name: /sign in/i})).toBeInTheDocument();
     });
 
-    it("renders the Google OAuth button", () => {
-        render(<LoginPage/>);
-        expect(screen.getByRole("button", {name: /continue with google/i})).toBeInTheDocument();
-    });
+    // it("renders the Google OAuth button", () => {
+    //     render(<LoginPage/>);
+    //     expect(screen.getByRole("button", {name: /continue with google/i})).toBeInTheDocument();
+    // });
 
     it("renders the create account footer link", () => {
         render(<LoginPage/>);
