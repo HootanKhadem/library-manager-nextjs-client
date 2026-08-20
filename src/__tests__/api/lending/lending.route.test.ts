@@ -22,6 +22,12 @@ describe("POST /api/lending", () => {
         expect(res.status).toBe(401);
     });
 
+    it("proceeds when only refresh_token is present", async () => {
+        (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true, status: 201, json: () => Promise.resolve({ id: 9, bookId: 1, memberId: 2, status: "ACTIVE" }) });
+        const res = await POST(makeReq({ bookId: 1, memberId: 2, lentDate: "2026-08-05" }, "refresh_token=rtok"));
+        expect(res.status).toBe(201);
+    });
+
     it("forwards the request body and Cookie header to the backend", async () => {
         (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true, status: 201, json: () => Promise.resolve({ id: 9, bookId: 1, memberId: 2, status: "ACTIVE" }) });
         await POST(makeReq({ bookId: 1, memberId: 2, lentDate: "2026-08-05" }, "access_token=tok"));

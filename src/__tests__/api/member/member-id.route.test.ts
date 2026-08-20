@@ -33,6 +33,12 @@ describe("PUT /api/member/[id]", () => {
         expect(res.status).toBe(401);
     });
 
+    it("proceeds when only refresh_token is present", async () => {
+        (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve({ id: 1, name: "Lucas Martinez" }) });
+        const res = await PUT(makePutReq({ name: "Lucas Martinez" }, "refresh_token=rtok"), ctx("1"));
+        expect(res.status).toBe(200);
+    });
+
     it("forwards the body and Cookie header to the correct backend path", async () => {
         (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve({ id: 1, name: "Lucas Martinez" }) });
         await PUT(makePutReq({ name: "Lucas Martinez" }, "access_token=tok"), ctx("1"));
@@ -56,6 +62,12 @@ describe("DELETE /api/member/[id]", () => {
     it("returns 401 when both access_token and refresh_token cookies are absent", async () => {
         const res = await DELETE(makeDeleteReq(), ctx("1"));
         expect(res.status).toBe(401);
+    });
+
+    it("proceeds when only refresh_token is present", async () => {
+        (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true, status: 204 });
+        const res = await DELETE(makeDeleteReq("refresh_token=rtok"), ctx("1"));
+        expect(res.status).toBe(204);
     });
 
     it("returns 204 with no body on successful deletion", async () => {

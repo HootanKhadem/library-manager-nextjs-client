@@ -22,6 +22,12 @@ describe("PUT /api/lending/[id]/return", () => {
         expect(res.status).toBe(401);
     });
 
+    it("proceeds when only refresh_token is present", async () => {
+        (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve({ id: 9, status: "RETURNED" }) });
+        const res = await PUT(makeReq("refresh_token=rtok"), ctx("9"));
+        expect(res.status).toBe(200);
+    });
+
     it("requests the correct backend path with a Cookie header", async () => {
         (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve({ id: 9, status: "RETURNED" }) });
         await PUT(makeReq("access_token=tok"), ctx("9"));
