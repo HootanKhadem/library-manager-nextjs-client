@@ -42,3 +42,5 @@ next-env.d.ts
 .superpowers/
 /.impeccable/
 /.worktrees/
+/graphify-out/
+/.code-review-graph/
