@@ -1,39 +1,50 @@
 import React from "react";
-import {act, fireEvent, render, screen} from "@testing-library/react";
+import {act, fireEvent, render, screen, waitFor} from "@testing-library/react";
+import {NotFoundException as MockNotFoundException} from "@zxing/library";
 import {BarcodeScanner} from "@/src/components/ui/BarcodeScanner";
 import {LanguageProvider} from "@/src/lib/i18n/context";
 
 // ---------------------------------------------------------------------------
-// Mock react-barcode-scanner/polyfill (no-op side-effect import)
+// Mock @zxing/library — provides the enums/exception class the component imports
 // ---------------------------------------------------------------------------
-import {BarcodeScanner as Comp} from "react-barcode-scanner";
+jest.mock("@zxing/library", () => {
+    class NotFoundException extends Error {
+    }
 
-jest.mock("react-barcode-scanner/polyfill", () => ({}));
-
-// ---------------------------------------------------------------------------
-// Mock react-barcode-scanner — captures onCapture so tests can trigger it
-// ---------------------------------------------------------------------------
-type DetectedBarcode = { rawValue: string };
-type OnCaptureFn = (barcodes: DetectedBarcode[]) => void;
-
-let capturedOnCapture: OnCaptureFn | null = null;
-
-jest.mock("react-barcode-scanner", () => ({
-    BarcodeScanner: (props: { onCapture?: OnCaptureFn }) => {
-        capturedOnCapture = props.onCapture ?? null;
-        return React.createElement("div", {"data-testid": "scanner-view"});
-    },
-}));
-
-// ---------------------------------------------------------------------------
-// Mock next/dynamic — runs loader synchronously via require
-// ---------------------------------------------------------------------------
-jest.mock("next/dynamic", () => () => {
-    return function DynamicWrapper(props: Record<string, unknown>) {
-        
-        return React.createElement(Comp, props);
+    return {
+        NotFoundException,
+        DecodeHintType: {POSSIBLE_FORMATS: "POSSIBLE_FORMATS"},
+        BarcodeFormat: {
+            EAN_13: "EAN_13",
+            EAN_8: "EAN_8",
+            CODE_128: "CODE_128",
+            CODE_39: "CODE_39",
+            UPC_A: "UPC_A",
+            UPC_E: "UPC_E",
+        },
     };
 });
+
+// ---------------------------------------------------------------------------
+// Mock @zxing/browser — captures the continuous-decode callback so tests can
+// trigger it, and exposes a stoppable controls object.
+// ---------------------------------------------------------------------------
+type DecodeCallback = (
+    result: { getText: () => string } | undefined,
+    error: Error | undefined
+) => void;
+
+let capturedCallback: DecodeCallback | null = null;
+const stop = jest.fn();
+
+jest.mock("@zxing/browser", () => ({
+    BrowserMultiFormatReader: jest.fn().mockImplementation(() => ({
+        decodeFromConstraints: jest.fn((_constraints, _video, callback: DecodeCallback) => {
+            capturedCallback = callback;
+            return Promise.resolve({stop});
+        }),
+    })),
+}));
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -50,7 +61,7 @@ function renderScanner(props: Partial<React.ComponentProps<typeof BarcodeScanner
 }
 
 beforeEach(() => {
-    capturedOnCapture = null;
+    capturedCallback = null;
 });
 
 afterEach(() => {
@@ -90,43 +101,53 @@ describe("BarcodeScanner", () => {
     it("calls onScan with decoded value then calls onClose", async () => {
         const { onScan, onClose } = renderScanner();
 
+        await waitFor(() => expect(capturedCallback).not.toBeNull());
+
         await act(async () => {
-            capturedOnCapture?.([{rawValue: "9780141182605"}]);
+            capturedCallback?.({getText: () => "9780141182605"}, undefined);
         });
 
         expect(onScan).toHaveBeenCalledWith("9780141182605");
         expect(onClose).toHaveBeenCalled();
     });
 
-    it("ignores empty barcode array", async () => {
+    it("ignores decode misses (no result)", async () => {
         const {onScan} = renderScanner();
 
+        await waitFor(() => expect(capturedCallback).not.toBeNull());
+
         await act(async () => {
-            capturedOnCapture?.([]);
+            capturedCallback?.(undefined, new MockNotFoundException());
         });
 
         expect(onScan).not.toHaveBeenCalled();
     });
 
-    it("ignores barcode with empty rawValue", async () => {
-        const { onScan } = renderScanner();
-
-        await act(async () => {
-            capturedOnCapture?.([{rawValue: ""}]);
-        });
-
-        expect(onScan).not.toHaveBeenCalled();
-    });
-
-    it("only fires onScan once even if onCapture fires multiple times", async () => {
+    it("only fires onScan once even if callback fires multiple times", async () => {
         const {onScan} = renderScanner();
 
+        await waitFor(() => expect(capturedCallback).not.toBeNull());
+
         await act(async () => {
-            capturedOnCapture?.([{rawValue: "9780141182605"}]);
-            capturedOnCapture?.([{rawValue: "9780141182605"}]);
+            capturedCallback?.({getText: () => "9780141182605"}, undefined);
+            capturedCallback?.({getText: () => "9780141182605"}, undefined);
         });
 
         expect(onScan).toHaveBeenCalledTimes(1);
+    });
+
+    it("stops the scanner controls on unmount/close", async () => {
+        const {rerender, onClose} = renderScanner();
+
+        await waitFor(() => expect(capturedCallback).not.toBeNull());
+
+        rerender(
+            <LanguageProvider initialLanguage="en">
+                <BarcodeScanner open={false} onClose={onClose} onScan={jest.fn()}/>
+            </LanguageProvider>
+        );
+
+        expect(stop).toHaveBeenCalled();
     });
 
     it("calls onClose when the close button is clicked", () => {

@@ -1,22 +1,11 @@
 "use client";
 
-import {useCallback, useRef} from "react";
-import dynamic from "next/dynamic";
+import {useEffect, useRef} from "react";
+import {NotFoundException} from "@zxing/library";
 import {ScanLine} from "lucide-react";
 import {Modal, ModalBody, ModalCloseButton, ModalHeader} from "@/src/components/ui/Modal";
 import {useLanguage} from "@/src/lib/i18n/context";
-
-interface DetectedBarcode {
-    rawValue: string;
-}
-
-const BarcodeScannerView = dynamic(
-    async () => {
-        await import("react-barcode-scanner/polyfill");
-        return import("react-barcode-scanner").then((m) => m.BarcodeScanner);
-    },
-    {ssr: false}
-);
+import type {IScannerControls} from "@zxing/browser";
 
 interface BarcodeScannerProps {
     open: boolean;
@@ -26,24 +15,75 @@ interface BarcodeScannerProps {
 
 export function BarcodeScanner({ open, onClose, onScan }: BarcodeScannerProps) {
     const { t } = useLanguage();
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const controlsRef = useRef<IScannerControls | null>(null);
     const scannedRef = useRef(false);
 
-    const handleCapture = useCallback(
-        (barcodes: DetectedBarcode[]) => {
-            if (scannedRef.current || barcodes.length === 0) return;
-            const code = barcodes[0].rawValue;
-            if (!code) return;
-            scannedRef.current = true;
-            onScan(code);
-            onClose();
-        },
-        [onScan, onClose]
-    );
+    useEffect(() => {
+        if (!open) return;
+        scannedRef.current = false;
+        let cancelled = false;
 
-    const handleClose = useCallback(() => {
+        void (async () => {
+            const {BrowserMultiFormatReader} = await import("@zxing/browser");
+            const {DecodeHintType, BarcodeFormat} = await import("@zxing/library");
+            const hints = new Map();
+            hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+                BarcodeFormat.EAN_13,
+                BarcodeFormat.EAN_8,
+                BarcodeFormat.CODE_128,
+                BarcodeFormat.CODE_39,
+                BarcodeFormat.UPC_A,
+                BarcodeFormat.UPC_E,
+            ]);
+            const reader = new BrowserMultiFormatReader(hints);
+
+            if (cancelled || !videoRef.current) return;
+
+            try {
+                const controls = await reader.decodeFromConstraints(
+                    {
+                        video: {
+                            facingMode: {ideal: "environment"},
+                            width: {min: 640},
+                            height: {min: 480},
+                        },
+                    },
+                    videoRef.current,
+                    (result, error) => {
+                        if (scannedRef.current || !result) {
+                            if (error && !(error instanceof NotFoundException)) {
+                                console.error(error);
+                            }
+                            return;
+                        }
+                        scannedRef.current = true;
+                        onScan(result.getText());
+                        controlsRef.current?.stop();
+                        onClose();
+                    }
+                );
+                if (cancelled) {
+                    controls.stop();
+                    return;
+                }
+                controlsRef.current = controls;
+            } catch (err) {
+                console.error(err);
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+            controlsRef.current?.stop();
+            controlsRef.current = null;
+        };
+    }, [open, onClose, onScan]);
+
+    const handleClose = () => {
         scannedRef.current = false;
         onClose();
-    }, [onClose]);
+    };
 
     return (
         <Modal open={open} onClose={handleClose} className="max-w-sm" data-testid="barcode-scanner">
@@ -66,18 +106,7 @@ export function BarcodeScanner({ open, onClose, onScan }: BarcodeScannerProps) {
                         data-testid="barcode-container"
                     >
                         {open && (
-                            <BarcodeScannerView
-                                options={{
-                                    formats: ["ean_13", "ean_8", "code_128", "code_39", "upc_a", "upc_e"],
-                                    delay: 500,
-                                }}
-                                trackConstraints={{
-                                    facingMode: {ideal: "environment"},
-                                    width: {min: 640},
-                                    height: {min: 480},
-                                }}
-                                onCapture={handleCapture}
-                            />
+                            <video ref={videoRef} data-testid="scanner-view" muted playsInline/>
                         )}
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
                             <div className="w-3/4 h-1/3 border-2 border-accent rounded-lg opacity-80"/>

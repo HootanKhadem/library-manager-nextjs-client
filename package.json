@@ -12,11 +12,11 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
-    "@zxing/browser": "^0.1.5",
+    "@zxing/browser": "^0.2.1",
+    "@zxing/library": "^0.23.0",
     "lucide-react": "^1.8.0",
     "next": "^16.3.1",
     "react": "19.2.3",
-    "react-barcode-scanner": "^4.0.1",
     "react-dom": "19.2.3"
   },
   "devDependencies": {
