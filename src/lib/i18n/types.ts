@@ -302,5 +302,7 @@ export interface Translations {
         insecureContext: string;
         permissionDenied: string;
         error: string;
+        camera: string;
+        cameraAuto: string;
     };
 }
