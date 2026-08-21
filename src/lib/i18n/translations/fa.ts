@@ -286,6 +286,8 @@ const fa: Translations = {
         insecureContext: "دسترسی به دوربین فقط در HTTPS ممکن است. این صفحه را با HTTPS یا localhost باز کنید.",
         permissionDenied: "دسترسی به دوربین رد شد. لطفاً مجوز دوربین را فعال کنید.",
         error: "خواندن بارکد ممکن نشد. دوباره امتحان کنید.",
+        camera: "دوربین",
+        cameraAuto: "خودکار (دوربین پشت)",
     },
 };
 

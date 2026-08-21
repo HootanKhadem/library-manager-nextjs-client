@@ -266,6 +266,8 @@ const en: Translations = {
         insecureContext: "Camera access requires HTTPS. Open this page over HTTPS or localhost.",
         permissionDenied: "Camera access denied. Please allow camera permission and try again.",
         error: "Could not read barcode. Please try again.",
+        camera: "Camera",
+        cameraAuto: "Auto (back camera)",
     },
 };
 
