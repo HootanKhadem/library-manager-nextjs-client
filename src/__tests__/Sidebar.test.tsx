@@ -17,9 +17,9 @@ const defaultProps = {isOpen: false, onClose: jest.fn()};
 describe("Sidebar component", () => {
     beforeEach(() => jest.clearAllMocks());
 
-    it("renders the bookwrym logo", () => {
+    it("renders the toumaar logo", () => {
         render(<Sidebar {...defaultProps} />);
-        expect(screen.getByText("bookwrym")).toBeInTheDocument();
+        expect(screen.getByText("toumaar")).toBeInTheDocument();
     });
 
     it("renders all navigation items", () => {

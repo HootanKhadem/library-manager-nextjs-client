@@ -35,7 +35,7 @@ export default function Sidebar({isOpen, onClose}: SidebarProps) {
 
     return (
         <SidebarShell isOpen={isOpen} onClose={onClose}>
-            <SidebarLogo icon={<Library className="h-5 w-5"/>} label="bookwrym"/>
+            <SidebarLogo icon={<Library className="h-5 w-5"/>} label="toumaar"/>
 
             <SidebarNav>
                 {NAV_ITEMS.map(({href, icon}) => (

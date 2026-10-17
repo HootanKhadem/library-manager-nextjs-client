@@ -2,6 +2,11 @@ import {render, screen} from "@testing-library/react";
 import {MarketingHeader} from "@/src/app/(marketing)/_components/MarketingHeader";
 
 describe("MarketingHeader", () => {
+    it("renders the toumaar brand", () => {
+        render(<MarketingHeader/>);
+        expect(screen.getByRole("link", {name: "toumaar"})).toHaveAttribute("href", "/");
+    });
+
     it("renders a Sign in link to /login", () => {
         render(<MarketingHeader/>);
         expect(screen.getByRole("link", {name: /^sign in$/i})).toHaveAttribute("href", "/login");

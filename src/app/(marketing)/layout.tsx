@@ -10,16 +10,16 @@ const manrope = Manrope({
 });
 
 const DIRECTION_CONTRACT = `
-THESIS: bookwrym's shelf glows only where you've been — a lit paper lantern,
+THESIS: toumaar's shelf glows only where you've been — a lit paper lantern,
 not a spreadsheet. Refuses the generic SaaS card-grid greeting.
 OWN-WORLD: near-black stone ground (#1C1917) lit by rose-600 (#E11D48) — the
 app shell's own accent, shared rather than a separate hue — as the only
 saturated color; folded-washi lantern silhouettes as the recurring form, one
-vermilion wyrm-seal mark, Manrope throughout, bamboo-rib hairline dividers.
+vermilion open-book seal, Manrope throughout, bamboo-rib hairline dividers.
 Dark is the default (carries the "dark until read" thesis); a light theme
 (stone-50 ground, same rose accent) is a confirmed opt-in via a header
 toggle, persisted to localStorage, never the default.
-STORY: visitor understands bookwrym as a fast, personal way to catalogue and
+STORY: visitor understands toumaar as a fast, personal way to catalogue and
 lend books; believes their shelf stays theirs, not a social feed; acts by
 signing in to start cataloguing.
 FIRST VIEWPORT: full-bleed dark hero, left-weighted oversized headline, a

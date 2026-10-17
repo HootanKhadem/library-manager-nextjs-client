@@ -67,9 +67,9 @@ describe("LoginPage", () => {
         expect(screen.getByRole("main")).toBeInTheDocument();
     });
 
-    it("renders the bookwrym brand name in the left panel", () => {
+    it("renders the toumaar brand name in the left panel", () => {
         render(<LoginPage/>);
-        expect(screen.getByText("bookwrym")).toBeInTheDocument();
+        expect(screen.getByText("toumaar")).toBeInTheDocument();
     });
 
     it("renders the tagline copy", () => {
