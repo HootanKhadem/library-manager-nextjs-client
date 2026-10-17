@@ -55,6 +55,12 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+### Install as an app
+
+On a supported browser, open toumaar over HTTPS (or `localhost`) and use the browser's **Install app** or **Add to Home Screen** action. The installed app uses the toumaar icon and opens without browser chrome.
+
+Offline navigation shows a reconnect page. Books, loans, account data, and changes require the backend; they are not stored for offline use. The service worker caches only the public offline page and PWA icons.
+
 ### Production Build
 
 ```bash
