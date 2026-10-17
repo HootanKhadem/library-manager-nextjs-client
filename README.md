@@ -1,4 +1,4 @@
-# bookwrym — Personal Library Manager
+# toumaar — Personal Library Manager
 
 A personal library management application built with **Next.js 16**, **React 19**, **TypeScript 5**, and **Tailwind CSS
 v4**. Track your book collection, manage lent books, and catalogue authors — all in a beautifully styled, client-side
@@ -43,7 +43,7 @@ app.
 
 ```bash
 git clone <repository-url>
-cd library-manager-nextjs-client
+cd <cloned-directory>
 npm install
 ```
 
@@ -118,13 +118,13 @@ npx jest --coverage
 ### Build the Docker image
 
 ```bash
-docker build -t bookwrym .
+docker build -t toumaar .
 ```
 
 ### Run the container
 
 ```bash
-docker run -p 3000:3000 bookwrym
+docker run -p 3000:3000 toumaar
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
@@ -140,7 +140,7 @@ docker compose up
 ## Project Structure
 
 ```
-library-manager-nextjs-client/
+toumaar/
 ├── app/
 │   ├── globals.css          # Tailwind CSS v4 + custom fonts, animations
 │   ├── layout.tsx           # Root layout with Next.js fonts (Playfair Display, Libre Baskerville, Courier Prime)

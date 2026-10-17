@@ -1,8 +1,8 @@
 import Link from 'next/link';
 
 export const metadata = {
-    title: 'Terms & data use — bookwrym',
-    description: 'What bookwrym is, and what we do with your data and how we store it.',
+    title: 'Terms & data use — toumaar',
+    description: 'What toumaar is, and what we do with your data and how we store it.',
 };
 
 const SECTIONS = [
@@ -23,9 +23,9 @@ export default function TermsPage() {
                     Terms & how we use your data
                 </h1>
                 <p className="mt-6 max-w-[68ch] text-[15px] leading-relaxed text-[var(--bw-ink-muted)]">
-                    This page describes, in plain language, what bookwrym does with the
+                    This page describes, in plain language, what toumaar does with the
                     information you give it and how that information is stored. It&apos;s a
-                    working draft — content will be reviewed and finalized before bookwrym
+                    working draft — content will be reviewed and finalized before toumaar
                     is used to manage real collections, and nothing here should be read as
                     legal advice or a certification of compliance with any specific law.
                 </p>
@@ -51,7 +51,7 @@ export default function TermsPage() {
                     <div id="scope" className="scroll-mt-24">
                         <h2 className="text-[19px] font-semibold text-[var(--bw-ink)]">1. What this covers</h2>
                         <p className="mt-3">
-                            bookwrym is a personal library manager: you catalogue books you own,
+                            toumaar is a personal library manager: you catalogue books you own,
                             track copies you&apos;ve lent to other people, and browse authors within
                             your own collection. It is not a social network — there is no public
                             profile, no follower list, and no way for other users to see your
@@ -99,7 +99,7 @@ export default function TermsPage() {
                     <div id="how-we-store-it" className="scroll-mt-24">
                         <h2 className="text-[19px] font-semibold text-[var(--bw-ink)]">4. How we store it</h2>
                         <p className="mt-3">
-                            Your data lives on bookwrym&apos;s backend service, reached only through
+                            Your data lives on toumaar&apos;s backend service, reached only through
                             our own servers — your browser never talks to it directly. Each
                             account&apos;s collection is isolated from every other account: there is
                             no shared or team view. We use industry-standard measures (encrypted

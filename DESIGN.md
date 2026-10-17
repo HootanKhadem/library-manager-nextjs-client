@@ -1,11 +1,11 @@
 ---
-name: bookwrym — Paper Lantern Study
+name: toumaar — Paper Lantern Study
 description: Marketing surface visual system — folded washi lanterns glowing rose against a dark stone ground, dark until read, lit once owned.
 colors:
   lantern-rose: "#E11D48"
   rose-dim: "#BE123C"
   ember: "#B3372B"
-  wyrm-vermilion: "#C24A32"
+  book-seal: "#C24A32"
   stone-room: "#1C1917"
   stone-raised: "#292524"
   stone-sunken: "#0C0A09"
@@ -80,20 +80,20 @@ components:
     typography: "{typography.label}"
 ---
 
-# Design System: bookwrym — Paper Lantern Study
+# Design System: toumaar — Paper Lantern Study
 
 ## Overview
 
 **Creative North Star: "The Paper Lantern Study"**
 
 This DESIGN.md governs one surface only: the marketing route group at `src/app/(marketing)/` (`/`, `/about`, `/terms`) —
-bookwrym's Persuade-mode entry point. It shares its accent and ground family with the app shell (dashboard/login/sidebar
+toumaar's Persuade-mode entry point. It shares its accent and ground family with the app shell (dashboard/login/sidebar
 under `src/app/(app)/` and `src/app/login/`) rather than running a separate hue: both worlds now key off the same
 rose-600 accent and stone neutrals defined in the root `globals.css` (`--accent`, `--sidebar-bg`, etc.) — the marketing
 surface reuses that palette on a dark, lantern-lit stage instead of the app shell's light one. Nothing in this file
 describes the app shell's layout or components, only this surface's own composition built on the shared color family.
 
-The Paper Lantern Study renders bookwrym's core idea — a shelf that stays dark until you've actually read something,
+The Paper Lantern Study renders toumaar's core idea — a shelf that stays dark until you've actually read something,
 then glows only where you've been — as an akari-workshop world: folded washi-paper lanterns held in a near-black stone
 room, lit one warm rose at a time. The system is built on restraint by omission: one saturated color against a
 near-black ground, one brand seal used exactly once per view, one recurring silhouette (the folded hexagonal lantern)
@@ -143,7 +143,7 @@ already uses for its own accent — plus two single-purpose warm reds reserved f
 
 ### Tertiary
 
-- **Wyrm Vermilion** (`#C24A32`): the brand seal color, used only inside `WyrmMark` — the coiled-wyrm-in-a-circle mark
+- **Book Seal Vermilion** (`#C24A32`): the brand seal color, used only inside `ToumaarMark` — the open-book-in-a-circle mark
   in the header. Appears exactly once per rendered view. Never used for buttons, links, or state.
 
 ### Neutral
@@ -165,9 +165,9 @@ already uses for its own accent — plus two single-purpose warm reds reserved f
 ### Light Theme (opt-in)
 
 Dark is the default and carries the system's "dark until read" thesis; light is a confirmed alternate, toggled via the
-header's sun/moon button (`ThemeToggle`) and persisted to `localStorage` (`bookwrym-theme`). Toggling sets
+header's sun/moon button (`ThemeToggle`) and persisted to `localStorage` (`toumaar-theme`). Toggling sets
 `data-theme="light"` on the `.bw-world` root, which swaps only the neutral ground/ink tokens — Lantern Rose, Rose Dim,
-Ember, and Wyrm Vermilion are identical in both themes, so the brand accent never shifts underfoot.
+Ember, and Book Seal Vermilion are identical in both themes, so the brand accent never shifts underfoot.
 
 - **Stone Room (light)** (`#FAFAF9`, stone-50) replaces Stone Room as the base ground.
 - **Stone Raised (light)** (`#F5F5F4`, stone-100) replaces Stone Raised.
@@ -181,7 +181,7 @@ Ember, and Wyrm Vermilion are identical in both themes, so the brand accent neve
 
 ### Named Rules
 
-**The One Vermilion Rule.** The wyrm seal (`#C24A32`) renders exactly once per view, in the header only. It never
+**The One Vermilion Rule.** The book seal (`#C24A32`) renders exactly once per view, in the header only. It never
 doubles as a link color, button color, or state indicator.
 
 **The Ember Distinction Rule.** The overdue lantern state uses `--bw-ember` (`#B3372B`), a color deliberately distinct
@@ -194,7 +194,7 @@ blurred bloom — never as a flat panel or section background.
 **The One Product Rule.** This surface's accent and neutrals are the app shell's own rose-600/stone-900 family, not an
 independent palette. A future color change to either world should be evaluated for the other.
 
-**The Accent-Never-Shifts Rule.** Lantern Rose, Rose Dim, Ember, and Wyrm Vermilion do not change between the dark and
+**The Accent-Never-Shifts Rule.** Lantern Rose, Rose Dim, Ember, and Book Seal Vermilion do not change between the dark and
 light themes — only the neutral ground and ink tokens invert. The brand color is constant; only the room's lighting
 changes.
 
@@ -312,7 +312,7 @@ heading + copy, no background, border, or shadow of their own.
 
 ### Navigation
 
-- **Header:** WyrmMark + wordmark on the left, horizontal link row centered/right on desktop (`gap-8`, 14px medium, Ink
+- **Header:** ToumaarMark + wordmark on the left, horizontal link row centered/right on desktop (`gap-8`, 14px medium, Ink
   Muted → Starlight Ink on hover, no underline at rest or on hover — the No-Line Rule below), then the ThemeToggle icon
   button, then the rose pill "Sign in" CTA on the far right. Below `sm`, the link row drops to a horizontal scrollable
   strip under a hairline border instead of a hamburger menu.
@@ -340,10 +340,10 @@ one page (e.g. four lanterns in the hero cluster) never collide on filter/gradie
 both animations are disabled under `prefers-reduced-motion: reduce`. Narrative ordering is significant: wherever
 multiple states appear together, they read folded → lit → lent → overdue, mirroring a book's real lifecycle.
 
-### Signature Component: WyrmMark
+### Signature Component: ToumaarMark
 
-A coiled-wyrm-in-a-circle seal mark (`src/app/(marketing)/_components/WyrmMark.tsx`), rendered once per view in the
-header only, always in Wyrm Vermilion outline with a small filled eye dot. It is the system's sole non-lantern mark and
+An open-book-in-a-circle seal mark (`src/app/(marketing)/_components/ToumaarMark.tsx`), rendered once per view in the
+header only, always in Book Seal Vermilion outline with a central book spine. It is the system's sole non-lantern mark and
 the only permitted use of vermilion.
 
 ### Signature Component: Reveal
@@ -372,7 +372,7 @@ a known and accepted tradeoff rather than an oversight.
 
 - **Do** treat Lantern Rose as a light source: CTAs, glyph "lit"/"lent" states, and soft blurred bloom only — never a
   section background.
-- **Do** keep the wyrm seal to exactly one instance per view, in the header.
+- **Do** keep the book seal to exactly one instance per view, in the header.
 - **Do** use the folded → lit → lent → overdue ordering whenever multiple lantern states appear together.
 - **Do** separate sections with Bamboo Rib hairlines and stone tonal-plane shifts rather than shadows or card borders.
 - **Do** theme focus-visible and the scrollbar explicitly within `.bw-world` — the default browser treatments are
@@ -383,7 +383,7 @@ a known and accepted tradeoff rather than an oversight.
   request explicitly corrected an earlier indigo/amber pairing for reading as a disconnected second brand.
 - **Do** reveal below-the-fold content on `/` once via `Reveal`, staggering sibling groups by ~100ms; never replay an
   entrance on scroll-back.
-- **Do** keep Lantern Rose, Rose Dim, Ember, and Wyrm Vermilion identical across both themes — only neutrals invert.
+- **Do** keep Lantern Rose, Rose Dim, Ember, and Book Seal Vermilion identical across both themes — only neutrals invert.
 - **Do** keep dark as the default theme; light is opt-in via the header toggle only, never triggered by system
   `prefers-color-scheme`.
 
@@ -392,7 +392,7 @@ a known and accepted tradeoff rather than an oversight.
 - **Don't** introduce a second saturated accent color beyond Lantern Rose. Ember and Vermilion are single-purpose
   exceptions (overdue state; brand seal), not a growing palette.
 - **Don't** put content in a bordered or shadowed card. This world has no card component.
-- **Don't** reuse Wyrm Vermilion for anything other than the header seal, including links, buttons, or state colors.
+- **Don't** reuse Book Seal Vermilion for anything other than the header seal, including links, buttons, or state colors.
 - **Don't** underline nav links at rest or on hover; brightness change (Ink Muted → Starlight Ink) is the only hover
   signal for text nav.
 - **Don't** stack a label/kicker above a headline. The build shipped one during development and it was removed in finish

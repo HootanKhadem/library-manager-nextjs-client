@@ -1,8 +1,8 @@
 import {LanternGlyph} from '../_components/LanternGlyph';
 
 export const metadata = {
-    title: 'About — bookwrym',
-    description: 'Why bookwrym exists and what it refuses to become.',
+    title: 'About — toumaar',
+    description: 'Why toumaar exists and what it refuses to become.',
 };
 
 export default function AboutPage() {
@@ -17,7 +17,7 @@ export default function AboutPage() {
                 />
                 <div className="relative mx-auto max-w-3xl">
                     <h1 className="text-[clamp(2.2rem,5vw,3.6rem)] font-extrabold leading-[1.02] tracking-[-0.03em] text-[var(--bw-ink)]">
-                        A shelf is a private thing. We built bookwrym to keep it that way.
+                        A shelf is a private thing. We built toumaar to keep it that way.
                     </h1>
                 </div>
             </section>

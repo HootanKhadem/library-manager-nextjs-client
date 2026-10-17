@@ -107,7 +107,7 @@ body {
 .animate-fadeIn  { animation: fadeIn  0.15s ease; }
 .animate-slideUp { animation: slideUp 0.2s  ease; }
 
-/* ─── bookwrym marketing world — Paper Lantern Study ──────────────────────
+/* ─── toumaar marketing world — Paper Lantern Study ──────────────────────
    Scoped to .bw-world. Ground and accent now match the rest of the
    project's palette: stone-900/950 (same family as the app's sidebar) for
    the room, rose-600 (the app's own accent) as the lantern's light — no
@@ -121,7 +121,7 @@ body {
     --bw-rose: #E11D48; /* rose-600 — the app's own accent, now the lantern's light */
     --bw-rose-dim: #BE123C; /* rose-700 — same as the app's --accent-hover; amber at rest / unlit rib */
     --bw-ember: #B3372B; /* overdue state only — distinct from both the seal and the accent */
-    --bw-vermilion: #C24A32; /* the wyrm-seal mark — appears exactly once per view, in the header */
+    --bw-seal: #C24A32; /* book seal — appears once per view, in the header */
     --bw-rib: rgba(250, 250, 249, 0.12); /* bamboo-rib hairlines, tinted from stone ink */
     --bw-glow-shadow: 0 8px 32px -4px rgba(225, 29, 72, 0.32), 0 2px 8px rgba(0, 0, 0, 0.4);
     --font-marketing: var(--font-manrope, 'Manrope'), ui-sans-serif, system-ui, sans-serif;

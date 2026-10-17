@@ -58,7 +58,7 @@ export default function HomePage() {
                             Your shelf glows only where you&apos;ve been.
                         </h1>
                         <p className="mt-7 max-w-[52ch] text-[17px] leading-relaxed text-[var(--bw-ink-muted)]">
-                            bookwrym is a fast, personal way to catalogue what you own, track who
+                            toumaar is a fast, personal way to catalogue what you own, track who
                             borrowed what, and never lose a book to memory again — no feeds,
                             no reviews, no strangers browsing your shelf.
                         </p>
@@ -93,17 +93,17 @@ export default function HomePage() {
             <section className="border-t border-[var(--bw-rib)] px-6 py-20 sm:px-10 sm:py-28">
                 <Reveal className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[0.7fr_1.3fr]">
                     <h2 className="text-[clamp(1.6rem,2.8vw,2.4rem)] font-bold leading-tight tracking-[-0.02em] text-[var(--bw-ink)]">
-                        Why bookwrym exists
+                        Why toumaar exists
                     </h2>
                     <div className="max-w-[70ch] space-y-5 text-[16px] leading-relaxed text-[var(--bw-ink-muted)]">
                         <p>
                             Most reading apps want to be your social feed — reviews, follower counts,
-                            a timeline of everyone else&apos;s bookshelf. bookwrym isn&apos;t that. It exists
+                            a timeline of everyone else&apos;s bookshelf. toumaar isn&apos;t that. It exists
                             for the much smaller, much more useful problem: knowing what you own,
                             what you&apos;ve lent out, and when it&apos;s coming back.
                         </p>
                         <p>
-                            A spreadsheet can technically do this. bookwrym is faster — scan a barcode
+                            A spreadsheet can technically do this. toumaar is faster — scan a barcode
                             or type a title and it&apos;s catalogued, with the author, genre, and lending
                             history tracked automatically, in a view built for skimming your own
                             collection, not browsing anyone else&apos;s.
@@ -151,7 +151,7 @@ export default function HomePage() {
                             Cataloguing shouldn&apos;t be the chore.
                         </h2>
                         <p className="mt-5 max-w-[52ch] text-[16px] leading-relaxed text-[var(--bw-ink-muted)]">
-                            Point your camera at the barcode and bookwrym fills in the title,
+                            Point your camera at the barcode and toumaar fills in the title,
                             author, and cover on its own. Prefer typing? A manual entry takes
                             about as long as writing the title down. Either way, the book is
                             catalogued before you&apos;ve set it back on the shelf.

@@ -13,7 +13,7 @@ Multi-tenant librarian tool: many user accounts, each with own personal book lib
 
 ## Product Purpose
 
-bookwrym — personal library management app. Lets a user track their book collection (owned, lent out, wishlist), manage
+toumaar — personal library management app. Lets a user track their book collection (owned, lent out, wishlist), manage
 lending to friends/family with due dates and overdue tracking, catalogue authors, and get a dashboard overview (KPIs,
 recent activity). Success = fast, accurate personal cataloguing with minimal friction.
 
@@ -46,8 +46,8 @@ social or discovery features.
 
 ## Brand Commitments
 
-- Product name: **bookwrym** (renamed from Librax 2026-08-12; app-internal identifiers like the `librax_session` storage
-  key and `librax:unauthorized` event stay as-is, not user-facing).
+- Product name: **toumaar** (renamed from bookwrym 2026-10-17). Legacy `librax_session` storage keys and
+  `librax:unauthorized` event stay as-is to preserve existing sessions; they are not user-facing.
 - App chrome (dashboard/login/sidebar) keeps its existing rose-600-on-stone Operate-mode look; logo mark: open-book icon
   in rose-600 square, paired with wordmark.
 - Existing tagline (login page): "Your personal reading universe, organized."

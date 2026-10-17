@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import {WyrmMark} from './WyrmMark';
+import {ToumaarMark} from './ToumaarMark';
 import {ThemeToggle} from './ThemeToggle';
 
 const LINKS = [
@@ -13,8 +13,8 @@ export function MarketingHeader() {
         <header className="relative z-20 border-b border-[var(--bw-rib)]">
             <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5 sm:px-10">
                 <Link href="/" className="flex items-center gap-2.5 group">
-                    <WyrmMark className="h-7 w-7 transition-transform duration-300 group-hover:rotate-[8deg]"/>
-                    <span className="text-[17px] font-bold tracking-[-0.02em] text-[var(--bw-ink)]">bookwrym</span>
+                    <ToumaarMark className="h-7 w-7 transition-transform duration-300 group-hover:rotate-[8deg]"/>
+                    <span className="text-[17px] font-bold tracking-[-0.02em] text-[var(--bw-ink)]">toumaar</span>
                 </Link>
 
                 <nav aria-label="Primary" className="hidden items-center gap-8 sm:flex">

@@ -2,7 +2,8 @@
 
 import {useEffect, useState} from 'react';
 
-const STORAGE_KEY = 'bookwrym-theme';
+const STORAGE_KEY = 'toumaar-theme';
+const LEGACY_STORAGE_KEY = 'bookwrym-theme';
 
 export function ThemeToggle() {
     const [theme, setTheme] = useState<'dark' | 'light'>('dark');
@@ -10,7 +11,7 @@ export function ThemeToggle() {
     useEffect(() => {
         let stored: string | null = null;
         try {
-            stored = localStorage.getItem(STORAGE_KEY);
+            stored = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY);
         } catch {
             // localStorage unavailable — fall back to the dark default
         }
@@ -34,6 +35,7 @@ export function ThemeToggle() {
         }
         try {
             localStorage.setItem(STORAGE_KEY, next);
+            localStorage.removeItem(LEGACY_STORAGE_KEY);
         } catch {
             // localStorage unavailable (private mode, disabled) — theme just won't persist
         }
