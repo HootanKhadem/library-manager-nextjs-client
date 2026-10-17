@@ -1,7 +1,8 @@
-import type {Metadata} from "next";
+import type {Metadata, Viewport} from "next";
 import {Plus_Jakarta_Sans, Vazirmatn} from "next/font/google";
 import "./globals.css";
 import {AuthProvider} from "@/src/contexts/AuthContext";
+import {PwaRegistration} from "@/src/components/PwaRegistration";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
     variable: "--font-plus-jakarta-sans",
@@ -19,7 +20,10 @@ const vazirmatn = Vazirmatn({
 export const metadata: Metadata = {
     title: "toumaar — Personal Library Manager",
     description: "A personal library manager to catalogue and track your book collection.",
+    appleWebApp: {capable: true, statusBarStyle: 'default', title: 'toumaar'},
 };
+
+export const viewport: Viewport = {themeColor: '#e11d48'};
 
 export default function RootLayout({
     children,
@@ -30,6 +34,7 @@ export default function RootLayout({
         <html lang="en">
             <body className={`${plusJakartaSans.variable} ${vazirmatn.variable} antialiased`}>
             <AuthProvider>{children}</AuthProvider>
+            <PwaRegistration/>
             </body>
         </html>
     );
