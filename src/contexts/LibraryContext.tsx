@@ -1,7 +1,7 @@
 'use client';
 
 import {createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState} from 'react';
-import {Author, BackendAuthor, BackendBook, BackendGenre, Book, NewBookFormData, PagedResponse} from '@/src/lib/types';
+import {Author, BackendAuthor, BackendBook, BackendGenre, Book, BookStatus, NewBookFormData, PagedResponse} from '@/src/lib/types';
 import {mapBackendAuthorToAuthor, mapBackendBookToBook, mapBookStatusToBackendStatus} from '@/src/lib/mappers';
 
 const PAGE_SIZE = 20;
@@ -40,6 +40,8 @@ interface LibraryContextValue {
 
     searchQuery: string;
     setSearchQuery: (q: string) => void;
+    activeFilter: BookStatus | 'All';
+    setActiveFilter: (f: BookStatus | 'All') => void;
 }
 
 const LibraryContext = createContext<LibraryContextValue | null>(null);
@@ -94,12 +96,15 @@ async function fetchGenres(): Promise<BackendGenre[]> {
     }
 }
 
-async function fetchBookPage(pageNum: number, genreMap: Map<number, string>): Promise<
+async function fetchBookPage(pageNum: number, genreMap: Map<number, string>, search?: string, status?: string): Promise<
     { ok: true; items: Book[]; totalPages: number; totalItems: number } | { ok: false }
 > {
+    const params = new URLSearchParams({ page: String(pageNum), pageSize: String(PAGE_SIZE) });
+    if (search?.trim()) params.set('q', search.trim());
+    if (status) params.set('status', status);
     let res: Response;
     try {
-        res = await fetch(`/api/book?page=${pageNum}&pageSize=${PAGE_SIZE}`);
+        res = await fetch(`/api/book?${params.toString()}`);
     } catch {
         return { ok: false };
     }
@@ -149,6 +154,7 @@ export function LibraryProvider({children}: { children: ReactNode }) {
     const [showAddModal, setShowAddModal] = useState(false);
     const [editingBook, setEditingBook] = useState<Book | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [activeFilter, setActiveFilterState] = useState<BookStatus | 'All'>('All');
 
     // Monotonic request counters: guard against an in-flight loadBooks/loadAuthors call
     // whose response resolves after a newer call has already started (out-of-order network
@@ -156,13 +162,20 @@ export function LibraryProvider({children}: { children: ReactNode }) {
     const booksRequestIdRef = useRef(0);
     const authorsRequestIdRef = useRef(0);
 
+    // True once the initial mount load has applied its (empty) filters; gates the debounce
+    // effect below so it doesn't double-fire on mount before there's anything to debounce.
+    const mountedRef = useRef(false);
+    // The search/status last actually sent to the backend, so paging (setPage/refetchBooks)
+    // can keep re-requesting with the currently-applied filters instead of losing them.
+    const appliedFiltersRef = useRef<{ search: string; status?: string }>({ search: '', status: undefined });
+
     const genreMap = useMemo(() => buildGenreMap(genres), [genres]);
 
-    const loadBooks = useCallback(async (pageNum: number, map: Map<number, string>) => {
+    const loadBooks = useCallback(async (pageNum: number, map: Map<number, string>, search?: string, status?: string) => {
         const requestId = ++booksRequestIdRef.current;
         setBooksLoading(true);
         setBooksError(false);
-        const result = await fetchBookPage(pageNum, map);
+        const result = await fetchBookPage(pageNum, map, search, status);
         if (requestId !== booksRequestIdRef.current) return; // a newer request has since started; discard this stale response
         if (!result.ok) {
             setBooksError(true);
@@ -200,6 +213,7 @@ export function LibraryProvider({children}: { children: ReactNode }) {
             if (cancelled) return;
             setGenres(genreList);
             await loadBooks(1, buildGenreMap(genreList));
+            mountedRef.current = true;
         })();
         return () => { cancelled = true; };
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -210,10 +224,28 @@ export function LibraryProvider({children}: { children: ReactNode }) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const setPage = useCallback((next: number) => { loadBooks(next, genreMap); }, [loadBooks, genreMap]);
+    // Debounces searchQuery/activeFilter changes into a fresh page-1 request carrying q/status.
+    // Skipped on mount (mountedRef not yet true) so it never fires for the initial load.
+    useEffect(() => {
+        if (!mountedRef.current) return;
+        const backendStatus = activeFilter === 'All' ? undefined : mapBookStatusToBackendStatus(activeFilter);
+        const handle = setTimeout(() => {
+            appliedFiltersRef.current = { search: searchQuery, status: backendStatus };
+            loadBooks(1, genreMap, searchQuery, backendStatus);
+        }, 300);
+        return () => clearTimeout(handle);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchQuery, activeFilter]);
+
+    const setPage = useCallback((next: number) => {
+        loadBooks(next, genreMap, appliedFiltersRef.current.search, appliedFiltersRef.current.status);
+    }, [loadBooks, genreMap]);
     const setAuthorsPage = useCallback((next: number) => { loadAuthors(next); }, [loadAuthors]);
-    const refetchBooks = useCallback(() => { loadBooks(page, genreMap); }, [loadBooks, page, genreMap]);
+    const refetchBooks = useCallback(() => {
+        loadBooks(page, genreMap, appliedFiltersRef.current.search, appliedFiltersRef.current.status);
+    }, [loadBooks, page, genreMap]);
     const refetchAuthors = useCallback(() => { loadAuthors(authorsPage); }, [loadAuthors, authorsPage]);
+    const setActiveFilter = useCallback((f: BookStatus | 'All') => { setActiveFilterState(f); }, []);
 
     const addBook = useCallback(async (data: NewBookFormData): Promise<{ ok: boolean }> => {
         let res: Response;
@@ -281,12 +313,14 @@ export function LibraryProvider({children}: { children: ReactNode }) {
             showAddModal, setShowAddModal,
             editingBook, setEditingBook,
             searchQuery, setSearchQuery,
+            activeFilter, setActiveFilter,
         }),
         [
             books, booksLoading, booksError, page, totalPages, totalItems, setPage, refetchBooks,
             authors, authorsLoading, authorsError, authorsPage, authorsTotalPages, setAuthorsPage, refetchAuthors,
             genres, addBook, updateBook, removeBookLocal, markBookLent,
             selectedBook, showAddModal, editingBook, searchQuery,
+            activeFilter, setActiveFilter,
         ],
     );
 

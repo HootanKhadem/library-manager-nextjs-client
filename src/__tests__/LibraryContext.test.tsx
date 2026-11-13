@@ -424,3 +424,74 @@ describe("LibraryContext.markBookLent", () => {
         expect(screen.getAllByRole("listitem")[1].textContent).toContain("Owned");
     });
 });
+
+describe("LibraryContext search and filter", () => {
+    afterEach(() => jest.resetAllMocks());
+
+    it("debounces searchQuery into a q param on /api/book", async () => {
+        setupFetchMock({
+            "GET /api/book?page=1&pageSize=20&q=dune": () =>
+                jsonResponse(200, { items: [SAMPLE_BOOK], page: 1, pageSize: 20, totalItems: 1, totalPages: 1 }),
+        });
+        function SearchHarness() {
+            const { books, setSearchQuery } = useLibrary();
+            return (
+                <div>
+                    <button onClick={() => setSearchQuery("dune")}>search</button>
+                    <ul>{books.map((b) => <li key={b.id}>{b.title}</li>)}</ul>
+                </div>
+            );
+        }
+        render(<LibraryProvider><SearchHarness /></LibraryProvider>);
+        await waitFor(() => expect(screen.getByText("search")).toBeInTheDocument());
+        await userEvent.click(screen.getByText("search"));
+        await waitFor(() => expect(screen.getByText("Dune")).toBeInTheDocument(), { timeout: 1000 });
+    });
+
+    it("sends a status param and resets to page 1 when activeFilter changes", async () => {
+        setupFetchMock({
+            "GET /api/book?page=1&pageSize=20&status=LENT_OUT": () =>
+                jsonResponse(200, { items: [SAMPLE_BOOK_2], page: 1, pageSize: 20, totalItems: 1, totalPages: 1 }),
+        });
+        function FilterHarness() {
+            const { books, page, setActiveFilter } = useLibrary();
+            return (
+                <div>
+                    <span data-testid="page">{page}</span>
+                    <button onClick={() => setActiveFilter("Lent Out")}>filter</button>
+                    <ul>{books.map((b) => <li key={b.id}>{b.title}</li>)}</ul>
+                </div>
+            );
+        }
+        render(<LibraryProvider><FilterHarness /></LibraryProvider>);
+        await waitFor(() => expect(screen.getByText("filter")).toBeInTheDocument());
+        await userEvent.click(screen.getByText("filter"));
+        await waitFor(() => expect(screen.getByText("Ficciones")).toBeInTheDocument(), { timeout: 1000 });
+        expect(screen.getByTestId("page")).toHaveTextContent("1");
+    });
+
+    it("keeps the active search applied when paging", async () => {
+        setupFetchMock({
+            "GET /api/book?page=1&pageSize=20&q=dune": () =>
+                jsonResponse(200, { items: [SAMPLE_BOOK], page: 1, pageSize: 20, totalItems: 2, totalPages: 2 }),
+            "GET /api/book?page=2&pageSize=20&q=dune": () =>
+                jsonResponse(200, { items: [SAMPLE_BOOK_2], page: 2, pageSize: 20, totalItems: 2, totalPages: 2 }),
+        });
+        function PagedSearchHarness() {
+            const { books, setSearchQuery, setPage } = useLibrary();
+            return (
+                <div>
+                    <button onClick={() => setSearchQuery("dune")}>search</button>
+                    <button onClick={() => setPage(2)}>page2</button>
+                    <ul>{books.map((b) => <li key={b.id}>{b.title}</li>)}</ul>
+                </div>
+            );
+        }
+        render(<LibraryProvider><PagedSearchHarness /></LibraryProvider>);
+        await waitFor(() => expect(screen.getByText("search")).toBeInTheDocument());
+        await userEvent.click(screen.getByText("search"));
+        await waitFor(() => expect(screen.getByText("Dune")).toBeInTheDocument(), { timeout: 1000 });
+        await userEvent.click(screen.getByText("page2"));
+        await waitFor(() => expect(screen.getByText("Ficciones")).toBeInTheDocument());
+    });
+});
