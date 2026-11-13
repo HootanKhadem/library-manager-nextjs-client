@@ -19,20 +19,16 @@ describe("BooksPage component", () => {
         expect(screen.getByText("Ficciones")).toBeInTheDocument();
     });
 
-    it("filters to show only Owned books", () => {
-        render(<BooksPage books={BOOKS} onBookClick={onBookClick} onAddBook={onAddBook}/>);
+    it("calls onFilterChange with the clicked filter", () => {
+        const onFilterChange = jest.fn();
+        render(<BooksPage books={BOOKS} activeFilter="All" onFilterChange={onFilterChange} onBookClick={onBookClick} onAddBook={onAddBook}/>);
         fireEvent.click(screen.getByRole("button", {name: "Owned"}));
-        // Owned books are visible
-        expect(screen.getByText("Blood Meridian")).toBeInTheDocument();
-        // Lent Out books should not appear
-        expect(screen.queryByText("Ficciones")).not.toBeInTheDocument();
+        expect(onFilterChange).toHaveBeenCalledWith("Owned");
     });
 
-    it("filters to show only Lent Out books", () => {
-        render(<BooksPage books={BOOKS} onBookClick={onBookClick} onAddBook={onAddBook}/>);
-        fireEvent.click(screen.getByRole("button", {name: "Lent Out"}));
-        expect(screen.getByText("Ficciones")).toBeInTheDocument();
-        expect(screen.queryByText("Blood Meridian")).not.toBeInTheDocument();
+    it("highlights the active filter button from the activeFilter prop", () => {
+        render(<BooksPage books={BOOKS} activeFilter="Lent Out" onFilterChange={jest.fn()} onBookClick={onBookClick} onAddBook={onAddBook}/>);
+        expect(screen.getByRole("button", {name: "Lent Out"})).toHaveClass("bg-[var(--accent)]");
     });
 
     it("calls onBookClick when a book row is clicked", () => {
@@ -64,16 +60,15 @@ describe("BooksPage — empty and error states", () => {
         expect(screen.getByText("Your library is empty")).toBeInTheDocument();
     });
 
-    it("shows 'No books match this filter' when filtered result is empty", () => {
-        const books = [
-            {
-                id: "1", title: "Dune", author: "Herbert", year: 1965,
-                genre: "Sci-Fi", status: "Owned" as const,
-            },
-        ];
-        render(<BooksPage books={books} onBookClick={jest.fn()} onAddBook={jest.fn()} />);
-        fireEvent.click(screen.getByText(/lent out/i));
+    it("shows 'No books match this filter' when books is empty and a filter is active", () => {
+        render(<BooksPage books={[]} activeFilter="Lent Out" onBookClick={jest.fn()} onAddBook={jest.fn()} />);
         expect(screen.getByText("No books match this filter")).toBeInTheDocument();
+    });
+
+    it("shows 'No books match this filter' (not 'library is empty') when books is empty and a search is active", () => {
+        render(<BooksPage books={[]} activeFilter="All" searchQuery="zzz-no-match" onBookClick={jest.fn()} onAddBook={jest.fn()} />);
+        expect(screen.getByText("No books match this filter")).toBeInTheDocument();
+        expect(screen.queryByText("Your library is empty")).not.toBeInTheDocument();
     });
 
     it("shows error state when isError is true", () => {

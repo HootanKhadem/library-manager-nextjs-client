@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Plus, BookOpen } from "lucide-react";
 import { Book, BookStatus } from "@/src/lib/types";
 import { interpolate, useLanguage } from "@/src/lib/i18n/context";
@@ -25,15 +24,17 @@ interface BooksPageProps {
     totalPages?: number;
     onPageChange?: (page: number) => void;
     totalItems?: number;
+    activeFilter?: BookStatus | "All";
+    onFilterChange?: (f: BookStatus | "All") => void;
+    searchQuery?: string;
 }
 
 export default function BooksPage({
     books, onBookClick, onAddBook, isError, onRetry,
     isLoading = false, page = 1, totalPages = 1, onPageChange = () => {}, totalItems,
+    activeFilter = "All", onFilterChange, searchQuery = "",
 }: BooksPageProps) {
     const { t } = useLanguage();
-    const [activeFilter, setActiveFilter] = useState<BookStatus | "All">("All");
-    const filtered = activeFilter === "All" ? books : books.filter((b) => b.status === activeFilter);
     const displayCount = totalItems ?? books.length;
 
     const FILTERS: { value: BookStatus | "All"; label: string }[] = [
@@ -53,7 +54,7 @@ export default function BooksPage({
                         {FILTERS.map(({ value, label }) => (
                             <button
                                 key={value}
-                                onClick={() => setActiveFilter(value)}
+                                onClick={() => onFilterChange?.(value)}
                                 className={[
                                     "px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
                                     activeFilter === value
@@ -81,8 +82,8 @@ export default function BooksPage({
                 />
             ) : isLoading && books.length === 0 ? (
                 <p className="py-16 text-center text-sm text-[var(--muted)]">{t.common.loading}</p>
-            ) : filtered.length === 0 ? (
-                activeFilter === "All" ? (
+            ) : books.length === 0 ? (
+                activeFilter === "All" && !searchQuery.trim() ? (
                     <EmptyState
                         heading={t.books.emptyAll}
                         description={t.books.emptyAllDesc}
@@ -112,7 +113,7 @@ export default function BooksPage({
                             </tr>
                         </DataTableHead>
                         <DataTableBody>
-                            {filtered.map((book, i) => (
+                            {books.map((book, i) => (
                                 <DataTableRow
                                     key={book.id}
                                     onClick={() => onBookClick(book)}
