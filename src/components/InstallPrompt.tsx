@@ -22,26 +22,28 @@ function isIos(): boolean {
         || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 }
 
+function wasDismissed(): boolean {
+    try {
+        return localStorage.getItem(DISMISS_KEY) === "1";
+    } catch {
+        // localStorage unavailable (private mode); treat as not dismissed.
+        return false;
+    }
+}
+
+function getInitialPlatform(): "android" | "ios" | null {
+    if (typeof window === "undefined" || isStandalone() || wasDismissed()) return null;
+    return isIos() ? "ios" : null;
+}
+
 export function InstallPrompt() {
     const {t} = useLanguage();
     const [deferredEvent, setDeferredEvent] = useState<BeforeInstallPromptEvent | null>(null);
-    const [platform, setPlatform] = useState<"android" | "ios" | null>(null);
+    const [platform, setPlatform] = useState<"android" | "ios" | null>(getInitialPlatform);
     const [dismissed, setDismissed] = useState(false);
 
     useEffect(() => {
-        if (isStandalone()) return;
-        let dismissedBefore = false;
-        try {
-            dismissedBefore = localStorage.getItem(DISMISS_KEY) === "1";
-        } catch {
-            // localStorage unavailable (private mode); treat as not dismissed.
-        }
-        if (dismissedBefore) return;
-
-        if (isIos()) {
-            setPlatform("ios");
-            return;
-        }
+        if (isIos() || isStandalone() || wasDismissed()) return;
 
         function handler(e: Event) {
             e.preventDefault();
