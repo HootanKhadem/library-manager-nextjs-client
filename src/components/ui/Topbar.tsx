@@ -38,7 +38,7 @@ interface PageHeaderProps extends HTMLAttributes<HTMLDivElement> {
 function PageHeader({ title, subtitle, action, className = "", ...props }: PageHeaderProps) {
     return (
         <div
-            className={["flex items-start justify-between gap-4 mb-6", className].join(" ")}
+            className={["flex flex-wrap items-start justify-between gap-4 mb-6", className].join(" ")}
             {...props}
         >
             <div>
