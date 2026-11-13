@@ -18,6 +18,14 @@ interface AddBookModalProps {
     genres?: BackendGenre[];
 }
 
+interface IsbnLookupResult {
+    title?: string;
+    author?: string;
+    publisher?: string;
+    publishedDate?: string;
+    pages?: number;
+}
+
 const EMPTY_FORM: NewBookFormData = {
     title: "", author: "", year: "", genre: "", status: "Owned",
     publisher: "", isbn: "", pages: "", quantity: "1", rating: "", description: "", notes: "",
@@ -29,9 +37,39 @@ export default function AddBookModal({ onClose, onAdd, mode = "add", initialData
     const [scannerOpen, setScannerOpen] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isbnLookupLoading, setIsbnLookupLoading] = useState(false);
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
         setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    }
+
+    async function lookupIsbn(rawIsbn: string) {
+        const isbn = rawIsbn.trim();
+        if (!isbn) return;
+        const otherFieldsEmpty = !form.title.trim() && !form.author.trim()
+            && !form.publisher.trim() && !form.pages.trim() && !form.year.trim();
+        if (!otherFieldsEmpty) return;
+
+        setIsbnLookupLoading(true);
+        try {
+            const res = await fetch(`/api/book/isbn/${encodeURIComponent(isbn)}`);
+            if (!res.ok) return;
+            const info: IsbnLookupResult | null = await res.json().catch(() => null);
+            if (!info) return;
+            const year = info.publishedDate?.match(/\d{4}/)?.[0];
+            setForm((prev) => ({
+                ...prev,
+                title: prev.title || info.title || prev.title,
+                author: prev.author || info.author || prev.author,
+                publisher: prev.publisher || info.publisher || prev.publisher,
+                pages: prev.pages || (info.pages ? String(info.pages) : prev.pages),
+                year: prev.year || year || prev.year,
+            }));
+        } catch {
+            // best-effort autofill; leave the form untouched on failure
+        } finally {
+            setIsbnLookupLoading(false);
+        }
     }
 
     async function handleSubmit() {
@@ -127,7 +165,9 @@ export default function AddBookModal({ onClose, onAdd, mode = "add", initialData
                                 name="isbn"
                                 value={form.isbn}
                                 onChange={handleChange}
-                                placeholder={t.addBook.fieldIsbnPlaceholder}
+                                onBlur={(e) => lookupIsbn(e.target.value)}
+                                placeholder={isbnLookupLoading ? t.common.loading : t.addBook.fieldIsbnPlaceholder}
+                                disabled={isbnLookupLoading}
                             />
                         </div>
                         <button
@@ -145,6 +185,7 @@ export default function AddBookModal({ onClose, onAdd, mode = "add", initialData
                         onScan={(isbn) => {
                             setForm((prev) => ({ ...prev, isbn }));
                             setScannerOpen(false);
+                            lookupIsbn(isbn);
                         }}
                     />
                     <Input
