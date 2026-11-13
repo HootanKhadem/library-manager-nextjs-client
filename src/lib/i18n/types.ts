@@ -305,4 +305,15 @@ export interface Translations {
         camera: string;
         cameraAuto: string;
     };
+
+    // ── Install prompt banner ───────────────────────────────────────────────────
+    installPrompt: {
+        title: string;
+        androidSubtitle: string;
+        iosSubtitle: string;
+        iosStep1: string;
+        iosStep2: string;
+        install: string;
+        dismiss: string;
+    };
 }

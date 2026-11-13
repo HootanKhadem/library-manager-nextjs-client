@@ -269,6 +269,16 @@ const en: Translations = {
         camera: "Camera",
         cameraAuto: "Auto (back camera)",
     },
+
+    installPrompt: {
+        title: "Install toumaar",
+        androidSubtitle: "Add toumaar to your home screen for quick, full-screen access.",
+        iosSubtitle: "Add toumaar to your home screen:",
+        iosStep1: "1. Tap the Share icon",
+        iosStep2: "2. Scroll down and tap \"Add to Home Screen\"",
+        install: "Install",
+        dismiss: "Not now",
+    },
 };
 
 export default en;

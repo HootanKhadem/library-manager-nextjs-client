@@ -289,6 +289,16 @@ const fa: Translations = {
         camera: "دوربین",
         cameraAuto: "خودکار (دوربین پشت)",
     },
+
+    installPrompt: {
+        title: "نصب toumaar",
+        androidSubtitle: "برای دسترسی سریع و تمام‌صفحه، toumaar را به صفحه اصلی اضافه کنید.",
+        iosSubtitle: "برای افزودن toumaar به صفحه اصلی:",
+        iosStep1: "۱. روی آیکون اشتراک‌گذاری (Share) بزنید",
+        iosStep2: "۲. پایین بروید و «Add to Home Screen» را انتخاب کنید",
+        install: "نصب",
+        dismiss: "الان نه",
+    },
 };
 
 export default fa;
