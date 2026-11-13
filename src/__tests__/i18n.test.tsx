@@ -299,15 +299,10 @@ describe("LanguageSwitcher component", () => {
 
 // ─── Sidebar: Farsi labels ────────────────────────────────────────────────────
 describe("Sidebar i18n", () => {
-    const defaultProps = {
-        isOpen: false,
-        onClose: jest.fn(),
-    };
-
     it("renders English nav labels by default", () => {
         render(
             <LanguageProvider>
-                <Sidebar {...defaultProps} />
+                <Sidebar />
             </LanguageProvider>
         );
         expect(screen.getByText("Dashboard")).toBeInTheDocument();
@@ -317,7 +312,7 @@ describe("Sidebar i18n", () => {
     it("renders Farsi nav labels when language is Farsi", () => {
         render(
             <LanguageProvider initialLanguage="fa">
-                <Sidebar {...defaultProps} />
+                <Sidebar />
             </LanguageProvider>
         );
         // fa.sidebar.navDashboard = "داشبورد"
@@ -329,14 +324,10 @@ describe("Sidebar i18n", () => {
 
 // ─── Topbar: Farsi page titles ────────────────────────────────────────────────
 describe("Topbar i18n", () => {
-    const defaultProps = {
-        onMenuToggle: jest.fn(),
-    };
-
     it("renders English title by default", () => {
         render(
             <LanguageProvider>
-                <Topbar {...defaultProps} />
+                <Topbar />
             </LanguageProvider>
         );
         // en.topbar.pages.dashboard = ["Dashboard", "Overview"]
@@ -346,7 +337,7 @@ describe("Topbar i18n", () => {
     it("renders Farsi title when language is Farsi", () => {
         render(
             <LanguageProvider initialLanguage="fa">
-                <Topbar {...defaultProps} />
+                <Topbar />
             </LanguageProvider>
         );
         // fa.topbar.pages.dashboard = ["داشبورد", "نمای کلی"]
@@ -357,7 +348,7 @@ describe("Topbar i18n", () => {
     it("renders Farsi search placeholder when language is Farsi", () => {
         render(
             <LanguageProvider initialLanguage="fa">
-                <Topbar {...defaultProps} />
+                <Topbar />
             </LanguageProvider>
         );
         // type="search" gives the input a role of "searchbox"

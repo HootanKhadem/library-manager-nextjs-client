@@ -11,10 +11,6 @@ import {Avatar} from "@/src/components/ui/Avatar";
 import {Topbar as TopbarShell} from "@/src/components/ui/Topbar";
 import {BarcodeScanner} from "@/src/components/ui/BarcodeScanner";
 
-interface TopbarProps {
-    onMenuToggle: () => void;
-}
-
 const PATH_TO_PAGE: Record<string, PageId> = {
     '/dashboard': 'dashboard',
     '/books': 'books',
@@ -23,7 +19,7 @@ const PATH_TO_PAGE: Record<string, PageId> = {
     '/settings': 'settings',
 };
 
-export default function Topbar({onMenuToggle}: TopbarProps) {
+export default function Topbar() {
     const { t } = useLanguage();
     const {searchQuery, setSearchQuery} = useLibrary();
     const {user, logout} = useAuth();
@@ -72,7 +68,6 @@ export default function Topbar({onMenuToggle}: TopbarProps) {
     return (
         <>
             <TopbarShell
-                onMenuClick={onMenuToggle}
                 startSlot={
                     <h2 className="text-sm font-semibold text-[var(--foreground)] tracking-tight" data-testid="topbar-title">
                         {title}
