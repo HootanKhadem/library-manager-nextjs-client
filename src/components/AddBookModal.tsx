@@ -53,7 +53,10 @@ export default function AddBookModal({ onClose, onAdd, mode = "add", initialData
         setIsbnLookupLoading(true);
         try {
             const res = await fetch(`/api/book/isbn/${encodeURIComponent(isbn)}`);
-            if (!res.ok) return;
+            if (!res.ok) {
+                console.warn(`ISBN lookup failed: ${res.status} ${res.statusText}`);
+                return;
+            }
             const info: IsbnLookupResult | null = await res.json().catch(() => null);
             if (!info) return;
             const year = info.publishedDate?.match(/\d{4}/)?.[0];
@@ -65,8 +68,8 @@ export default function AddBookModal({ onClose, onAdd, mode = "add", initialData
                 pages: prev.pages || (info.pages ? String(info.pages) : prev.pages),
                 year: prev.year || year || prev.year,
             }));
-        } catch {
-            // best-effort autofill; leave the form untouched on failure
+        } catch (e) {
+            console.warn("ISBN lookup request failed:", e);
         } finally {
             setIsbnLookupLoading(false);
         }
