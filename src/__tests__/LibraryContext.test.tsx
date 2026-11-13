@@ -494,4 +494,65 @@ describe("LibraryContext search and filter", () => {
         await userEvent.click(screen.getByText("page2"));
         await waitFor(() => expect(screen.getByText("Ficciones")).toBeInTheDocument());
     });
+
+    it("applies a filter changed during the initial mount load, instead of leaving the unfiltered page 1 displayed", async () => {
+        let resolveInitialBooks: (value: unknown) => void = () => {};
+        const initialBooksPromise = new Promise((resolve) => { resolveInitialBooks = resolve; });
+        setupFetchMock({
+            "GET /api/book?page=1&pageSize=20": () => initialBooksPromise as Promise<unknown>,
+            "GET /api/book?page=1&pageSize=20&status=LENT_OUT": () =>
+                jsonResponse(200, { items: [SAMPLE_BOOK_2], page: 1, pageSize: 20, totalItems: 1, totalPages: 1 }),
+        });
+        function RaceHarness() {
+            const { books, setActiveFilter } = useLibrary();
+            return (
+                <div>
+                    <button onClick={() => setActiveFilter("Lent Out")}>filter</button>
+                    <ul>{books.map((b) => <li key={b.id}>{b.title}</li>)}</ul>
+                </div>
+            );
+        }
+        render(<LibraryProvider><RaceHarness /></LibraryProvider>);
+        await waitFor(() => expect(screen.getByText("filter")).toBeInTheDocument());
+        // Click the filter before the initial, unfiltered mount load has resolved.
+        await userEvent.click(screen.getByText("filter"));
+
+        resolveInitialBooks({
+            ok: true,
+            status: 200,
+            json: () => Promise.resolve({ items: [SAMPLE_BOOK], page: 1, pageSize: 20, totalItems: 1, totalPages: 1 }),
+        });
+
+        await waitFor(() => expect(screen.getByText("Ficciones")).toBeInTheDocument(), { timeout: 1000 });
+        expect(screen.queryByText("Dune")).not.toBeInTheDocument();
+    });
+
+    it("refetches under the active filter after markBookLent instead of leaving a stale row visible", async () => {
+        let ownedCallCount = 0;
+        setupFetchMock({
+            "GET /api/book?page=1&pageSize=20&status=OWNED": () => {
+                ownedCallCount += 1;
+                return ownedCallCount === 1
+                    ? jsonResponse(200, { items: [SAMPLE_BOOK], page: 1, pageSize: 20, totalItems: 1, totalPages: 1 })
+                    : jsonResponse(200, { items: [], page: 1, pageSize: 20, totalItems: 0, totalPages: 1 });
+            },
+        });
+        function MarkLentHarness() {
+            const { books, setActiveFilter, markBookLent } = useLibrary();
+            return (
+                <div>
+                    <button onClick={() => setActiveFilter("Owned")}>filter</button>
+                    <button onClick={() => books[0] && markBookLent(books[0].id)}>mark-lent</button>
+                    <ul>{books.map((b) => <li key={b.id}>{b.title}</li>)}</ul>
+                </div>
+            );
+        }
+        render(<LibraryProvider><MarkLentHarness /></LibraryProvider>);
+        await waitFor(() => expect(screen.getByText("filter")).toBeInTheDocument());
+        await userEvent.click(screen.getByText("filter"));
+        await waitFor(() => expect(screen.getByText("Dune")).toBeInTheDocument(), { timeout: 1000 });
+
+        await userEvent.click(screen.getByText("mark-lent"));
+        await waitFor(() => expect(screen.queryByText("Dune")).not.toBeInTheDocument());
+    });
 });

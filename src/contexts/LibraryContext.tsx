@@ -156,6 +156,14 @@ export function LibraryProvider({children}: { children: ReactNode }) {
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFilter, setActiveFilterState] = useState<BookStatus | 'All'>('All');
 
+    // "Latest ref" mirrors of searchQuery/activeFilter, updated every render. The mount effect
+    // below needs to read whichever value is *current* once its own async work finishes, not
+    // the value captured in its (never re-run) closure at mount time.
+    const searchQueryRef = useRef(searchQuery);
+    searchQueryRef.current = searchQuery;
+    const activeFilterRef = useRef(activeFilter);
+    activeFilterRef.current = activeFilter;
+
     // Monotonic request counters: guard against an in-flight loadBooks/loadAuthors call
     // whose response resolves after a newer call has already started (out-of-order network
     // resolution when paging quickly). Only the response matching the latest request id is committed.
@@ -168,6 +176,14 @@ export function LibraryProvider({children}: { children: ReactNode }) {
     // The search/status last actually sent to the backend, so paging (setPage/refetchBooks)
     // can keep re-requesting with the currently-applied filters instead of losing them.
     const appliedFiltersRef = useRef<{ search: string; status?: string }>({ search: '', status: undefined });
+    // Whether a search/status filter is currently applied against the backend — used to decide
+    // whether an optimistic local book mutation (add/update/markLent) is safe (no filter: the
+    // mutated row still belongs under the current view) or must instead refetch the current
+    // page from the server so rows that no longer match the filter drop out.
+    const hasActiveFilter = useCallback(
+        () => appliedFiltersRef.current.search.trim() !== '' || !!appliedFiltersRef.current.status,
+        [],
+    );
 
     const genreMap = useMemo(() => buildGenreMap(genres), [genres]);
 
@@ -212,8 +228,21 @@ export function LibraryProvider({children}: { children: ReactNode }) {
             const genreList = await fetchGenres();
             if (cancelled) return;
             setGenres(genreList);
-            await loadBooks(1, buildGenreMap(genreList));
+            const map = buildGenreMap(genreList);
+            await loadBooks(1, map);
             mountedRef.current = true;
+            // The user may have typed a search or picked a filter while this initial, unfiltered
+            // load was still in flight. The debounce effect only reacts to a *change* in
+            // searchQuery/activeFilter, so a change that happened while mountedRef was still
+            // false would otherwise never be retried, leaving the unfiltered page 1 on screen
+            // under an active-looking filter/search box. Apply it now if so.
+            const latestSearch = searchQueryRef.current;
+            const latestFilter = activeFilterRef.current;
+            if (latestSearch.trim() !== '' || latestFilter !== 'All') {
+                const backendStatus = latestFilter === 'All' ? undefined : mapBookStatusToBackendStatus(latestFilter);
+                appliedFiltersRef.current = { search: latestSearch, status: backendStatus };
+                await loadBooks(1, map, latestSearch, backendStatus);
+            }
         })();
         return () => { cancelled = true; };
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -267,9 +296,16 @@ export function LibraryProvider({children}: { children: ReactNode }) {
         } catch {
             return { ok: false };
         }
-        setBooks((prev) => [mapped, ...prev]);
+        // Under an active search/filter the new book may not belong on the current page/view
+        // (e.g. it doesn't match the search term, or its status differs from the active tab) —
+        // refetch the current page from the server instead of just prepending it locally.
+        if (hasActiveFilter()) {
+            refetchBooks();
+        } else {
+            setBooks((prev) => [mapped, ...prev]);
+        }
         return { ok: true };
-    }, [genreMap]);
+    }, [genreMap, hasActiveFilter, refetchBooks]);
 
     const updateBook = useCallback(async (id: string, data: NewBookFormData): Promise<{ ok: boolean }> => {
         let res: Response;
@@ -291,17 +327,30 @@ export function LibraryProvider({children}: { children: ReactNode }) {
         } catch {
             return { ok: false };
         }
-        setBooks((prev) => prev.map((b) => (b.id === id ? mapped : b)));
+        // Same reasoning as addBook above: under an active filter the edited book may no longer
+        // belong on the current page/view, so re-fetch from the server rather than patch locally.
+        if (hasActiveFilter()) {
+            refetchBooks();
+        } else {
+            setBooks((prev) => prev.map((b) => (b.id === id ? mapped : b)));
+        }
         return { ok: true };
-    }, [genreMap]);
+    }, [genreMap, hasActiveFilter, refetchBooks]);
 
     const removeBookLocal = useCallback((id: string) => {
         setBooks((prev) => prev.filter((b) => b.id !== id));
     }, []);
 
     const markBookLent = useCallback((bookId: string) => {
+        // Same reasoning as addBook/updateBook: under an active filter (e.g. the "Owned" tab or
+        // a search term) a book just marked lent may no longer belong in the current view, so
+        // re-fetch from the server rather than just patch its status in place.
+        if (hasActiveFilter()) {
+            refetchBooks();
+            return;
+        }
         setBooks(prev => prev.map(b => (b.id === bookId ? { ...b, status: 'Lent Out' } : b)));
-    }, []);
+    }, [hasActiveFilter, refetchBooks]);
 
     const value = useMemo(
         () => ({
