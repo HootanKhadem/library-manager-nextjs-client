@@ -31,8 +31,6 @@ jest.mock("@/src/contexts/AuthContext", () => ({
 
 import {usePathname} from "next/navigation";
 
-const defaultProps = {onMenuToggle: jest.fn()};
-
 describe("Topbar component", () => {
     beforeEach(() => {
         jest.clearAllMocks();
@@ -41,41 +39,41 @@ describe("Topbar component", () => {
 
     it("renders dashboard title", () => {
         (usePathname as jest.Mock).mockReturnValue("/dashboard");
-        render(<Topbar {...defaultProps} />);
+        render(<Topbar />);
         expect(screen.getByTestId("topbar-title")).toHaveTextContent("Dashboard");
     });
 
     it("renders books page title", () => {
         (usePathname as jest.Mock).mockReturnValue("/books");
-        render(<Topbar {...defaultProps} />);
+        render(<Topbar />);
         expect(screen.getByTestId("topbar-title")).toHaveTextContent("All Books");
     });
 
     it("renders lent page title", () => {
         (usePathname as jest.Mock).mockReturnValue("/lent");
-        render(<Topbar {...defaultProps} />);
+        render(<Topbar />);
         expect(screen.getByTestId("topbar-title")).toHaveTextContent("Currently Lent");
     });
 
     it("renders authors page title", () => {
         (usePathname as jest.Mock).mockReturnValue("/authors");
-        render(<Topbar {...defaultProps} />);
+        render(<Topbar />);
         expect(screen.getByTestId("topbar-title")).toHaveTextContent("Authors");
     });
 
     it("renders settings page title", () => {
         (usePathname as jest.Mock).mockReturnValue("/settings");
-        render(<Topbar {...defaultProps} />);
+        render(<Topbar />);
         expect(screen.getByTestId("topbar-title")).toHaveTextContent("Preferences");
     });
 
     it("renders search input", () => {
-        render(<Topbar {...defaultProps} />);
+        render(<Topbar />);
         expect(screen.getByRole("searchbox", {name: /search/i})).toBeInTheDocument();
     });
 
     it("calls setSearchQuery when typing in search box", () => {
-        render(<Topbar {...defaultProps} />);
+        render(<Topbar />);
         fireEvent.change(screen.getByRole("searchbox", {name: /search/i}), {
             target: {value: "Borges"},
         });
@@ -84,25 +82,25 @@ describe("Topbar component", () => {
 
     it("shows current search query in input", () => {
         mockSearchQuery = "McCarthy";
-        render(<Topbar {...defaultProps} />);
+        render(<Topbar />);
         expect(screen.getByRole("searchbox", {name: /search/i})).toHaveValue("McCarthy");
     });
 
     describe("mobile search overlay", () => {
         it("renders a mobile search icon button", () => {
-            render(<Topbar {...defaultProps} />);
+            render(<Topbar />);
             expect(screen.getByRole("button", { name: /^search$/i })).toBeInTheDocument();
         });
 
         it("opens the search overlay when the mobile search icon is clicked", () => {
-            render(<Topbar {...defaultProps} />);
+            render(<Topbar />);
             fireEvent.click(screen.getByRole("button", { name: /^search$/i }));
             const inputs = screen.getAllByRole("searchbox", { name: /search/i });
             expect(inputs.length).toBe(2);
         });
 
         it("closes the overlay and clears the query when X is clicked", () => {
-            render(<Topbar {...defaultProps} />);
+            render(<Topbar />);
             fireEvent.click(screen.getByRole("button", { name: /^search$/i }));
             fireEvent.click(screen.getByRole("button", { name: /close/i }));
             expect(mockSetSearchQuery).toHaveBeenCalledWith("");
@@ -110,7 +108,7 @@ describe("Topbar component", () => {
         });
 
         it("calls setSearchQuery when typing in the mobile overlay input", () => {
-            render(<Topbar {...defaultProps} />);
+            render(<Topbar />);
             fireEvent.click(screen.getByRole("button", { name: /^search$/i }));
             const inputs = screen.getAllByRole("searchbox", { name: /search/i });
             fireEvent.change(inputs[inputs.length - 1], { target: { value: "Borges" } });
@@ -120,12 +118,12 @@ describe("Topbar component", () => {
 
     describe("account menu", () => {
         it("renders an account button", () => {
-            render(<Topbar {...defaultProps} />);
+            render(<Topbar />);
             expect(screen.getByRole("button", {name: /account/i})).toBeInTheDocument();
         });
 
         it("opens the account menu showing the user's name and Log out when clicked", () => {
-            render(<Topbar {...defaultProps} />);
+            render(<Topbar />);
             fireEvent.click(screen.getByRole("button", {name: /account/i}));
             expect(screen.getByText("Ada Lovelace")).toBeInTheDocument();
             expect(screen.getByRole("menuitem", {name: /log out/i})).toBeInTheDocument();
@@ -133,14 +131,14 @@ describe("Topbar component", () => {
 
         it("calls logout() when Log out is clicked", async () => {
             mockLogout.mockResolvedValue(undefined);
-            render(<Topbar {...defaultProps} />);
+            render(<Topbar />);
             fireEvent.click(screen.getByRole("button", {name: /account/i}));
             fireEvent.click(screen.getByRole("menuitem", {name: /log out/i}));
             expect(mockLogout).toHaveBeenCalled();
         });
 
         it("closes the menu when Escape is pressed", () => {
-            render(<Topbar {...defaultProps} />);
+            render(<Topbar />);
             fireEvent.click(screen.getByRole("button", {name: /account/i}));
             expect(screen.getByRole("menu")).toBeInTheDocument();
             fireEvent.keyDown(document, {key: "Escape"});

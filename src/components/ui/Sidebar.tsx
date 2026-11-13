@@ -6,40 +6,19 @@ import Link from "next/link";
 /* ─── Shell ─────────────────────────────────────────────────────────────── */
 
 interface SidebarShellProps {
-    isOpen: boolean;          // mobile drawer state
-    onClose: () => void;
     children: ReactNode;
 }
 
-function SidebarShell({ isOpen, onClose, children }: SidebarShellProps) {
+/* Desktop-only rail. Mobile navigation lives in the bottom tab bar instead —
+   a drawer-behind-hamburger is an admin-panel pattern, not how phone apps navigate. */
+function SidebarShell({ children }: SidebarShellProps) {
     return (
-        <>
-            {/* Mobile backdrop */}
-            {isOpen && (
-                <div
-                    className="fixed inset-0 z-20 bg-black/40 lg:hidden"
-                    onClick={onClose}
-                    aria-hidden="true"
-                />
-            )}
-
-            {/* Sidebar */}
-            <aside
-                data-testid="sidebar"
-                data-open={isOpen || undefined}
-                className={[
-                    "group fixed inset-y-0 start-0 z-30 flex flex-col bg-[var(--sidebar-bg)] transition-all duration-200 ease-in-out",
-                    /* desktop: 60px collapsed, hover → 240px */
-                    "lg:w-[60px] lg:hover:w-60",
-                    /* mobile: full drawer toggled by isOpen */
-                    "w-60",
-                    /* hide off-screen on mobile only; lg always visible */
-                    isOpen ? "translate-x-0" : "max-lg:ltr:-translate-x-full max-lg:rtl:translate-x-full",
-                ].join(" ")}
-            >
-                {children}
-            </aside>
-        </>
+        <aside
+            data-testid="sidebar"
+            className="group fixed inset-y-0 start-0 z-30 hidden lg:flex lg:w-[60px] lg:hover:w-60 flex-col bg-[var(--sidebar-bg)] transition-all duration-200 ease-in-out"
+        >
+            {children}
+        </aside>
     );
 }
 

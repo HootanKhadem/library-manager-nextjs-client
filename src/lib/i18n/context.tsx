@@ -46,7 +46,7 @@
  *    CSS variable. Wire the font class into the body switch below.
  */
 
-import React, {createContext, useCallback, useContext, useEffect, useState} from "react";
+import React, {createContext, useCallback, useContext, useEffect, useRef, useState} from "react";
 import {Language, TextDirection, Translations} from "@/src/lib/i18n/types";
 import en from "@/src/lib/i18n/translations/en";
 import fa from "@/src/lib/i18n/translations/fa";
@@ -118,6 +118,35 @@ interface LanguageProviderProps {
 export function LanguageProvider({children, initialLanguage = "en"}: LanguageProviderProps) {
     const [language, setLanguageState] = useState<Language>(initialLanguage);
 
+    // Last-known full preferences record from the server. PUT /api/preferences
+    // replaces the whole row, so persisting a language switch must echo back
+    // every other saved field (libraryName, dateFormat, etc.) - sending
+    // {language} alone would silently wipe them.
+    const preferencesRef = useRef<Record<string, unknown> | null>(null);
+
+    // Load the user's saved language preference once on mount. Without this, the
+    // provider always starts from `initialLanguage` ("en"), so every fresh page
+    // load/refresh showed English even after the user saved "fa" in Settings -
+    // that page was the only place pulling the saved preference back in.
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await fetch("/api/preferences");
+                if (!res.ok) return;
+                const data = await res.json().catch(() => null);
+                if (cancelled || !data) return;
+                preferencesRef.current = data;
+                if (data.language && data.language in TRANSLATIONS) {
+                    setLanguageState(data.language);
+                }
+            } catch {
+                // No saved preference reachable - keep the default language.
+            }
+        })();
+        return () => { cancelled = true; };
+    }, []);
+
     const meta = LANGUAGE_META[language];
 
     // Sync <html> dir + lang and <body> font class on every language change.
@@ -145,6 +174,24 @@ export function LanguageProvider({children, initialLanguage = "en"}: LanguagePro
 
     const setLanguage = useCallback((lang: Language) => {
         setLanguageState(lang);
+        (async () => {
+            try {
+                let base = preferencesRef.current;
+                if (!base) {
+                    const res = await fetch("/api/preferences");
+                    base = res.ok ? await res.json().catch(() => null) : null;
+                }
+                const payload = {...(base ?? {}), language: lang};
+                preferencesRef.current = payload;
+                await fetch("/api/preferences", {
+                    method: "PUT",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify(payload),
+                });
+            } catch {
+                // Best-effort persistence - the UI has already switched regardless.
+            }
+        })();
     }, []);
 
     const value: LanguageContextValue = {

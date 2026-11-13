@@ -106,6 +106,42 @@ describe("AddBookModal component", () => {
         render(<AddBookModal onClose={jest.fn()} onAdd={jest.fn()} />);
         expect(screen.getByLabelText(/quantity/i)).toHaveValue(1);
     });
+
+    describe("ISBN lookup autofill", () => {
+        beforeEach(() => { global.fetch = jest.fn(); });
+        afterEach(() => { jest.clearAllMocks(); });
+
+        it("autofills empty fields from the lookup result when the ISBN field loses focus", async () => {
+            (global.fetch as jest.Mock).mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({
+                    title: "Fantastic Mr. Fox", author: "Roald Dahl", publisher: "Puffin",
+                    publishedDate: "October 1, 1988", pages: 96,
+                }),
+            });
+            render(<AddBookModal onClose={onClose} onAdd={onAdd} />);
+
+            fireEvent.change(screen.getByLabelText(/isbn/i), { target: { value: "0140328726" } });
+            fireEvent.blur(screen.getByLabelText(/isbn/i));
+
+            await waitFor(() => expect(screen.getByPlaceholderText(/The Brothers Karamazov/i)).toHaveValue("Fantastic Mr. Fox"));
+            expect(screen.getByPlaceholderText(/Fyodor Dostoevsky/i)).toHaveValue("Roald Dahl");
+            expect(screen.getByLabelText(/publisher/i)).toHaveValue("Puffin");
+            expect(screen.getByLabelText(/pages/i)).toHaveValue(96);
+            expect(screen.getByLabelText(/year/i)).toHaveValue(1988);
+            expect(global.fetch).toHaveBeenCalledWith("/api/book/isbn/0140328726");
+        });
+
+        it("does not look up when another field already has a value", async () => {
+            render(<AddBookModal onClose={onClose} onAdd={onAdd} />);
+
+            fireEvent.change(screen.getByPlaceholderText(/The Brothers Karamazov/i), { target: { value: "Dune" } });
+            fireEvent.change(screen.getByLabelText(/isbn/i), { target: { value: "0140328726" } });
+            fireEvent.blur(screen.getByLabelText(/isbn/i));
+
+            expect(global.fetch).not.toHaveBeenCalled();
+        });
+    });
 });
 
 describe("AddBookModal edit mode", () => {

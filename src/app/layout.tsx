@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     appleWebApp: {capable: true, statusBarStyle: 'default', title: 'toumaar'},
 };
 
-export const viewport: Viewport = {themeColor: '#e11d48'};
+export const viewport: Viewport = {themeColor: '#e11d48', viewportFit: 'cover'};
 
 export default function RootLayout({
     children,

@@ -7,12 +7,7 @@ import {useLibrary} from "@/src/contexts/LibraryContext";
 import {NavItem, SidebarFooter, SidebarLogo, SidebarNav, SidebarShell} from "@/src/components/ui/Sidebar";
 import {Tooltip} from "@/src/components/ui/Tooltip";
 
-interface SidebarProps {
-    isOpen: boolean;
-    onClose: () => void;
-}
-
-const NAV_ITEMS = [
+export const NAV_ITEMS = [
     {href: '/dashboard', icon: <LayoutDashboard className="h-4 w-4"/>},
     {href: '/books', icon: <BookOpen className="h-4 w-4"/>},
     {href: '/lent', icon: <Bookmark className="h-4 w-4"/>},
@@ -20,21 +15,25 @@ const NAV_ITEMS = [
     {href: '/settings', icon: <Settings className="h-4 w-4"/>},
 ] as const;
 
-export default function Sidebar({isOpen, onClose}: SidebarProps) {
-    const { t } = useLanguage();
-    const {setShowAddModal} = useLibrary();
-    const pathname = usePathname();
-
-    const labels: Record<string, string> = {
+export function navLabels(t: ReturnType<typeof useLanguage>['t']): Record<string, string> {
+    return {
         '/dashboard': t.sidebar.navDashboard,
         '/books': t.sidebar.navAllBooks,
         '/lent': t.sidebar.navCurrentlyLent,
         '/authors': t.sidebar.navAuthors,
         '/settings': t.sidebar.navPreferences,
     };
+}
+
+export default function Sidebar() {
+    const { t } = useLanguage();
+    const {setShowAddModal} = useLibrary();
+    const pathname = usePathname();
+
+    const labels = navLabels(t);
 
     return (
-        <SidebarShell isOpen={isOpen} onClose={onClose}>
+        <SidebarShell>
             <SidebarLogo icon={<Library className="h-5 w-5"/>} label="toumaar"/>
 
             <SidebarNav>
@@ -45,7 +44,6 @@ export default function Sidebar({isOpen, onClose}: SidebarProps) {
                             icon={icon}
                             label={labels[href]}
                             active={pathname === href}
-                            onClick={onClose}
                         />
                     </Tooltip>
                 ))}
@@ -54,10 +52,7 @@ export default function Sidebar({isOpen, onClose}: SidebarProps) {
             <SidebarFooter>
                 <Tooltip content={t.sidebar.addNewBook} side="right">
                     <button
-                        onClick={() => {
-                            setShowAddModal(true);
-                            onClose();
-                        }}
+                        onClick={() => setShowAddModal(true)}
                         aria-label={t.sidebar.addNewBook}
                         className="flex items-center gap-3 w-full rounded-lg px-2.5 py-2 text-sm font-medium transition-colors duration-150 cursor-pointer bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] overflow-hidden"
                     >
