@@ -54,11 +54,34 @@ function buildGenreMap(genres: BackendGenre[]): Map<number, string> {
     return new Map(genres.map((g) => [g.id, g.name]));
 }
 
-function buildBookPayload(data: NewBookFormData) {
+// An explicit id keeps same-named authors apart; without one the backend matches/creates by name.
+function authorRef(data: NewBookFormData, authorId?: number) {
+    const id = authorId ?? (data.authorId ? Number(data.authorId) : undefined);
+    return { ...(id ? { id } : {}), name: data.author.trim(), image: '' };
+}
+
+// "Create a separate author" was chosen: create it first so the book can reference it by id.
+async function createSeparateAuthor(data: NewBookFormData): Promise<number | null | undefined> {
+    if (!data.newAuthor || data.authorId) return undefined;
+    try {
+        const res = await fetch('/api/author', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: data.author.trim(), image: '' }),
+        });
+        if (!res.ok) return null;
+        const created: BackendAuthor | null = await res.json().catch(() => null);
+        return created?.id ?? null;
+    } catch {
+        return null;
+    }
+}
+
+function buildBookPayload(data: NewBookFormData, authorId?: number) {
     const genreId = Number(data.genre);
     return {
         name: data.title,
-        author: { name: data.author, image: '' },
+        author: authorRef(data, authorId),
         pages: parseInt(data.pages) || 0,
         isbn: data.isbn,
         publishedDate: data.year.trim() || undefined,
@@ -78,11 +101,11 @@ function buildBookPayload(data: NewBookFormData) {
 // (mapped for all 4 frontend statuses, not just "Owned") so a PUT never silently drops the
 // book's status. genreId is still omitted when genuinely unset (NaN/0), but is otherwise
 // always included so an unrelated edit doesn't wipe out the book's genre.
-function buildBookUpdatePayload(data: NewBookFormData) {
+function buildBookUpdatePayload(data: NewBookFormData, authorId?: number) {
     const genreId = Number(data.genre);
     return {
         name: data.title,
-        author: { name: data.author, image: '' },
+        author: authorRef(data, authorId),
         pages: parseInt(data.pages) || 0,
         isbn: data.isbn,
         publishedDate: data.year.trim() || undefined,
@@ -316,12 +339,14 @@ export function LibraryProvider({children}: { children: ReactNode }) {
     const setActiveFilter = useCallback((f: BookStatus | 'All') => { setActiveFilterState(f); }, []);
 
     const addBook = useCallback(async (data: NewBookFormData): Promise<{ ok: boolean }> => {
+        const newAuthorId = await createSeparateAuthor(data);
+        if (newAuthorId === null) return { ok: false };
         let res: Response;
         try {
             res = await fetch('/api/book', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(buildBookPayload(data)),
+                body: JSON.stringify(buildBookPayload(data, newAuthorId)),
             });
         } catch {
             return { ok: false };
@@ -349,12 +374,14 @@ export function LibraryProvider({children}: { children: ReactNode }) {
     }, [genreMap, hasActiveFilter, refetchBooks, bumpVersion, refetchAuthors]);
 
     const updateBook = useCallback(async (id: string, data: NewBookFormData): Promise<{ ok: boolean }> => {
+        const newAuthorId = await createSeparateAuthor(data);
+        if (newAuthorId === null) return { ok: false };
         let res: Response;
         try {
             res = await fetch(`/api/book/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(buildBookUpdatePayload(data)),
+                body: JSON.stringify(buildBookUpdatePayload(data, newAuthorId)),
             });
         } catch {
             return { ok: false };

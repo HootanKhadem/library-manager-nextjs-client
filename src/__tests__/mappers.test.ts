@@ -79,6 +79,7 @@ describe("mapBackendBookToBook", () => {
             id: "42",
             title: "Dune",
             author: "Frank Herbert",
+            authorId: "7",
             year: 1965,
             genre: "Fiction",
             status: "Owned",
@@ -145,7 +146,7 @@ describe("bookToFormData", () => {
         expect(bookToFormData(book, genres)).toEqual({
             title: "Dune",
             author: "Frank Herbert",
-            translator: "", language: "", image: "", backImage: "",
+            authorId: "", newAuthor: false, translator: "", language: "", image: "", backImage: "",
             year: "1965",
             genre: "1",
             status: "Owned",

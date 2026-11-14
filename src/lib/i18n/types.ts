@@ -264,6 +264,11 @@ export interface Translations {
         fieldTitlePlaceholder: string;
         fieldAuthor: string;
         fieldAuthorPlaceholder: string;
+        authorBooksCount: string;
+        authorExisting: string;
+        authorWillCreate: string;
+        authorCreateSeparate: string;
+        authorSuggestions: string;
         fieldYear: string;
         fieldYearPlaceholder: string;
         fieldGenre: string;

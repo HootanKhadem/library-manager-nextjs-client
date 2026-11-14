@@ -41,6 +41,7 @@ export function mapBackendBookToBook(b: BackendBook, genreMap: Map<number, strin
         id: String(b.id),
         title: b.name,
         author: b.author && typeof b.author.name === "string" ? b.author.name : "",
+        authorId: b.author?.id !== undefined ? String(b.author.id) : undefined,
         year: extractYear(b.publishedDate),
         genre: (b.genreId !== undefined ? genreMap.get(b.genreId) : undefined) ?? "Other",
         status: mapBackendStatusToBookStatus(b.status),
@@ -78,6 +79,8 @@ export function bookToFormData(book: Book, genres: BackendGenre[]): NewBookFormD
     return {
         title: book.title,
         author: book.author,
+        authorId: book.authorId ?? "",
+        newAuthor: false,
         year: book.year == null ? "" : String(book.year),
         genre: matchedGenre ? String(matchedGenre.id) : "",
         status: book.status,
