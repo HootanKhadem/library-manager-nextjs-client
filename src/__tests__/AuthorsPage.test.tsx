@@ -1,36 +1,32 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import AuthorsPage from "@/src/components/pages/AuthorsPage";
-import { Author, Book } from "@/src/lib/types";
+import { Author } from "@/src/lib/types";
 
 const MOCK_AUTHORS: Author[] = [
     { id: "a1", initials: "JB", name: "Jorge Borges", bookCount: 2, genre: "Fiction" },
 ];
 
-const MOCK_WORKS: Book[] = [
-    { id: "b1", title: "Ficciones", author: "Jorge Borges", year: 1944, genre: "Fiction", status: "Owned" },
-];
-
 describe("AuthorsPage — empty and error states", () => {
     it("shows author cards when authors present", () => {
-        render(<AuthorsPage authors={MOCK_AUTHORS} borgesWorks={MOCK_WORKS} />);
+        render(<AuthorsPage authors={MOCK_AUTHORS} />);
         expect(screen.getByText("Jorge Borges")).toBeInTheDocument();
     });
 
     it("shows empty state when authors array is empty", () => {
-        render(<AuthorsPage authors={[]} borgesWorks={[]} />);
+        render(<AuthorsPage authors={[]} />);
         expect(screen.getByText("No authors yet")).toBeInTheDocument();
     });
 
-    it("shows empty state in works table when borgesWorks is empty", () => {
-        render(<AuthorsPage authors={MOCK_AUTHORS} borgesWorks={[]} />);
-        expect(screen.getByText("No works found")).toBeInTheDocument();
+    it("links each author card to its own page", () => {
+        render(<AuthorsPage authors={MOCK_AUTHORS} />);
+        expect(screen.getByRole("link", { name: /Jorge Borges/ })).toHaveAttribute("href", "/authors/a1");
     });
 
     it("shows error state when isError is true", () => {
         render(
             <AuthorsPage
                 authors={[]}
-                borgesWorks={[]}
+               
                 isError
                 onRetry={jest.fn()}
             />
@@ -43,7 +39,7 @@ describe("AuthorsPage — empty and error states", () => {
         render(
             <AuthorsPage
                 authors={[]}
-                borgesWorks={[]}
+               
                 isError
                 onRetry={onRetry}
             />
@@ -55,7 +51,7 @@ describe("AuthorsPage — empty and error states", () => {
 
 describe("AuthorsPage — loading and pagination", () => {
     it("shows loading text when isLoading and no authors yet", () => {
-        render(<AuthorsPage authors={[]} borgesWorks={[]} isLoading />);
+        render(<AuthorsPage authors={[]} isLoading />);
         expect(screen.getByText("Loading…")).toBeInTheDocument();
     });
 
@@ -63,7 +59,7 @@ describe("AuthorsPage — loading and pagination", () => {
         render(
             <AuthorsPage
                 authors={MOCK_AUTHORS}
-                borgesWorks={MOCK_WORKS}
+               
                 page={1}
                 totalPages={3}
                 onPageChange={jest.fn()}

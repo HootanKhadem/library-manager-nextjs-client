@@ -49,6 +49,9 @@ export function mapBackendBookToBook(b: BackendBook, genreMap: Map<number, strin
         pages: b.pages || undefined,
         rating: b.rating || undefined,
         quantity: b.quantity,
+        translator: b.translator || undefined,
+        image: b.image || undefined,
+        backImage: b.backImage || undefined,
     };
 }
 
@@ -84,5 +87,8 @@ export function bookToFormData(book: Book, genres: BackendGenre[]): NewBookFormD
         rating: book.rating !== undefined ? String(book.rating) : "",
         description: book.description ?? "",
         notes: book.notes ?? "",
+        translator: book.translator ?? "",
+        image: book.image ?? "",
+        backImage: book.backImage ?? "",
     };
 }

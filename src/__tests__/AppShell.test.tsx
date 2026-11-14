@@ -4,14 +4,16 @@ import { LibraryProvider } from "@/src/contexts/LibraryContext";
 import { LanguageProvider } from "@/src/lib/i18n/context";
 import { AuthProvider } from "@/src/contexts/AuthContext";
 import AppShell from "@/src/components/AppShell";
-import BooksRoute from "@/src/app/(app)/books/page";
+import BookDetailRoute from "@/src/app/(app)/books/[id]/page";
 import { BackendBook, BackendGenre, PagedResponse } from "@/src/lib/types";
 
 // AppShell composes Sidebar + Topbar. Topbar calls usePathname() and, since it
 // now has an account menu with a logout button, useRouter().
+const mockReplace = jest.fn();
 jest.mock("next/navigation", () => ({
-    usePathname: jest.fn(() => "/books"),
-    useRouter: jest.fn(() => ({ replace: jest.fn() })),
+    usePathname: () => "/books/42",
+    useParams: () => ({ id: "42" }),
+    useRouter: () => ({ replace: mockReplace, push: jest.fn() }),
 }));
 
 // The barcode scanner pulls in a camera-dependent library; it's never opened in these
@@ -76,7 +78,7 @@ function renderApp() {
             <LanguageProvider>
                 <LibraryProvider>
                     <AppShell>
-                        <BooksRoute />
+                        <BookDetailRoute />
                     </AppShell>
                 </LibraryProvider>
             </LanguageProvider>
@@ -89,19 +91,14 @@ describe("AppShell integration — edit round-trip", () => {
 
     it("preserves status and genre on save (regression test for Finding 1)", async () => {
         setupFetchMock({
-            "GET /api/book?page=1&pageSize=20": () =>
-                jsonResponse(200, { items: [WISHLIST_BOOK], page: 1, pageSize: 20, totalItems: 1, totalPages: 1 }),
+            "GET /api/book/42": () => jsonResponse(200, WISHLIST_BOOK),
             "PUT /api/book/42": () => jsonResponse(200, { ...WISHLIST_BOOK, name: "Dune (Revised)" }),
         });
 
         renderApp();
 
-        // Book list loads and the row is clickable.
-        await waitFor(() => expect(screen.getByText("Dune")).toBeInTheDocument());
-        await userEvent.click(screen.getByText("Dune").closest("tr")!);
-
-        // Detail modal opens; click Edit to switch to the AddBookModal in edit mode.
-        expect(await screen.findByTestId("book-detail-modal")).toBeInTheDocument();
+        // Detail page loads; click Edit to open the AddBookModal in edit mode.
+        expect(await screen.findByRole("heading", { name: "Dune" })).toBeInTheDocument();
         await userEvent.click(screen.getByRole("button", { name: "Edit" }));
 
         // Edit form opens, pre-filled from the selected book.
@@ -130,19 +127,15 @@ describe("AppShell integration — edit round-trip", () => {
 describe("AppShell integration — delete flow", () => {
     afterEach(() => jest.resetAllMocks());
 
-    it("confirms, deletes, closes the modal, and removes the book from the list", async () => {
+    it("confirms, deletes, and returns to the books list", async () => {
         setupFetchMock({
-            "GET /api/book?page=1&pageSize=20": () =>
-                jsonResponse(200, { items: [OWNED_BOOK], page: 1, pageSize: 20, totalItems: 1, totalPages: 1 }),
+            "GET /api/book/42": () => jsonResponse(200, OWNED_BOOK),
             "DELETE /api/book/42": () => jsonResponse(204, null),
         });
 
         renderApp();
 
-        await waitFor(() => expect(screen.getByText("Blood Meridian")).toBeInTheDocument());
-        await userEvent.click(screen.getByText("Blood Meridian").closest("tr")!);
-
-        expect(await screen.findByTestId("book-detail-modal")).toBeInTheDocument();
+        expect(await screen.findByRole("heading", { name: "Blood Meridian" })).toBeInTheDocument();
 
         // First click asks for confirmation, second click performs the delete.
         await userEvent.click(screen.getByRole("button", { name: "Delete" }));
@@ -155,7 +148,6 @@ describe("AppShell integration — delete flow", () => {
         const [url] = (global.fetch as jest.Mock).mock.calls.find(([, o]: [string, RequestInit]) => o?.method === "DELETE")!;
         expect(url).toBe("/api/book/42");
 
-        await waitFor(() => expect(screen.queryByTestId("book-detail-modal")).not.toBeInTheDocument());
-        expect(screen.queryByText("Blood Meridian")).not.toBeInTheDocument();
+        await waitFor(() => expect(mockReplace).toHaveBeenCalledWith("/books"));
     });
 });

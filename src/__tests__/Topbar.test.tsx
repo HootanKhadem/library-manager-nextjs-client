@@ -7,17 +7,20 @@ jest.mock("@zxing/browser", () => ({
     })),
 }));
 
+const mockPush = jest.fn();
 jest.mock("next/navigation", () => ({
     usePathname: jest.fn(() => "/dashboard"),
-    useRouter: jest.fn(() => ({replace: jest.fn()})),
+    useRouter: jest.fn(() => ({replace: jest.fn(), push: mockPush})),
 }));
 
 const mockSetSearchQuery = jest.fn();
+const mockSetShowAddModal = jest.fn();
 let mockSearchQuery = "";
 jest.mock("@/src/contexts/LibraryContext", () => ({
     useLibrary: jest.fn(() => ({
         searchQuery: mockSearchQuery,
         setSearchQuery: mockSetSearchQuery,
+        setShowAddModal: mockSetShowAddModal,
     })),
 }));
 
@@ -78,6 +81,18 @@ describe("Topbar component", () => {
             target: {value: "Borges"},
         });
         expect(mockSetSearchQuery).toHaveBeenCalledWith("Borges");
+    });
+
+    it("jumps to the books list when searching from another page", () => {
+        render(<Topbar />);
+        fireEvent.change(screen.getByRole("searchbox", {name: /search/i}), {target: {value: "Borges"}});
+        expect(mockPush).toHaveBeenCalledWith("/books");
+    });
+
+    it("opens the add-book modal from the topbar button", () => {
+        render(<Topbar />);
+        fireEvent.click(screen.getByRole("button", {name: /add new book/i}));
+        expect(mockSetShowAddModal).toHaveBeenCalledWith(true);
     });
 
     it("shows current search query in input", () => {

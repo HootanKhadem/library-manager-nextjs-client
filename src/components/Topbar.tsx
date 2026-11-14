@@ -2,7 +2,7 @@
 
 import {useEffect, useRef, useState} from "react";
 import {usePathname, useRouter} from "next/navigation";
-import {LogOut, ScanLine, Search, X} from "lucide-react";
+import {LogOut, Plus, ScanLine, Search, X} from "lucide-react";
 import {PageId} from "@/src/lib/types";
 import {useLanguage} from "@/src/lib/i18n/context";
 import {useLibrary} from "@/src/contexts/LibraryContext";
@@ -21,7 +21,7 @@ const PATH_TO_PAGE: Record<string, PageId> = {
 
 export default function Topbar() {
     const { t } = useLanguage();
-    const {searchQuery, setSearchQuery} = useLibrary();
+    const {searchQuery, setSearchQuery: setQuery, setShowAddModal} = useLibrary();
     const {user, logout} = useAuth();
     const pathname = usePathname();
     const router = useRouter();
@@ -57,7 +57,13 @@ export default function Topbar() {
         router.replace("/login");
     }
 
-    const pageId: PageId = PATH_TO_PAGE[pathname] ?? 'dashboard';
+    // Search results live on the books list, so typing anywhere else takes the user there.
+    function setSearchQuery(q: string) {
+        setQuery(q);
+        if (q.trim() && pathname !== '/books') router.push('/books');
+    }
+
+    const pageId: PageId = PATH_TO_PAGE[pathname] ?? (pathname.startsWith('/books/') ? 'books' : pathname.startsWith('/authors/') ? 'authors' : 'dashboard');
     const [title] = t.topbar.pages[pageId];
 
     function closeSearch() {
@@ -102,6 +108,15 @@ export default function Topbar() {
                                 <ScanLine className="h-3.5 w-3.5" aria-hidden="true" />
                             </button>
                         </div>
+
+                        <button
+                            type="button"
+                            onClick={() => setShowAddModal(true)}
+                            className="hidden lg:flex h-8 items-center gap-1.5 rounded-lg bg-[var(--accent)] px-3 text-xs font-medium text-white transition-colors hover:bg-[var(--accent-hover)] cursor-pointer"
+                        >
+                            <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                            {t.addBook.title}
+                        </button>
 
                         <div className="relative" ref={accountRef}>
                             <button

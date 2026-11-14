@@ -31,8 +31,7 @@ interface LibraryContextValue {
     removeBookLocal: (id: string) => void;
     markBookLent: (bookId: string) => void;
 
-    selectedBook: Book | null;
-    setSelectedBook: (book: Book | null) => void;
+    dataVersion: number;
     showAddModal: boolean;
     setShowAddModal: (show: boolean) => void;
     editingBook: Book | null;
@@ -60,6 +59,9 @@ function buildBookPayload(data: NewBookFormData) {
         publishedDate: data.year,
         publisher: data.publisher,
         quantity: parseInt(data.quantity) || 1,
+        ...(data.translator.trim() ? { translator: data.translator.trim() } : {}),
+        ...(data.image ? { image: data.image } : {}),
+        ...(data.backImage ? { backImage: data.backImage } : {}),
         ...(data.rating ? { rating: parseInt(data.rating) } : {}),
         ...(data.status === 'Owned' ? { status: 'OWNED' } : {}),
         ...(genreId ? { genreId } : {}),
@@ -80,6 +82,9 @@ function buildBookUpdatePayload(data: NewBookFormData) {
         publishedDate: data.year,
         publisher: data.publisher,
         quantity: parseInt(data.quantity) || 1,
+        ...(data.translator.trim() ? { translator: data.translator.trim() } : {}),
+        ...(data.image ? { image: data.image } : {}),
+        ...(data.backImage ? { backImage: data.backImage } : {}),
         ...(data.rating ? { rating: parseInt(data.rating) } : {}),
         status: mapBookStatusToBackendStatus(data.status),
         ...(genreId ? { genreId } : {}),
@@ -150,7 +155,9 @@ export function LibraryProvider({children}: { children: ReactNode }) {
 
     const [genres, setGenres] = useState<BackendGenre[]>([]);
 
-    const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+    // Bumped on every book mutation so mounted views (dashboard, book page) know to refetch.
+    const [dataVersion, setDataVersion] = useState(0);
+    const bumpVersion = useCallback(() => setDataVersion((v) => v + 1), []);
     const [showAddModal, setShowAddModal] = useState(false);
     const [editingBook, setEditingBook] = useState<Book | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
@@ -216,7 +223,7 @@ export function LibraryProvider({children}: { children: ReactNode }) {
             setAuthorsLoading(false);
             return;
         }
-        setAuthors(result.items.map((a) => mapBackendAuthorToAuthor(a, 0)));
+        setAuthors(result.items.map((a) => mapBackendAuthorToAuthor(a, a.bookCount ?? 0)));
         setAuthorsTotalPages(result.totalPages);
         setAuthorsPageState(pageNum);
         setAuthorsLoading(false);
@@ -304,8 +311,10 @@ export function LibraryProvider({children}: { children: ReactNode }) {
         } else {
             setBooks((prev) => [mapped, ...prev]);
         }
+        bumpVersion();
+        refetchAuthors();
         return { ok: true };
-    }, [genreMap, hasActiveFilter, refetchBooks]);
+    }, [genreMap, hasActiveFilter, refetchBooks, bumpVersion, refetchAuthors]);
 
     const updateBook = useCallback(async (id: string, data: NewBookFormData): Promise<{ ok: boolean }> => {
         let res: Response;
@@ -334,14 +343,19 @@ export function LibraryProvider({children}: { children: ReactNode }) {
         } else {
             setBooks((prev) => prev.map((b) => (b.id === id ? mapped : b)));
         }
+        bumpVersion();
+        refetchAuthors();
         return { ok: true };
-    }, [genreMap, hasActiveFilter, refetchBooks]);
+    }, [genreMap, hasActiveFilter, refetchBooks, bumpVersion, refetchAuthors]);
 
     const removeBookLocal = useCallback((id: string) => {
         setBooks((prev) => prev.filter((b) => b.id !== id));
-    }, []);
+        bumpVersion();
+        refetchAuthors();
+    }, [bumpVersion, refetchAuthors]);
 
     const markBookLent = useCallback((bookId: string) => {
+        bumpVersion();
         // Same reasoning as addBook/updateBook: under an active filter (e.g. the "Owned" tab or
         // a search term) a book just marked lent may no longer belong in the current view, so
         // re-fetch from the server rather than just patch its status in place.
@@ -350,7 +364,7 @@ export function LibraryProvider({children}: { children: ReactNode }) {
             return;
         }
         setBooks(prev => prev.map(b => (b.id === bookId ? { ...b, status: 'Lent Out' } : b)));
-    }, [hasActiveFilter, refetchBooks]);
+    }, [hasActiveFilter, refetchBooks, bumpVersion]);
 
     const value = useMemo(
         () => ({
@@ -358,7 +372,7 @@ export function LibraryProvider({children}: { children: ReactNode }) {
             authors, authorsLoading, authorsError, authorsPage, authorsTotalPages, setAuthorsPage, refetchAuthors,
             genres,
             addBook, updateBook, removeBookLocal, markBookLent,
-            selectedBook, setSelectedBook,
+            dataVersion,
             showAddModal, setShowAddModal,
             editingBook, setEditingBook,
             searchQuery, setSearchQuery,
@@ -368,7 +382,7 @@ export function LibraryProvider({children}: { children: ReactNode }) {
             books, booksLoading, booksError, page, totalPages, totalItems, setPage, refetchBooks,
             authors, authorsLoading, authorsError, authorsPage, authorsTotalPages, setAuthorsPage, refetchAuthors,
             genres, addBook, updateBook, removeBookLocal, markBookLent,
-            selectedBook, showAddModal, editingBook, searchQuery,
+            dataVersion, showAddModal, editingBook, searchQuery,
             activeFilter, setActiveFilter,
         ],
     );

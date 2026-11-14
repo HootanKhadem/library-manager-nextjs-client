@@ -9,6 +9,7 @@ import {Input} from "@/src/components/ui/Input";
 import {Select} from "@/src/components/ui/Select";
 import {Button} from "@/src/components/ui/Button";
 import {BarcodeScanner} from "@/src/components/ui/BarcodeScanner";
+import {CoverPicker} from "@/src/components/ui/CoverPicker";
 
 interface AddBookModalProps {
     onClose: () => void;
@@ -29,6 +30,7 @@ interface IsbnLookupResult {
 const EMPTY_FORM: NewBookFormData = {
     title: "", author: "", year: "", genre: "", status: "Owned",
     publisher: "", isbn: "", pages: "", quantity: "1", rating: "", description: "", notes: "",
+    translator: "", image: "", backImage: "",
 };
 
 export default function AddBookModal({ onClose, onAdd, mode = "add", initialData, genres = [] }: AddBookModalProps) {
@@ -136,6 +138,13 @@ export default function AddBookModal({ onClose, onAdd, mode = "add", initialData
                         placeholder={t.addBook.fieldAuthorPlaceholder}
                     />
                     <Input
+                        label={t.addBook.fieldTranslator}
+                        name="translator"
+                        value={form.translator}
+                        onChange={handleChange}
+                        placeholder={t.addBook.fieldTranslatorPlaceholder}
+                    />
+                    <Input
                         label={t.addBook.fieldYear}
                         name="year"
                         type="number"
@@ -213,6 +222,22 @@ export default function AddBookModal({ onClose, onAdd, mode = "add", initialData
                             <option key={value} value={value}>{label}</option>
                         ))}
                     </Select>
+                    <div className="sm:col-span-2 grid grid-cols-2 gap-4 max-w-sm">
+                        <CoverPicker
+                            label={t.addBook.fieldFrontCover}
+                            value={form.image}
+                            onChange={(image) => setForm((prev) => ({ ...prev, image }))}
+                            chooseLabel={t.addBook.chooseImage}
+                            removeLabel={t.addBook.removeImage}
+                        />
+                        <CoverPicker
+                            label={t.addBook.fieldBackCover}
+                            value={form.backImage}
+                            onChange={(backImage) => setForm((prev) => ({ ...prev, backImage }))}
+                            chooseLabel={t.addBook.chooseImage}
+                            removeLabel={t.addBook.removeImage}
+                        />
+                    </div>
                     <div className="sm:col-span-2 flex flex-col gap-1">
                         <label className="text-sm font-medium text-[var(--foreground)]">{t.addBook.fieldDescription}</label>
                         <textarea

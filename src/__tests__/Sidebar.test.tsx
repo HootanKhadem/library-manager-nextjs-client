@@ -1,4 +1,4 @@
-import {fireEvent, render, screen} from "@testing-library/react";
+import {render, screen} from "@testing-library/react";
 import Sidebar from "@/src/components/Sidebar";
 import {usePathname} from "next/navigation";
 
@@ -42,9 +42,10 @@ describe("Sidebar component", () => {
         expect(screen.getByText("All Books").closest("a")).toHaveAttribute("href", "/books");
     });
 
-    it("calls setShowAddModal when Add New Book is clicked", () => {
+    it("has no add-book button and no tooltips (nav items are plain list rows)", () => {
         render(<Sidebar />);
-        fireEvent.click(screen.getByLabelText(/Add New Book/i));
-        expect(mockSetShowAddModal).toHaveBeenCalledWith(true);
+        expect(screen.queryByLabelText(/Add New Book/i)).not.toBeInTheDocument();
+        expect(screen.getAllByRole("listitem")).toHaveLength(5);
     });
+
 });
