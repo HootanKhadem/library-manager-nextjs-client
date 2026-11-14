@@ -7,7 +7,7 @@ import { BackendBook, NewBookFormData, PagedResponse } from "@/src/lib/types";
 const FORM: NewBookFormData = {
     title: "Dune", author: "Frank Herbert", year: "1965", genre: "Science Fiction", status: "Owned",
     publisher: "Chilton", isbn: "123", pages: "412", quantity: "1", rating: "5", description: "", notes: "",
-    translator: "", image: "", backImage: "",
+    translator: "", language: "", image: "", backImage: "",
 };
 
 const EMPTY_PAGE: PagedResponse<unknown> = { items: [], page: 1, pageSize: 20, totalItems: 0, totalPages: 1 };
@@ -555,5 +555,56 @@ describe("LibraryContext search and filter", () => {
 
         await userEvent.click(screen.getByText("mark-lent"));
         await waitFor(() => expect(screen.queryByText("Dune")).not.toBeInTheDocument());
+    });
+});
+
+describe("LibraryContext sorting", () => {
+    afterEach(() => jest.resetAllMocks());
+
+    it("sends sort and dir for books, resets to page 1, and keeps the sort when paging", async () => {
+        setupFetchMock({
+            "GET /api/book?page=1&pageSize=20&sort=name&dir=asc": () =>
+                jsonResponse(200, { items: [SAMPLE_BOOK], page: 1, pageSize: 20, totalItems: 2, totalPages: 2 }),
+            "GET /api/book?page=2&pageSize=20&sort=name&dir=asc": () =>
+                jsonResponse(200, { items: [SAMPLE_BOOK_2], page: 2, pageSize: 20, totalItems: 2, totalPages: 2 }),
+        });
+        function SortHarness() {
+            const { books, booksSort, setBooksSort, setPage } = useLibrary();
+            return (
+                <div>
+                    <span data-testid="sort">{booksSort ? `${booksSort.id}:${booksSort.dir}` : "none"}</span>
+                    <button onClick={() => setBooksSort({ id: "name", dir: "asc" })}>sort</button>
+                    <button onClick={() => setPage(2)}>page2</button>
+                    <ul>{books.map((b) => <li key={b.id}>{b.title}</li>)}</ul>
+                </div>
+            );
+        }
+        render(<LibraryProvider><SortHarness /></LibraryProvider>);
+        await waitFor(() => expect(screen.getByText("sort")).toBeInTheDocument());
+        await userEvent.click(screen.getByText("sort"));
+        await waitFor(() => expect(screen.getByText("Dune")).toBeInTheDocument());
+        expect(screen.getByTestId("sort")).toHaveTextContent("name:asc");
+        await userEvent.click(screen.getByText("page2"));
+        await waitFor(() => expect(screen.getByText("Ficciones")).toBeInTheDocument());
+    });
+
+    it("sends sort and dir for authors", async () => {
+        setupFetchMock({
+            "GET /api/author?page=1&pageSize=20&sort=bookCount&dir=desc": () =>
+                jsonResponse(200, { items: [{ id: 1, name: "Frank Herbert", image: "", bookCount: 3 }], page: 1, pageSize: 20, totalItems: 1, totalPages: 1 }),
+        });
+        function AuthorSortHarness() {
+            const { authors, setAuthorsSort } = useLibrary();
+            return (
+                <div>
+                    <button onClick={() => setAuthorsSort({ id: "bookCount", dir: "desc" })}>sort</button>
+                    <ul>{authors.map((a) => <li key={a.id}>{a.name}</li>)}</ul>
+                </div>
+            );
+        }
+        render(<LibraryProvider><AuthorSortHarness /></LibraryProvider>);
+        await waitFor(() => expect(screen.getByText("sort")).toBeInTheDocument());
+        await userEvent.click(screen.getByText("sort"));
+        await waitFor(() => expect(screen.getByText("Frank Herbert")).toBeInTheDocument());
     });
 });

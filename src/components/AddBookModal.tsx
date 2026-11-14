@@ -11,6 +11,8 @@ import {Button} from "@/src/components/ui/Button";
 import {BarcodeScanner} from "@/src/components/ui/BarcodeScanner";
 import {CoverPicker} from "@/src/components/ui/CoverPicker";
 
+const LANGUAGE_SUGGESTIONS = ["English", "Persian", "Arabic", "French", "German", "Spanish", "Russian", "Turkish"];
+
 interface AddBookModalProps {
     onClose: () => void;
     onAdd: (book: NewBookFormData) => Promise<boolean>;
@@ -30,7 +32,7 @@ interface IsbnLookupResult {
 const EMPTY_FORM: NewBookFormData = {
     title: "", author: "", year: "", genre: "", status: "Owned",
     publisher: "", isbn: "", pages: "", quantity: "1", rating: "", description: "", notes: "",
-    translator: "", image: "", backImage: "",
+    translator: "", language: "", image: "", backImage: "",
 };
 
 export default function AddBookModal({ onClose, onAdd, mode = "add", initialData, genres = [] }: AddBookModalProps) {
@@ -144,6 +146,17 @@ export default function AddBookModal({ onClose, onAdd, mode = "add", initialData
                         onChange={handleChange}
                         placeholder={t.addBook.fieldTranslatorPlaceholder}
                     />
+                    <Input
+                        label={t.addBook.fieldLanguage}
+                        name="language"
+                        value={form.language}
+                        onChange={handleChange}
+                        placeholder={t.addBook.fieldLanguagePlaceholder}
+                        list="book-language-options"
+                    />
+                    <datalist id="book-language-options">
+                        {LANGUAGE_SUGGESTIONS.map((l) => <option key={l} value={l} />)}
+                    </datalist>
                     <Input
                         label={t.addBook.fieldYear}
                         name="year"

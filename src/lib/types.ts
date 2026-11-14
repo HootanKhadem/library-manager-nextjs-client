@@ -36,6 +36,7 @@ export interface Book {
     rating?: number;
     publisher?: string;
     translator?: string;
+    language?: string;
     isbn?: string;
     pages?: number;
     quantity?: number;
@@ -78,6 +79,7 @@ export interface NewBookFormData {
     description: string;
     notes: string;
     translator: string;
+    language: string;
     image: string;
     backImage: string;
 }
@@ -149,6 +151,7 @@ export interface BackendBook {
     name: string;
     author: BackendAuthorRef;
     translator?: string;
+    language?: string | null;
     pages: number;
     isbn: string;
     publishedDate?: string | null;

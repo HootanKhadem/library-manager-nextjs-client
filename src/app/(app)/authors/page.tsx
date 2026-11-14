@@ -7,6 +7,7 @@ export default function AuthorsRoute() {
     const {
         authors, authorsLoading, authorsError,
         authorsPage, authorsTotalPages, setAuthorsPage, refetchAuthors,
+        authorsSort, setAuthorsSort,
     } = useLibrary();
 
     return (
@@ -18,6 +19,8 @@ export default function AuthorsRoute() {
             page={authorsPage}
             totalPages={authorsTotalPages}
             onPageChange={setAuthorsPage}
+            sort={authorsSort}
+            onSortChange={setAuthorsSort}
         />
     );
 }

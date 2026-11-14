@@ -8,7 +8,7 @@ import {
 import { useLanguage } from "@/src/lib/i18n/context";
 import { Card, CardHeader, CardBody } from "@/src/components/ui/Card";
 import { Button } from "@/src/components/ui/Button";
-import { DataTable, DataTableHead, DataTableBody, DataTableRow, Th, Td } from "@/src/components/ui/DataTable";
+import { DataGrid, DataGridColumn } from "@/src/components/ui/DataGrid";
 import { EmptyState } from "@/src/components/ui/EmptyState";
 import { ErrorState } from "@/src/components/ui/ErrorState";
 import { Skeleton } from "@/src/components/ui/Skeleton";
@@ -48,6 +48,29 @@ async function fetchSection<T>(
         setState({ data: null, loading: false, error: true });
     }
 }
+
+type T = ReturnType<typeof useLanguage>["t"];
+
+// Newest first, as returned by the API, so these headers are not sortable.
+const recentColumns = (t: T): DataGridColumn<DashboardBook>[] => [
+    {
+        id: "title", header: t.dashboard.colTitleAuthor,
+        cell: (b) => (
+            <>
+                <p className="font-medium text-[var(--foreground)] leading-tight">{b.name}</p>
+                <p className="text-xs text-[var(--muted)] mt-0.5">{b.author}</p>
+            </>
+        ),
+    },
+    { id: "genre", header: t.dashboard.colGenre, cell: (b) => b.genre ? <GenreTag genre={b.genre} /> : <span className="text-[var(--muted-foreground)]">—</span> },
+    {
+        id: "status", header: t.dashboard.colStatus,
+        cell: (b) => b.status
+            ? <StatusBadge status={b.status === "LENT_OUT" ? "Lent Out" : "Owned"} overdue={false} />
+            : <span className="text-[var(--muted-foreground)]">—</span>,
+    },
+    { id: "rating", header: t.dashboard.colRating, cell: (b) => b.rating ? <StarRating value={b.rating} /> : <span className="text-[var(--muted-foreground)]">—</span> },
+];
 
 export default function DashboardPage({ onViewAll, refreshKey = 0 }: DashboardPageProps) {
     const { t } = useLanguage();
@@ -164,43 +187,12 @@ export default function DashboardPage({ onViewAll, refreshKey = 0 }: DashboardPa
                     )}
 
                     {!recentBooks.loading && !recentBooks.error && recentBooks.data && recentBooks.data.length > 0 && (
-                        <DataTable className="rounded-t-none border-0 shadow-none">
-                            <DataTableHead>
-                                <tr>
-                                    <Th>{t.dashboard.colTitleAuthor}</Th>
-                                    <Th>{t.dashboard.colGenre}</Th>
-                                    <Th>{t.dashboard.colStatus}</Th>
-                                    <Th>{t.dashboard.colRating}</Th>
-                                </tr>
-                            </DataTableHead>
-                            <DataTableBody>
-                                {recentBooks.data.map((book) => (
-                                    <DataTableRow key={book.id}>
-                                        <Td>
-                                            <p className="font-medium text-[var(--foreground)] leading-tight">{book.name}</p>
-                                            <p className="text-xs text-[var(--muted)] mt-0.5">{book.author}</p>
-                                        </Td>
-                                        <Td>{book.genre ? <GenreTag genre={book.genre} /> : <span className="text-[var(--muted-foreground)]">—</span>}</Td>
-                                        <Td>
-                                            {book.status ? (
-                                                <StatusBadge
-                                                    status={book.status === "LENT_OUT" ? "Lent Out" : "Owned"}
-                                                    overdue={false}
-                                                />
-                                            ) : (
-                                                <span className="text-[var(--muted-foreground)]">—</span>
-                                            )}
-                                        </Td>
-                                        <Td>
-                                            {book.rating
-                                                ? <StarRating value={book.rating} />
-                                                : <span className="text-[var(--muted-foreground)]">—</span>
-                                            }
-                                        </Td>
-                                    </DataTableRow>
-                                ))}
-                            </DataTableBody>
-                        </DataTable>
+                        <DataGrid
+                            className="rounded-t-none border-0 shadow-none"
+                            columns={recentColumns(t)}
+                            rows={recentBooks.data}
+                            rowKey={(b) => b.id}
+                        />
                     )}
                 </Card>
 

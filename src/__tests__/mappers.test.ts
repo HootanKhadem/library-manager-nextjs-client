@@ -145,7 +145,7 @@ describe("bookToFormData", () => {
         expect(bookToFormData(book, genres)).toEqual({
             title: "Dune",
             author: "Frank Herbert",
-            translator: "", image: "", backImage: "",
+            translator: "", language: "", image: "", backImage: "",
             year: "1965",
             genre: "1",
             status: "Owned",
@@ -173,5 +173,24 @@ describe("bookToFormData", () => {
             genre: "Fiction", status: "Owned",
         };
         expect(bookToFormData(book, genres).quantity).toBe("1");
+    });
+});
+
+describe("language", () => {
+    it("maps the backend language onto the book and back into the form", () => {
+        const book = mapBackendBookToBook(
+            { id: 1, name: "Dune", author: { id: 1, name: "F" }, pages: 1, isbn: "1", publisher: "P", quantity: 1, language: "Persian" },
+            new Map(),
+        );
+        expect(book.language).toBe("Persian");
+        expect(bookToFormData(book, []).language).toBe("Persian");
+    });
+
+    it("leaves language undefined when the backend sends none", () => {
+        const book = mapBackendBookToBook(
+            { id: 1, name: "Dune", author: { id: 1, name: "F" }, pages: 1, isbn: "1", publisher: "P", quantity: 1, language: null },
+            new Map(),
+        );
+        expect(book.language).toBeUndefined();
     });
 });

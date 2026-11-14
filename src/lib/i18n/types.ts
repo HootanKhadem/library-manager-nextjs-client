@@ -139,6 +139,7 @@ export interface Translations {
         colStatus: string;
         colLentTo: string;
         colRating: string;
+        colLanguage: string;
         emptyFiltered: string;
         emptyFilteredDesc: string;
         emptyAll: string;
@@ -184,6 +185,9 @@ export interface Translations {
         colGenre: string;
         colStatus: string;
         colRating: string;
+        colName: string;
+        colBooks: string;
+        colLanguage: string;
         colNotes: string;
         emptyAuthors: string;
         emptyAuthorsDesc: string;
@@ -236,6 +240,7 @@ export interface Translations {
         labelLendTo: string;
         selectMember: string;
         noMembers: string;
+        labelLanguage: string;
         labelTranslator: string;
         labelQuantity: string;
         labelYear: string;
@@ -276,6 +281,8 @@ export interface Translations {
         fieldNotesPlaceholder: string;
         fieldTranslator: string;
         fieldTranslatorPlaceholder: string;
+        fieldLanguage: string;
+        fieldLanguagePlaceholder: string;
         fieldFrontCover: string;
         fieldBackCover: string;
         chooseImage: string;

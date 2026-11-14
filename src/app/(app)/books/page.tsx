@@ -8,7 +8,7 @@ export default function BooksRoute() {
     const {
         books, searchQuery, setShowAddModal,
         booksLoading, booksError, page, totalPages, totalItems, setPage, refetchBooks,
-        activeFilter, setActiveFilter,
+        activeFilter, setActiveFilter, booksSort, setBooksSort,
     } = useLibrary();
 
     const router = useRouter();
@@ -28,6 +28,8 @@ export default function BooksRoute() {
             activeFilter={activeFilter}
             onFilterChange={setActiveFilter}
             searchQuery={searchQuery}
+            sort={booksSort}
+            onSortChange={setBooksSort}
         />
     );
 }

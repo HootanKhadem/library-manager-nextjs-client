@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ImageOff } from "lucide-react";
-import { BackendBook, Book } from "@/src/lib/types";
+import { BackendBook, Book, LendRecord } from "@/src/lib/types";
 import { mapBackendBookToBook } from "@/src/lib/mappers";
 import { useLanguage } from "@/src/lib/i18n/context";
 import { useLibrary } from "@/src/contexts/LibraryContext";
@@ -14,7 +14,16 @@ import { StatusBadge } from "@/src/components/ui/StatusBadge";
 import { StarRating } from "@/src/components/ui/StarRating";
 import { GenreTag } from "@/src/components/ui/GenreTag";
 import { ErrorState } from "@/src/components/ui/ErrorState";
-import { DataTable, DataTableHead, DataTableBody, DataTableRow, Th, Td } from "@/src/components/ui/DataTable";
+import { DataGrid, DataGridColumn } from "@/src/components/ui/DataGrid";
+
+type T = ReturnType<typeof useLanguage>["t"];
+
+const lendingColumns = (t: T): DataGridColumn<LendRecord>[] => [
+    { id: "lentTo", header: t.bookDetail.colLentTo, sortable: true, sortValue: (r) => r.lentTo, cell: (r) => r.lentTo },
+    { id: "dateOut", header: t.bookDetail.colDateOut, sortable: true, sortValue: (r) => r.dateOut, cell: (r) => r.dateOut },
+    { id: "dateReturned", header: t.bookDetail.colDateReturned, sortable: true, sortValue: (r) => r.dateReturned, cell: (r) => r.dateReturned ?? "—" },
+    { id: "condition", header: t.bookDetail.colCondition, sortable: true, sortValue: (r) => r.condition, cell: (r) => r.condition ?? "—" },
+];
 
 export default function BookDetailPage({ id }: { id: string }) {
     const { t } = useLanguage();
@@ -155,6 +164,7 @@ export default function BookDetailPage({ id }: { id: string }) {
                             <Meta label={t.bookDetail.labelYear}>{book.year == null ? "—" : String(book.year)}</Meta>
                             <Meta label={t.bookDetail.labelPublisher}>{book.publisher}</Meta>
                             <Meta label={t.bookDetail.labelTranslator}>{book.translator}</Meta>
+                            <Meta label={t.bookDetail.labelLanguage}>{book.language}</Meta>
                             <Meta label={t.bookDetail.labelIsbn} mono>{book.isbn}</Meta>
                             <Meta label={t.bookDetail.labelPages}>{book.pages !== undefined ? String(book.pages) : undefined}</Meta>
                             <Meta label={t.bookDetail.labelQuantity}>{book.quantity !== undefined ? String(book.quantity) : undefined}</Meta>
@@ -217,26 +227,11 @@ export default function BookDetailPage({ id }: { id: string }) {
             {book.lendingHistory && book.lendingHistory.length > 0 && (
                 <div className="mt-6">
                     <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">{t.bookDetail.labelLendingHistory}</p>
-                    <DataTable>
-                        <DataTableHead>
-                            <tr>
-                                <Th>{t.bookDetail.colLentTo}</Th>
-                                <Th>{t.bookDetail.colDateOut}</Th>
-                                <Th>{t.bookDetail.colDateReturned}</Th>
-                                <Th>{t.bookDetail.colCondition}</Th>
-                            </tr>
-                        </DataTableHead>
-                        <DataTableBody>
-                            {book.lendingHistory.map((record, i) => (
-                                <DataTableRow key={i}>
-                                    <Td>{record.lentTo}</Td>
-                                    <Td>{record.dateOut}</Td>
-                                    <Td>{record.dateReturned ?? "—"}</Td>
-                                    <Td>{record.condition ?? "—"}</Td>
-                                </DataTableRow>
-                            ))}
-                        </DataTableBody>
-                    </DataTable>
+                    <DataGrid
+                        columns={lendingColumns(t)}
+                        rows={book.lendingHistory}
+                        rowKey={(_, i) => i}
+                    />
                 </div>
             )}
         </div>

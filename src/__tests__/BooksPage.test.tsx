@@ -135,4 +135,18 @@ describe("BooksPage — loading and pagination", () => {
         fireEvent.click(screen.getByRole("button", { name: "2" }));
         expect(onPageChange).toHaveBeenCalledWith(2);
     });
+
+    it("asks to sort by the clicked column using the backend field name", () => {
+        const onSortChange = jest.fn();
+        render(<BooksPage books={BOOKS} onBookClick={onBookClick} onAddBook={onAddBook} sort={null} onSortChange={onSortChange}/>);
+        fireEvent.click(screen.getByRole("button", {name: "Language"}));
+        expect(onSortChange).toHaveBeenCalledWith({id: "language", dir: "asc"});
+        fireEvent.click(screen.getByRole("button", {name: "Year"}));
+        expect(onSortChange).toHaveBeenLastCalledWith({id: "publishedDate", dir: "asc"});
+    });
+
+    it("shows the book language in the table", () => {
+        render(<BooksPage books={[{...BOOKS[0], language: "Persian"}]} onBookClick={onBookClick} onAddBook={onAddBook}/>);
+        expect(screen.getByText("Persian")).toBeInTheDocument();
+    });
 });

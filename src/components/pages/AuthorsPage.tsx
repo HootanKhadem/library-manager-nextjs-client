@@ -4,8 +4,7 @@ import Link from "next/link";
 import { Author } from "@/src/lib/types";
 import { interpolate, useLanguage } from "@/src/lib/i18n/context";
 import { PageHeader } from "@/src/components/ui/Topbar";
-import { Card, CardBody } from "@/src/components/ui/Card";
-import { GenreTag } from "@/src/components/ui/GenreTag";
+import { DataGrid, DataGridColumn, SortState } from "@/src/components/ui/DataGrid";
 import { Avatar } from "@/src/components/ui/Avatar";
 import { Users } from "lucide-react";
 import { EmptyState } from "@/src/components/ui/EmptyState";
@@ -20,13 +19,30 @@ interface AuthorsPageProps {
     page?: number;
     totalPages?: number;
     onPageChange?: (page: number) => void;
+    sort?: SortState | null;
+    onSortChange?: (sort: SortState | null) => void;
 }
 
 export default function AuthorsPage({
     authors, isError, onRetry,
     isLoading = false, page = 1, totalPages = 1, onPageChange = () => {},
+    sort = null, onSortChange = () => {},
 }: AuthorsPageProps) {
     const { t } = useLanguage();
+
+    // Column ids double as the backend `sort` values.
+    const COLUMNS: DataGridColumn<Author>[] = [
+        {
+            id: "name", header: t.authors.colName, sortable: true,
+            cell: (a) => (
+                <Link href={`/authors/${a.id}`} className="flex items-center gap-3 font-medium text-[var(--foreground)] hover:text-[var(--accent)]">
+                    <Avatar name={a.name} size="sm" />
+                    {a.name}
+                </Link>
+            ),
+        },
+        { id: "bookCount", header: t.authors.colBooks, sortable: true, className: "tabular-nums text-[var(--muted)]", cell: (a) => a.bookCount },
+    ];
 
     return (
         <div data-testid="authors-page">
@@ -52,11 +68,13 @@ export default function AuthorsPage({
                 />
             ) : (
                 <>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-4">
-                        {authors.map((author) => (
-                            <AuthorCard key={author.id} author={author} />
-                        ))}
-                    </div>
+                    <DataGrid
+                        columns={COLUMNS}
+                        rows={authors}
+                        rowKey={(a) => a.id}
+                        sort={sort}
+                        onSortChange={onSortChange}
+                    />
                     <Pagination
                         page={page}
                         totalPages={totalPages}
@@ -67,25 +85,5 @@ export default function AuthorsPage({
                 </>
             )}
         </div>
-    );
-}
-
-function AuthorCard({ author }: { author: Author }) {
-    const { t } = useLanguage();
-    return (
-        <Link href={`/authors/${author.id}`} className="block">
-            <Card className="text-center p-5 hover:-translate-y-0.5 transition-transform">
-                <CardBody className="flex flex-col items-center gap-2 p-0">
-                    <Avatar name={author.name} size="lg" />
-                    <div>
-                        <p className="text-sm font-semibold text-[var(--foreground)] leading-tight">{author.name}</p>
-                        <p className="text-xs text-[var(--muted)] mt-0.5">
-                            {interpolate(t.authors.booksInCollection, { count: String(author.bookCount) })}
-                        </p>
-                    </div>
-                    {author.genre && <GenreTag genre={author.genre} />}
-                </CardBody>
-            </Card>
-        </Link>
     );
 }
