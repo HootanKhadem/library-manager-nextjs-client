@@ -3,7 +3,8 @@ import {Plus_Jakarta_Sans, Vazirmatn} from "next/font/google";
 import "./globals.css";
 import {AuthProvider} from "@/src/contexts/AuthContext";
 import {PwaRegistration} from "@/src/components/PwaRegistration";
-import {LanguageProvider, LANGUAGE_META} from "@/src/lib/i18n/context";
+import {LanguageProvider} from "@/src/lib/i18n/context";
+import {LANGUAGE_META} from "@/src/lib/i18n/meta";
 import {getServerLanguage} from "@/src/lib/i18n/server";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
