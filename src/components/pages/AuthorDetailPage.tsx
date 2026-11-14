@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, BookOpen } from "lucide-react";
+import { ArrowLeft, BookOpen, GitMerge } from "lucide-react";
+import { MergeAuthorsDrawer } from "@/src/components/MergeAuthorsDrawer";
+import { Button } from "@/src/components/ui/Button";
 import { BackendAuthor, BackendBook, Book } from "@/src/lib/types";
 import { mapBackendBookToBook } from "@/src/lib/mappers";
 import { interpolate, useLanguage } from "@/src/lib/i18n/context";
@@ -40,7 +42,9 @@ const workColumns = (t: T): DataGridColumn<Book>[] => [
 
 export default function AuthorDetailPage({ id }: { id: string }) {
     const { t } = useLanguage();
-    const { genres, dataVersion } = useLibrary();
+    const { genres, dataVersion, refetchAuthors, refetchBooks } = useLibrary();
+    const [mergeOpen, setMergeOpen] = useState(false);
+    const [notice, setNotice] = useState<string | null>(null);
     const genreMap = useMemo(() => new Map(genres.map((g) => [g.id, g.name])), [genres]);
 
     const [result, setResult] = useState<
@@ -74,6 +78,14 @@ export default function AuthorDetailPage({ id }: { id: string }) {
     const works = result?.state === "ready" ? result.works : [];
     const load = () => { setResult(null); setAttempt((a) => a + 1); };
 
+    const handleMerged = ({ count, name }: { count: number; name: string }) => {
+        setMergeOpen(false);
+        setNotice(interpolate(t.authors.mergeSuccess, { count: String(count), name }));
+        setAttempt((a) => a + 1); // reload this author and its works (no loading flash)
+        refetchAuthors();
+        refetchBooks();
+    };
+
     const back = (
         <Link href="/authors" className="mb-4 inline-flex items-center gap-1.5 text-sm text-[var(--muted)] hover:text-[var(--foreground)]">
             <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
@@ -106,15 +118,29 @@ export default function AuthorDetailPage({ id }: { id: string }) {
         <div data-testid="author-detail-page">
             {back}
 
-            <div className="mb-6 flex items-center gap-4">
-                <Avatar name={author.name} size="lg" className="!h-16 !w-16 !text-xl" />
-                <div>
-                    <h1 className="text-xl font-semibold tracking-tight text-[var(--foreground)]">{author.name}</h1>
-                    <p className="mt-0.5 text-sm text-[var(--muted)]">
-                        {interpolate(t.authors.booksInCollection, { count: String(works.length) })}
-                    </p>
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                    <Avatar name={author.name} size="lg" className="!h-16 !w-16 !text-xl" />
+                    <div>
+                        <h1 className="text-xl font-semibold tracking-tight text-[var(--foreground)]">{author.name}</h1>
+                        <p className="mt-0.5 text-sm text-[var(--muted)]">
+                            {interpolate(t.authors.booksInCollection, { count: String(works.length) })}
+                        </p>
+                    </div>
                 </div>
+                <Button variant="secondary" onClick={() => { setNotice(null); setMergeOpen(true); }}>
+                    <GitMerge className="h-4 w-4" aria-hidden="true" />
+                    {t.authors.mergeButton}
+                </Button>
             </div>
+
+            {notice && (
+                <p role="status" className="mb-6 rounded-xl border border-[var(--success)] bg-green-50 px-4 py-2.5 text-sm font-medium text-[var(--success)]">
+                    {notice}
+                </p>
+            )}
+
+            <MergeAuthorsDrawer author={author} open={mergeOpen} onClose={() => setMergeOpen(false)} onMerged={handleMerged} />
 
             <dl className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
                 <Stat label={t.authors.statBooks} value={String(works.length)} />

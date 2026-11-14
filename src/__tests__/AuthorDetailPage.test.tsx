@@ -3,7 +3,7 @@ import AuthorDetailPage from "@/src/components/pages/AuthorDetailPage";
 import { LanguageProvider } from "@/src/lib/i18n/context";
 
 jest.mock("@/src/contexts/LibraryContext", () => ({
-    useLibrary: () => ({ genres: [{ id: 1, name: "Fiction" }], dataVersion: 0 }),
+    useLibrary: () => ({ genres: [{ id: 1, name: "Fiction" }], dataVersion: 0, refetchAuthors: jest.fn(), refetchBooks: jest.fn() }),
 }));
 
 function jsonResponse(status: number, body: unknown) {

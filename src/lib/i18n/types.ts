@@ -196,6 +196,25 @@ export interface Translations {
         emptyAuthorsDesc: string;
         emptyWorks: string;
         emptyWorksDesc: string;
+        mergeButton: string;
+        mergeTitle: string;
+        mergeDesc: string;
+        mergeSuggested: string;
+        mergeSelectAll: string;
+        mergeFind: string;
+        mergeSearchPlaceholder: string;
+        mergeNoMatch: string;
+        mergeFinalName: string;
+        mergeResult: string;
+        mergeDuplicateTitles: string;
+        mergeDeleteWarning: string;
+        mergeCancel: string;
+        mergeConfirm: string;
+        mergeSelectToMerge: string;
+        mergeError: string;
+        mergeSuccess: string;
+        mergeClose: string;
+        mergeBooksCount: string;
     };
 
     // ── Settings page ────────────────────────────────────────────────────────────
