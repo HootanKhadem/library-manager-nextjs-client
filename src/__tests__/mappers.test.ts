@@ -48,11 +48,11 @@ describe("extractYear", () => {
     });
 
     it("falls back to the current year for garbage input", () => {
-        expect(extractYear("not a date")).toBe(new Date().getFullYear());
+        expect(extractYear("not a date")).toBeNull();
     });
 
     it("falls back to the current year for undefined", () => {
-        expect(extractYear(undefined)).toBe(new Date().getFullYear());
+        expect(extractYear(undefined)).toBeNull();
     });
 });
 

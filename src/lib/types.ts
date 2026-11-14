@@ -27,7 +27,7 @@ export interface Book {
     id: string;
     title: string;
     author: string;
-    year: number;
+    year: number | null;
     genre: BookGenre | string;
     status: BookStatus;
     lentTo?: string;
@@ -151,7 +151,7 @@ export interface BackendBook {
     translator?: string;
     pages: number;
     isbn: string;
-    publishedDate: string;
+    publishedDate?: string | null;
     publisher: string;
     quantity: number;
     image?: string;

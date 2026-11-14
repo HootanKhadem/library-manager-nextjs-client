@@ -152,7 +152,7 @@ export default function BookDetailPage({ id }: { id: string }) {
                             <Meta label={t.bookDetail.labelRating}>
                                 {book.rating ? <StarRating value={book.rating} /> : <Dash />}
                             </Meta>
-                            <Meta label={t.bookDetail.labelYear}>{String(book.year)}</Meta>
+                            <Meta label={t.bookDetail.labelYear}>{book.year == null ? "—" : String(book.year)}</Meta>
                             <Meta label={t.bookDetail.labelPublisher}>{book.publisher}</Meta>
                             <Meta label={t.bookDetail.labelTranslator}>{book.translator}</Meta>
                             <Meta label={t.bookDetail.labelIsbn} mono>{book.isbn}</Meta>

@@ -133,7 +133,7 @@ export default function AuthorDetailPage({ id }: { id: string }) {
                                             {book.title}
                                         </Link>
                                     </Td>
-                                    <Td className="tabular-nums text-[var(--muted)]">{book.year}</Td>
+                                    <Td className="tabular-nums text-[var(--muted)]">{book.year ?? "—"}</Td>
                                     <Td><GenreTag genre={book.genre} /></Td>
                                     <Td><StatusBadge status={book.status} overdue={book.overdue} /></Td>
                                     <Td>
