@@ -2,6 +2,7 @@
 
 import {createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState} from 'react';
 import {Author, BackendAuthor, BackendBook, BackendGenre, Book, BookStatus, NewBookFormData, PagedResponse} from '@/src/lib/types';
+import type {SortState} from '@/src/components/ui/DataGrid';
 import {mapBackendAuthorToAuthor, mapBackendBookToBook, mapBookStatusToBackendStatus} from '@/src/lib/mappers';
 
 const PAGE_SIZE = 20;
@@ -15,6 +16,8 @@ interface LibraryContextValue {
     totalItems: number;
     setPage: (page: number) => void;
     refetchBooks: () => void;
+    booksSort: SortState | null;
+    setBooksSort: (sort: SortState | null) => void;
 
     authors: Author[];
     authorsLoading: boolean;
@@ -23,6 +26,8 @@ interface LibraryContextValue {
     authorsTotalPages: number;
     setAuthorsPage: (page: number) => void;
     refetchAuthors: () => void;
+    authorsSort: SortState | null;
+    setAuthorsSort: (sort: SortState | null) => void;
 
     genres: BackendGenre[];
 
@@ -60,6 +65,7 @@ function buildBookPayload(data: NewBookFormData) {
         publisher: data.publisher,
         quantity: parseInt(data.quantity) || 1,
         ...(data.translator.trim() ? { translator: data.translator.trim() } : {}),
+        ...(data.language.trim() ? { language: data.language.trim() } : {}),
         ...(data.image ? { image: data.image } : {}),
         ...(data.backImage ? { backImage: data.backImage } : {}),
         ...(data.rating ? { rating: parseInt(data.rating) } : {}),
@@ -83,6 +89,7 @@ function buildBookUpdatePayload(data: NewBookFormData) {
         publisher: data.publisher,
         quantity: parseInt(data.quantity) || 1,
         ...(data.translator.trim() ? { translator: data.translator.trim() } : {}),
+        ...(data.language.trim() ? { language: data.language.trim() } : {}),
         ...(data.image ? { image: data.image } : {}),
         ...(data.backImage ? { backImage: data.backImage } : {}),
         ...(data.rating ? { rating: parseInt(data.rating) } : {}),
@@ -101,12 +108,19 @@ async function fetchGenres(): Promise<BackendGenre[]> {
     }
 }
 
-async function fetchBookPage(pageNum: number, genreMap: Map<number, string>, search?: string, status?: string): Promise<
+function applySort(params: URLSearchParams, sort: SortState | null) {
+    if (!sort) return;
+    params.set('sort', sort.id);
+    params.set('dir', sort.dir);
+}
+
+async function fetchBookPage(pageNum: number, genreMap: Map<number, string>, search?: string, status?: string, sort: SortState | null = null): Promise<
     { ok: true; items: Book[]; totalPages: number; totalItems: number } | { ok: false }
 > {
     const params = new URLSearchParams({ page: String(pageNum), pageSize: String(PAGE_SIZE) });
     if (search?.trim()) params.set('q', search.trim());
     if (status) params.set('status', status);
+    applySort(params, sort);
     let res: Response;
     try {
         res = await fetch(`/api/book?${params.toString()}`);
@@ -124,12 +138,14 @@ async function fetchBookPage(pageNum: number, genreMap: Map<number, string>, sea
     };
 }
 
-async function fetchAuthorPage(pageNum: number): Promise<
+async function fetchAuthorPage(pageNum: number, sort: SortState | null = null): Promise<
     { ok: true; items: BackendAuthor[]; totalPages: number; totalItems: number } | { ok: false }
 > {
     let res: Response;
     try {
-        res = await fetch(`/api/author?page=${pageNum}&pageSize=${PAGE_SIZE}`);
+        const params = new URLSearchParams({ page: String(pageNum), pageSize: String(PAGE_SIZE) });
+        applySort(params, sort);
+        res = await fetch(`/api/author?${params.toString()}`);
     } catch {
         return { ok: false };
     }
@@ -152,6 +168,12 @@ export function LibraryProvider({children}: { children: ReactNode }) {
     const [authorsError, setAuthorsError] = useState(false);
     const [authorsPage, setAuthorsPageState] = useState(1);
     const [authorsTotalPages, setAuthorsTotalPages] = useState(1);
+
+    // Sorting is server-side (lists are paginated). Refs mirror state so loaders always send the latest sort.
+    const [booksSort, setBooksSortState] = useState<SortState | null>(null);
+    const booksSortRef = useRef<SortState | null>(null);
+    const [authorsSort, setAuthorsSortState] = useState<SortState | null>(null);
+    const authorsSortRef = useRef<SortState | null>(null);
 
     const [genres, setGenres] = useState<BackendGenre[]>([]);
 
@@ -188,7 +210,7 @@ export function LibraryProvider({children}: { children: ReactNode }) {
     // mutated row still belongs under the current view) or must instead refetch the current
     // page from the server so rows that no longer match the filter drop out.
     const hasActiveFilter = useCallback(
-        () => appliedFiltersRef.current.search.trim() !== '' || !!appliedFiltersRef.current.status,
+        () => appliedFiltersRef.current.search.trim() !== '' || !!appliedFiltersRef.current.status || booksSortRef.current !== null,
         [],
     );
 
@@ -198,7 +220,7 @@ export function LibraryProvider({children}: { children: ReactNode }) {
         const requestId = ++booksRequestIdRef.current;
         setBooksLoading(true);
         setBooksError(false);
-        const result = await fetchBookPage(pageNum, map, search, status);
+        const result = await fetchBookPage(pageNum, map, search, status, booksSortRef.current);
         if (requestId !== booksRequestIdRef.current) return; // a newer request has since started; discard this stale response
         if (!result.ok) {
             setBooksError(true);
@@ -216,7 +238,7 @@ export function LibraryProvider({children}: { children: ReactNode }) {
         const requestId = ++authorsRequestIdRef.current;
         setAuthorsLoading(true);
         setAuthorsError(false);
-        const result = await fetchAuthorPage(pageNum);
+        const result = await fetchAuthorPage(pageNum, authorsSortRef.current);
         if (requestId !== authorsRequestIdRef.current) return; // a newer request has since started; discard this stale response
         if (!result.ok) {
             setAuthorsError(true);
@@ -276,6 +298,16 @@ export function LibraryProvider({children}: { children: ReactNode }) {
     const setPage = useCallback((next: number) => {
         loadBooks(next, genreMap, appliedFiltersRef.current.search, appliedFiltersRef.current.status);
     }, [loadBooks, genreMap]);
+    const setBooksSort = useCallback((sort: SortState | null) => {
+        booksSortRef.current = sort;
+        setBooksSortState(sort);
+        loadBooks(1, genreMap, appliedFiltersRef.current.search, appliedFiltersRef.current.status);
+    }, [loadBooks, genreMap]);
+    const setAuthorsSort = useCallback((sort: SortState | null) => {
+        authorsSortRef.current = sort;
+        setAuthorsSortState(sort);
+        loadAuthors(1);
+    }, [loadAuthors]);
     const setAuthorsPage = useCallback((next: number) => { loadAuthors(next); }, [loadAuthors]);
     const refetchBooks = useCallback(() => {
         loadBooks(page, genreMap, appliedFiltersRef.current.search, appliedFiltersRef.current.status);
@@ -368,8 +400,8 @@ export function LibraryProvider({children}: { children: ReactNode }) {
 
     const value = useMemo(
         () => ({
-            books, booksLoading, booksError, page, totalPages, totalItems, setPage, refetchBooks,
-            authors, authorsLoading, authorsError, authorsPage, authorsTotalPages, setAuthorsPage, refetchAuthors,
+            books, booksLoading, booksError, page, totalPages, totalItems, setPage, refetchBooks, booksSort, setBooksSort,
+            authors, authorsLoading, authorsError, authorsPage, authorsTotalPages, setAuthorsPage, refetchAuthors, authorsSort, setAuthorsSort,
             genres,
             addBook, updateBook, removeBookLocal, markBookLent,
             dataVersion,
@@ -379,8 +411,8 @@ export function LibraryProvider({children}: { children: ReactNode }) {
             activeFilter, setActiveFilter,
         }),
         [
-            books, booksLoading, booksError, page, totalPages, totalItems, setPage, refetchBooks,
-            authors, authorsLoading, authorsError, authorsPage, authorsTotalPages, setAuthorsPage, refetchAuthors,
+            books, booksLoading, booksError, page, totalPages, totalItems, setPage, refetchBooks, booksSort, setBooksSort,
+            authors, authorsLoading, authorsError, authorsPage, authorsTotalPages, setAuthorsPage, refetchAuthors, authorsSort, setAuthorsSort,
             genres, addBook, updateBook, removeBookLocal, markBookLent,
             dataVersion, showAddModal, editingBook, searchQuery,
             activeFilter, setActiveFilter,

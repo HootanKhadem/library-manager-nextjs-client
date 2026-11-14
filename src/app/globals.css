@@ -138,6 +138,10 @@ a, button {
     transition: background 0.25s ease, color 0.25s ease;
 }
 
+html[dir="rtl"] .bw-world {
+    font-family: var(--font-farsi);
+}
+
 /* Light theme — same rose accent, inverted stone ground. Dark stays the
    default (it carries the "dark until read" thesis); light is an explicit
    opt-in via the header toggle. */

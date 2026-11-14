@@ -50,6 +50,7 @@ import React, {createContext, useCallback, useContext, useEffect, useRef, useSta
 import {Language, TextDirection, Translations} from "@/src/lib/i18n/types";
 import en from "@/src/lib/i18n/translations/en";
 import fa from "@/src/lib/i18n/translations/fa";
+import {LANG_COOKIE} from "@/src/lib/i18n/cookie";
 
 // ---------------------------------------------------------------------------
 // Translation map
@@ -73,6 +74,20 @@ interface LanguageMeta {
     dir: TextDirection;
     nativeName: string;
     fontClass?: string;
+}
+
+function writeLanguageCookie(lang: Language) {
+    if (typeof document === "undefined") return;
+    document.cookie = `${LANG_COOKIE}=${lang}; path=/; max-age=31536000; samesite=lax`;
+}
+
+// Same UI-side hint AuthContext keeps: only signed-in users have saved preferences to fetch.
+function hasSessionHint(): boolean {
+    try {
+        return localStorage.getItem("librax_session") === "true" || sessionStorage.getItem("librax_session") === "true";
+    } catch {
+        return false;
+    }
 }
 
 export const LANGUAGE_META: Record<Language, LanguageMeta> = {
@@ -124,13 +139,13 @@ export function LanguageProvider({children, initialLanguage = "en"}: LanguagePro
     // {language} alone would silently wipe them.
     const preferencesRef = useRef<Record<string, unknown> | null>(null);
 
-    // Load the user's saved language preference once on mount. Without this, the
-    // provider always starts from `initialLanguage` ("en"), so every fresh page
-    // load/refresh showed English even after the user saved "fa" in Settings -
-    // that page was the only place pulling the saved preference back in.
+    // Pull the saved language preference from the server. The server already rendered the right
+    // language from the cookie (see getServerLanguage), so this only matters when the preference
+    // changed elsewhere, or right after signing in on a browser that has no cookie yet.
     useEffect(() => {
         let cancelled = false;
-        (async () => {
+        async function loadPreferences() {
+            if (!hasSessionHint()) return;
             try {
                 const res = await fetch("/api/preferences");
                 if (!res.ok) return;
@@ -141,10 +156,15 @@ export function LanguageProvider({children, initialLanguage = "en"}: LanguagePro
                     setLanguageState(data.language);
                 }
             } catch {
-                // No saved preference reachable - keep the default language.
+                // No saved preference reachable - keep the current language.
             }
-        })();
-        return () => { cancelled = true; };
+        }
+        loadPreferences();
+        window.addEventListener("librax:login", loadPreferences);
+        return () => {
+            cancelled = true;
+            window.removeEventListener("librax:login", loadPreferences);
+        };
     }, []);
 
     const meta = LANGUAGE_META[language];
@@ -161,6 +181,7 @@ export function LanguageProvider({children, initialLanguage = "en"}: LanguagePro
         // Set direction and locale on the root element
         html.setAttribute("dir", meta.dir);
         html.setAttribute("lang", language);
+        writeLanguageCookie(language);
 
         // Swap font class on body: remove all known font classes first, then add
         // the one for the new language (if any).
@@ -174,6 +195,7 @@ export function LanguageProvider({children, initialLanguage = "en"}: LanguagePro
 
     const setLanguage = useCallback((lang: Language) => {
         setLanguageState(lang);
+        if (!hasSessionHint()) return; // signed out (login/marketing): the cookie alone remembers it
         (async () => {
             try {
                 let base = preferencesRef.current;

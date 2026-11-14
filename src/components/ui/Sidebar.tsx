@@ -2,6 +2,7 @@
 
 import {ReactNode} from "react";
 import Link from "next/link";
+import { useLanguage } from "@/src/lib/i18n/context";
 
 /* ─── Shell ─────────────────────────────────────────────────────────────── */
 
@@ -43,8 +44,9 @@ function SidebarLogo({ icon, label }: SidebarLogoProps) {
 /* ─── Nav ───────────────────────────────────────────────────────────────── */
 
 function SidebarNav({ children }: { children: ReactNode }) {
+    const { t } = useLanguage();
     return (
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden py-3" aria-label="Main navigation">
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden py-3" aria-label={t.common.mainNavigation}>
             <ul className="space-y-0.5 px-2">{children}</ul>
         </nav>
     );

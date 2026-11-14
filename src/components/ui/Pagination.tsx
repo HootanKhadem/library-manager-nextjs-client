@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useLanguage } from "@/src/lib/i18n/context";
 
 interface PaginationProps {
     page: number;
@@ -28,10 +29,11 @@ function pageWindow(page: number, totalPages: number): (number | "ellipsis")[] {
 }
 
 export default function Pagination({ page, totalPages, onPageChange, prevLabel, nextLabel }: PaginationProps) {
+    const { t } = useLanguage();
     if (totalPages <= 1) return null;
 
     return (
-        <nav aria-label="Pagination" className="flex items-center justify-center gap-1 mt-4">
+        <nav aria-label={t.common.pagination} className="flex items-center justify-center gap-1 mt-4">
             <button
                 type="button"
                 onClick={() => onPageChange(page - 1)}

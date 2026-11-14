@@ -5,7 +5,7 @@ import { Book, BookStatus } from "@/src/lib/types";
 import { interpolate, useLanguage } from "@/src/lib/i18n/context";
 import { PageHeader } from "@/src/components/ui/Topbar";
 import { Button } from "@/src/components/ui/Button";
-import { DataTable, DataTableHead, DataTableBody, DataTableRow, Th, Td } from "@/src/components/ui/DataTable";
+import { DataGrid, DataGridColumn, SortState } from "@/src/components/ui/DataGrid";
 import { EmptyState } from "@/src/components/ui/EmptyState";
 import { ErrorState } from "@/src/components/ui/ErrorState";
 import { StatusBadge } from "@/src/components/ui/StatusBadge";
@@ -27,12 +27,15 @@ interface BooksPageProps {
     activeFilter?: BookStatus | "All";
     onFilterChange?: (f: BookStatus | "All") => void;
     searchQuery?: string;
+    sort?: SortState | null;
+    onSortChange?: (sort: SortState | null) => void;
 }
 
 export default function BooksPage({
     books, onBookClick, onAddBook, isError, onRetry,
     isLoading = false, page = 1, totalPages = 1, onPageChange = () => {}, totalItems,
     activeFilter = "All", onFilterChange, searchQuery = "",
+    sort = null, onSortChange = () => {},
 }: BooksPageProps) {
     const { t } = useLanguage();
     const displayCount = totalItems ?? books.length;
@@ -42,6 +45,36 @@ export default function BooksPage({
         { value: "Owned",    label: t.books.filterOwned },
         { value: "Lent Out", label: t.books.filterLentOut },
         { value: "Wishlist", label: t.books.filterWishlist },
+    ];
+
+    // Column ids double as the backend `sort` values.
+    const COLUMNS: DataGridColumn<Book>[] = [
+        {
+            id: "number", header: t.books.colNumber,
+            className: "text-[var(--muted-foreground)] tabular-nums w-12",
+            cell: (_, i) => String(i + 1).padStart(3, "0"),
+        },
+        { id: "name", header: t.books.colTitle, sortable: true, cell: (b) => <span className="font-medium text-[var(--foreground)]">{b.title}</span> },
+        { id: "author", header: t.books.colAuthor, sortable: true, className: "text-[var(--muted)]", cell: (b) => b.author },
+        { id: "language", header: t.books.colLanguage, sortable: true, className: "text-[var(--muted)]", cell: (b) => b.language ?? "—" },
+        { id: "publishedDate", header: t.books.colYear, sortable: true, className: "tabular-nums text-[var(--muted)]", cell: (b) => b.year ?? "—" },
+        { id: "genre", header: t.books.colGenre, sortable: true, cell: (b) => <GenreTag genre={b.genre} /> },
+        { id: "status", header: t.books.colStatus, sortable: true, cell: (b) => <StatusBadge status={b.status} overdue={b.overdue} /> },
+        {
+            id: "lentTo", header: t.books.colLentTo,
+            cell: (b) => b.lentTo ? (
+                <span className={b.overdue ? "text-[var(--destructive)] font-medium text-xs" : "text-xs text-[var(--foreground)]"}>
+                    {b.lentTo}
+                    {b.overdue && <span className="ms-1 text-[var(--destructive)]">({t.common.overdue})</span>}
+                </span>
+            ) : (
+                <span className="text-[var(--muted-foreground)]">—</span>
+            ),
+        },
+        {
+            id: "rating", header: t.books.colRating, sortable: true,
+            cell: (b) => b.rating ? <StarRating value={b.rating} /> : <span className="text-[var(--muted-foreground)]">—</span>,
+        },
     ];
 
     return (
@@ -99,56 +132,14 @@ export default function BooksPage({
                 )
             ) : (
                 <>
-                    <DataTable>
-                        <DataTableHead>
-                            <tr>
-                                <Th>#</Th>
-                                <Th>{t.books.colTitle}</Th>
-                                <Th>{t.books.colAuthor}</Th>
-                                <Th>{t.books.colYear}</Th>
-                                <Th>{t.books.colGenre}</Th>
-                                <Th>{t.books.colStatus}</Th>
-                                <Th>{t.books.colLentTo}</Th>
-                                <Th>{t.books.colRating}</Th>
-                            </tr>
-                        </DataTableHead>
-                        <DataTableBody>
-                            {books.map((book, i) => (
-                                <DataTableRow
-                                    key={book.id}
-                                    onClick={() => onBookClick(book)}
-                                    className="cursor-pointer"
-                                >
-                                    <Td className="text-[var(--muted-foreground)] tabular-nums w-12">
-                                        {String(i + 1).padStart(3, "0")}
-                                    </Td>
-                                    <Td>
-                                        <span className="font-medium text-[var(--foreground)]">{book.title}</span>
-                                    </Td>
-                                    <Td className="text-[var(--muted)]">{book.author}</Td>
-                                    <Td className="tabular-nums text-[var(--muted)]">{book.year ?? "—"}</Td>
-                                    <Td><GenreTag genre={book.genre} /></Td>
-                                    <Td><StatusBadge status={book.status} overdue={book.overdue} /></Td>
-                                    <Td>
-                                        {book.lentTo ? (
-                                            <span className={book.overdue ? "text-[var(--destructive)] font-medium text-xs" : "text-xs text-[var(--foreground)]"}>
-                                                {book.lentTo}
-                                                {book.overdue && <span className="ms-1 text-[var(--destructive)]">({t.common.overdue})</span>}
-                                            </span>
-                                        ) : (
-                                            <span className="text-[var(--muted-foreground)]">—</span>
-                                        )}
-                                    </Td>
-                                    <Td>
-                                        {book.rating
-                                            ? <StarRating value={book.rating} />
-                                            : <span className="text-[var(--muted-foreground)]">—</span>
-                                        }
-                                    </Td>
-                                </DataTableRow>
-                            ))}
-                        </DataTableBody>
-                    </DataTable>
+                    <DataGrid
+                        columns={COLUMNS}
+                        rows={books}
+                        rowKey={(b) => b.id}
+                        onRowClick={onBookClick}
+                        sort={sort}
+                        onSortChange={onSortChange}
+                    />
                     <Pagination
                         page={page}
                         totalPages={totalPages}

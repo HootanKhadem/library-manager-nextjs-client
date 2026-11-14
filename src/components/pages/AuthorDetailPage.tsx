@@ -9,12 +9,34 @@ import { interpolate, useLanguage } from "@/src/lib/i18n/context";
 import { useLibrary } from "@/src/contexts/LibraryContext";
 import { Avatar } from "@/src/components/ui/Avatar";
 import { Card, CardHeader } from "@/src/components/ui/Card";
-import { DataTable, DataTableHead, DataTableBody, DataTableRow, Th, Td } from "@/src/components/ui/DataTable";
+import { DataGrid, DataGridColumn } from "@/src/components/ui/DataGrid";
 import { EmptyState } from "@/src/components/ui/EmptyState";
 import { ErrorState } from "@/src/components/ui/ErrorState";
 import { StatusBadge } from "@/src/components/ui/StatusBadge";
 import { StarRating } from "@/src/components/ui/StarRating";
 import { GenreTag } from "@/src/components/ui/GenreTag";
+
+type T = ReturnType<typeof useLanguage>["t"];
+
+// Sorted in the browser: the works list is not paginated.
+const workColumns = (t: T): DataGridColumn<Book>[] => [
+    {
+        id: "title", header: t.authors.colTitle, sortable: true, sortValue: (b) => b.title,
+        cell: (b) => (
+            <Link href={`/books/${b.id}`} className="font-medium text-[var(--foreground)] hover:text-[var(--accent)]">
+                {b.title}
+            </Link>
+        ),
+    },
+    { id: "language", header: t.authors.colLanguage, sortable: true, sortValue: (b) => b.language, className: "text-[var(--muted)]", cell: (b) => b.language ?? "—" },
+    { id: "year", header: t.authors.colYear, sortable: true, sortValue: (b) => b.year, className: "tabular-nums text-[var(--muted)]", cell: (b) => b.year ?? "—" },
+    { id: "genre", header: t.authors.colGenre, sortable: true, sortValue: (b) => b.genre, cell: (b) => <GenreTag genre={b.genre} /> },
+    { id: "status", header: t.authors.colStatus, sortable: true, sortValue: (b) => b.status, cell: (b) => <StatusBadge status={b.status} overdue={b.overdue} /> },
+    {
+        id: "rating", header: t.authors.colRating, sortable: true, sortValue: (b) => b.rating,
+        cell: (b) => b.rating ? <StarRating value={b.rating} /> : <span className="text-[var(--muted-foreground)]">—</span>,
+    },
+];
 
 export default function AuthorDetailPage({ id }: { id: string }) {
     const { t } = useLanguage();
@@ -115,36 +137,12 @@ export default function AuthorDetailPage({ id }: { id: string }) {
                         className="py-10"
                     />
                 ) : (
-                    <DataTable className="rounded-t-none border-0 shadow-none">
-                        <DataTableHead>
-                            <tr>
-                                <Th>{t.authors.colTitle}</Th>
-                                <Th>{t.authors.colYear}</Th>
-                                <Th>{t.authors.colGenre}</Th>
-                                <Th>{t.authors.colStatus}</Th>
-                                <Th>{t.authors.colRating}</Th>
-                            </tr>
-                        </DataTableHead>
-                        <DataTableBody>
-                            {works.map((book) => (
-                                <DataTableRow key={book.id}>
-                                    <Td>
-                                        <Link href={`/books/${book.id}`} className="font-medium text-[var(--foreground)] hover:text-[var(--accent)]">
-                                            {book.title}
-                                        </Link>
-                                    </Td>
-                                    <Td className="tabular-nums text-[var(--muted)]">{book.year ?? "—"}</Td>
-                                    <Td><GenreTag genre={book.genre} /></Td>
-                                    <Td><StatusBadge status={book.status} overdue={book.overdue} /></Td>
-                                    <Td>
-                                        {book.rating
-                                            ? <StarRating value={book.rating} />
-                                            : <span className="text-[var(--muted-foreground)]">—</span>}
-                                    </Td>
-                                </DataTableRow>
-                            ))}
-                        </DataTableBody>
-                    </DataTable>
+                    <DataGrid
+                        className="rounded-t-none border-0 shadow-none"
+                        columns={workColumns(t)}
+                        rows={works}
+                        rowKey={(b) => b.id}
+                    />
                 )}
             </Card>
         </div>

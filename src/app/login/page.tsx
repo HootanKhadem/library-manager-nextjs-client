@@ -3,17 +3,14 @@
 import {useEffect, useState} from 'react';
 import {useRouter} from 'next/navigation';
 import {useAuth} from '@/src/contexts/AuthContext';
+import {useLanguage} from '@/src/lib/i18n/context';
+import {LanguageToggle} from '@/src/components/LanguageToggle';
 import styles from './login.module.css';
-
-const FEATURES = [
-    {strong: 'Books', rest: 'tracked across your full collection'},
-    {strong: 'Loans', rest: 'managed with due date reminders'},
-    {strong: 'Authors', rest: 'catalogued with full details'},
-];
 
 export default function LoginPage() {
     const {isAuthenticated, hydrated, login} = useAuth();
     const router = useRouter();
+    const {t} = useLanguage();
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -30,12 +27,18 @@ export default function LoginPage() {
 
     if (!hydrated || isAuthenticated) return null;
 
+    const FEATURES = [
+        {strong: t.auth.featureBooksStrong, rest: t.auth.featureBooksRest},
+        {strong: t.auth.featureLoansStrong, rest: t.auth.featureLoansRest},
+        {strong: t.auth.featureAuthorsStrong, rest: t.auth.featureAuthorsRest},
+    ];
+
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         setError('');
 
         if (!email.trim() || !password.trim()) {
-            setError('Please enter your email and password.');
+            setError(t.auth.errEnterCredentials);
             return;
         }
 
@@ -45,17 +48,18 @@ export default function LoginPage() {
             if (ok) {
                 router.replace('/dashboard');
             } else {
-                setError('Invalid credentials. Please try again.');
+                setError(t.auth.errInvalidCredentials);
             }
         } catch {
-            setError('Something went wrong. Please try again.');
+            setError(t.auth.errGeneric);
         } finally {
             setIsLoading(false);
         }
     }
 
     return (
-        <main className="min-h-screen flex items-center justify-center bg-[#f5f4f0] px-4 py-6">
+        <main className="relative min-h-screen flex items-center justify-center bg-[#f5f4f0] px-4 py-6">
+            <LanguageToggle className="absolute top-4 end-4 z-20 rounded-full border border-stone-300/80 bg-white px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-100 transition-colors cursor-pointer"/>
             <div
                 className={[
                     'flex w-full max-w-215 min-h-135 rounded-xl overflow-hidden',
@@ -89,19 +93,19 @@ export default function LoginPage() {
                     {/* Tagline */}
                     <div className={`relative z-10 ${styles.a2}`}>
                         <p className="text-[26px] font-semibold text-stone-50 leading-[1.3] tracking-[-0.6px] mb-3.5 max-[640px]:text-xl">
-                            Your personal<br/>
-                            <em className="not-italic text-rose-500">reading universe,</em><br/>
-                            organized.
+                            {t.auth.brandTagline1}<br/>
+                            <em className="not-italic text-rose-500">{t.auth.brandTagline2}</em><br/>
+                            {t.auth.brandTagline3}
                         </p>
                         <p className="text-[13px] text-stone-400 leading-relaxed">
-                            Track books, manage loans, and discover patterns in your reading life — all in one place.
+                            {t.auth.brandBlurb}
                         </p>
                     </div>
 
                     {/* Features */}
                     <ul
                         className={`flex flex-col gap-2.5 relative z-10 max-[640px]:hidden ${styles.a3}`}
-                        aria-label="Features"
+                        aria-label={t.auth.featuresLabel}
                     >
                         {FEATURES.map(({strong, rest}) => (
                             <li key={strong} className="flex items-center gap-2.5">
@@ -120,8 +124,8 @@ export default function LoginPage() {
 
                     {/* Form header */}
                     <div className={`mb-7 ${styles.a4}`}>
-                        <h1 className="text-xl font-semibold text-stone-900 tracking-[-0.4px] mb-1">Welcome back</h1>
-                        <p className="text-[13px] text-stone-500">Sign in to your library</p>
+                        <h1 className="text-xl font-semibold text-stone-900 tracking-[-0.4px] mb-1">{t.auth.welcomeBack}</h1>
+                        <p className="text-[13px] text-stone-500">{t.auth.signInSubtitle}</p>
                     </div>
 
                     <form onSubmit={handleSubmit} noValidate>
@@ -130,11 +134,11 @@ export default function LoginPage() {
                         <div className={`mb-4 ${styles.a5}`}>
                             <label className="block text-xs font-medium text-stone-700 mb-1.5 tracking-[0.1px]"
                                    htmlFor="email">
-                                Email address
+                                {t.auth.emailLabel}
                             </label>
                             <div className={`relative ${styles.inputWrap}`}>
                                 <span
-                                    className={`absolute left-2.75 top-1/2 -translate-y-1/2 flex pointer-events-none transition-colors duration-150 text-stone-400 ${styles.inputIcon}`}
+                                    className={`absolute start-2.75 top-1/2 -translate-y-1/2 flex pointer-events-none transition-colors duration-150 text-stone-400 ${styles.inputIcon}`}
                                     aria-hidden="true">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                                          stroke="currentColor" strokeWidth="2" strokeLinecap="round"
@@ -145,7 +149,7 @@ export default function LoginPage() {
                                     </svg>
                                 </span>
                                 <input
-                                    className={`w-full h-10 pl-9 pr-3 border border-stone-300/80 rounded-lg bg-white font-[inherit] text-[13px] text-stone-900 outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-stone-300 ${styles.input}`}
+                                    className={`w-full h-10 ps-9 pe-3 border border-stone-300/80 rounded-lg bg-white font-[inherit] text-[13px] text-stone-900 outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-stone-300 ${styles.input}`}
                                     id="email"
                                     type="email"
                                     name="email"
@@ -162,11 +166,11 @@ export default function LoginPage() {
                         <div className={`mb-4 ${styles.a6}`}>
                             <label className="block text-xs font-medium text-stone-700 mb-1.5 tracking-[0.1px]"
                                    htmlFor="password">
-                                Password
+                                {t.auth.passwordLabel}
                             </label>
                             <div className={`relative ${styles.inputWrap}`}>
                                 <span
-                                    className={`absolute left-2.75 top-1/2 -translate-y-1/2 flex pointer-events-none transition-colors duration-150 text-stone-400 ${styles.inputIcon}`}
+                                    className={`absolute start-2.75 top-1/2 -translate-y-1/2 flex pointer-events-none transition-colors duration-150 text-stone-400 ${styles.inputIcon}`}
                                     aria-hidden="true">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                                          stroke="currentColor" strokeWidth="2" strokeLinecap="round"
@@ -176,7 +180,7 @@ export default function LoginPage() {
                                     </svg>
                                 </span>
                                 <input
-                                    className={`w-full h-10 pl-9 pr-9 border border-stone-300/80 rounded-lg bg-white font-[inherit] text-[13px] text-stone-900 outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-stone-300 ${styles.input}`}
+                                    className={`w-full h-10 ps-9 pe-9 border border-stone-300/80 rounded-lg bg-white font-[inherit] text-[13px] text-stone-900 outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-stone-300 ${styles.input}`}
                                     id="password"
                                     type={showPassword ? 'text' : 'password'}
                                     name="password"
@@ -188,8 +192,8 @@ export default function LoginPage() {
                                 />
                                 <button
                                     type="button"
-                                    className="absolute right-2.75 top-1/2 -translate-y-1/2 flex bg-transparent border-none p-0 text-stone-400 hover:text-stone-700 cursor-pointer transition-colors duration-150"
-                                    aria-label="Toggle password visibility"
+                                    className="absolute end-2.75 top-1/2 -translate-y-1/2 flex bg-transparent border-none p-0 text-stone-400 hover:text-stone-700 cursor-pointer transition-colors duration-150"
+                                    aria-label={t.auth.togglePassword}
                                     onClick={() => setShowPassword(v => !v)}
                                 >
                                     {showPassword ? (
@@ -243,14 +247,14 @@ export default function LoginPage() {
                                             <polyline points="1,5 4,8 9,2"/>
                                         </svg>
                                     </span>
-                                    <span className="text-xs text-stone-500">Remember me</span>
+                                    <span className="text-xs text-stone-500">{t.auth.rememberMe}</span>
                                 </label>
                             </div>
                             <button
                                 type="button"
                                 className="text-xs font-medium text-rose-600 hover:text-rose-700 no-underline transition-colors duration-150 bg-transparent border-none p-0 cursor-pointer"
                             >
-                                Forgot password?
+                                {t.auth.forgotPassword}
                             </button>
                         </div>
 
@@ -261,7 +265,7 @@ export default function LoginPage() {
                             className={`w-full h-10 bg-rose-600 hover:bg-rose-700 active:scale-[0.985] disabled:opacity-70 disabled:cursor-not-allowed text-white border-none rounded-lg font-[inherit] text-[13px] font-semibold cursor-pointer flex items-center justify-center gap-1.5 tracking-[0.1px] transition-[background,transform] duration-150 ${styles.a8}`}
                         >
                             {isLoading ? (
-                                <span>Signing in…</span>
+                                <span>{t.auth.signingIn}</span>
                             ) : (
                                 <>
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
@@ -271,7 +275,7 @@ export default function LoginPage() {
                                         <polyline points="10 17 15 12 10 7"/>
                                         <line x1="15" y1="12" x2="3" y2="12"/>
                                     </svg>
-                                    Sign in
+                                    {t.auth.signIn}
                                 </>
                             )}
                         </button>
@@ -280,7 +284,7 @@ export default function LoginPage() {
                     {/* Divider */}
                     <div className={`flex items-center gap-3 my-4.5 ${styles.a9}`} aria-hidden="true">
                         <div className="flex-1 h-px bg-stone-200"/>
-                        <span className="text-[11px] text-stone-400 whitespace-nowrap">or continue with</span>
+                        <span className="text-[11px] text-stone-400 whitespace-nowrap">{t.auth.orContinueWith}</span>
                         <div className="flex-1 h-px bg-stone-200"/>
                     </div>
 
@@ -309,13 +313,13 @@ export default function LoginPage() {
 
                     {/* Footer */}
                     <p className={`mt-5.5 text-center text-xs text-stone-400 ${styles.a11}`}>
-                        Don&apos;t have an account?{' '}
+                        {t.auth.noAccount}{' '}
                         <button
                             type="button"
                             onClick={() => router.push('/signup')}
                             className="text-rose-600 font-medium no-underline hover:text-rose-700 transition-colors duration-150 bg-transparent border-none p-0 cursor-pointer"
                         >
-                            Create one
+                            {t.auth.createOne}
                         </button>
                     </p>
 

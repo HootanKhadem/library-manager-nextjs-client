@@ -151,7 +151,7 @@ describe("AddBookModal edit mode", () => {
     const initialData: NewBookFormData = {
         title: "Dune", author: "Frank Herbert", year: "1965", genre: "1", status: "Owned",
         publisher: "Chilton", isbn: "123", pages: "412", quantity: "3", rating: "5", description: "", notes: "",
-        translator: "", image: "", backImage: "",
+        translator: "", language: "", image: "", backImage: "",
     };
 
     beforeEach(() => jest.clearAllMocks());

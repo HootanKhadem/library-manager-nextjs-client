@@ -1,13 +1,15 @@
 import { ReactNode } from "react";
 import Link from "next/link";
+import { useLanguage } from "@/src/lib/i18n/context";
 
 /* ─── Shell ─────────────────────────────────────────────────────────────── */
 
 function BottomNavShell({ children }: { children: ReactNode }) {
+    const { t } = useLanguage();
     return (
         <nav
             data-testid="bottom-nav"
-            aria-label="Main navigation"
+            aria-label={t.common.mainNavigation}
             className="fixed inset-x-0 bottom-0 z-30 flex lg:hidden items-stretch border-t border-[var(--border)] bg-[var(--card)]/95 backdrop-blur-sm pb-[env(safe-area-inset-bottom)]"
         >
             {children}
