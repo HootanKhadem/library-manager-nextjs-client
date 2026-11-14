@@ -46,4 +46,7 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
+# Fails when the server can't render a page (a 500), not just when the process is down.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3   CMD curl -fsS http://127.0.0.1:3000/login > /dev/null || exit 1
+
 CMD ["node", "server.js"]

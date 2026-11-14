@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
+    "smoke": "node scripts/smoke.mjs",
     "test": "jest",
     "test:watch": "jest --watch"
   },

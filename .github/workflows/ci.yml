@@ -35,6 +35,11 @@ jobs:
       - name: Build
         run: npm run build
 
+      # Boots the production server and requests the public pages. Jest and `next build`
+      # can't catch server render crashes; this can.
+      - name: Smoke test
+        run: npm run smoke
+
   deploy:
     name: Deploy
     needs: test

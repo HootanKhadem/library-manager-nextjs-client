@@ -51,6 +51,7 @@ import {Language, TextDirection, Translations} from "@/src/lib/i18n/types";
 import en from "@/src/lib/i18n/translations/en";
 import fa from "@/src/lib/i18n/translations/fa";
 import {LANG_COOKIE} from "@/src/lib/i18n/cookie";
+import {LANGUAGE_META} from "@/src/lib/i18n/meta";
 
 // ---------------------------------------------------------------------------
 // Translation map
@@ -70,11 +71,7 @@ const TRANSLATIONS: Record<Language, Translations> = {en, fa};
 //              language-specific font selection.
 //              The class must be registered in app/layout.tsx as a CSS var.
 // ---------------------------------------------------------------------------
-interface LanguageMeta {
-    dir: TextDirection;
-    nativeName: string;
-    fontClass?: string;
-}
+export {LANGUAGE_META};
 
 function writeLanguageCookie(lang: Language) {
     if (typeof document === "undefined") return;
@@ -89,11 +86,6 @@ function hasSessionHint(): boolean {
         return false;
     }
 }
-
-export const LANGUAGE_META: Record<Language, LanguageMeta> = {
-    en: {dir: "ltr", nativeName: "English"},
-    fa: {dir: "rtl", nativeName: "\u0641\u0627\u0631\u0633\u06CC", fontClass: "font-vazirmatn"},
-};
 
 // ---------------------------------------------------------------------------
 // Context value shape
