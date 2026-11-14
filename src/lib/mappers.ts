@@ -31,9 +31,9 @@ export function mapBookStatusToBackendStatus(status: BookStatus): string {
     return STATUS_FRONTEND_TO_BACKEND[status];
 }
 
-export function extractYear(publishedDate: string | undefined): number {
+export function extractYear(publishedDate: string | null | undefined): number | null {
     const match = publishedDate?.match(/\d{4}/);
-    return match ? parseInt(match[0], 10) : new Date().getFullYear();
+    return match ? parseInt(match[0], 10) : null;
 }
 
 export function mapBackendBookToBook(b: BackendBook, genreMap: Map<number, string>): Book {
@@ -77,7 +77,7 @@ export function bookToFormData(book: Book, genres: BackendGenre[]): NewBookFormD
     return {
         title: book.title,
         author: book.author,
-        year: String(book.year),
+        year: book.year == null ? "" : String(book.year),
         genre: matchedGenre ? String(matchedGenre.id) : "",
         status: book.status,
         publisher: book.publisher ?? "",

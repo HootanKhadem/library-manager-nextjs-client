@@ -126,7 +126,7 @@ export default function BooksPage({
                                         <span className="font-medium text-[var(--foreground)]">{book.title}</span>
                                     </Td>
                                     <Td className="text-[var(--muted)]">{book.author}</Td>
-                                    <Td className="tabular-nums text-[var(--muted)]">{book.year}</Td>
+                                    <Td className="tabular-nums text-[var(--muted)]">{book.year ?? "—"}</Td>
                                     <Td><GenreTag genre={book.genre} /></Td>
                                     <Td><StatusBadge status={book.status} overdue={book.overdue} /></Td>
                                     <Td>
