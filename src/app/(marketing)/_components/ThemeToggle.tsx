@@ -1,11 +1,13 @@
 'use client';
 
 import {useEffect, useState} from 'react';
+import {useLanguage} from '@/src/lib/i18n/context';
 
 const STORAGE_KEY = 'toumaar-theme';
 const LEGACY_STORAGE_KEY = 'bookwrym-theme';
 
 export function ThemeToggle() {
+    const {t} = useLanguage();
     const [theme, setTheme] = useState<'dark' | 'light'>('dark');
 
     useEffect(() => {
@@ -45,7 +47,7 @@ export function ThemeToggle() {
         <button
             type="button"
             onClick={toggle}
-            aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+            aria-label={theme === 'dark' ? t.marketing.themeToLight : t.marketing.themeToDark}
             aria-pressed={theme === 'light'}
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--bw-rib)] text-[var(--bw-ink-muted)] transition-colors duration-200 hover:text-[var(--bw-ink)]"
         >

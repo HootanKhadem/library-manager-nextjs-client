@@ -3,6 +3,8 @@ import {Plus_Jakarta_Sans, Vazirmatn} from "next/font/google";
 import "./globals.css";
 import {AuthProvider} from "@/src/contexts/AuthContext";
 import {PwaRegistration} from "@/src/components/PwaRegistration";
+import {LanguageProvider, LANGUAGE_META} from "@/src/lib/i18n/context";
+import {getServerLanguage} from "@/src/lib/i18n/server";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
     variable: "--font-plus-jakarta-sans",
@@ -25,15 +27,21 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {themeColor: '#e11d48', viewportFit: 'cover'};
 
-export default function RootLayout({
+export default async function RootLayout({
     children,
 }: Readonly<{
     children: React.ReactNode;
 }>) {
+    // Resolved on the server so the first paint is already in the user's language and direction.
+    const language = await getServerLanguage();
+    const meta = LANGUAGE_META[language];
+
     return (
-        <html lang="en">
-            <body className={`${plusJakartaSans.variable} ${vazirmatn.variable} antialiased`}>
-            <AuthProvider>{children}</AuthProvider>
+        <html lang={language} dir={meta.dir}>
+            <body className={`${plusJakartaSans.variable} ${vazirmatn.variable} ${meta.fontClass ?? ""} antialiased`}>
+            <LanguageProvider initialLanguage={language}>
+                <AuthProvider>{children}</AuthProvider>
+            </LanguageProvider>
             <PwaRegistration/>
             </body>
         </html>

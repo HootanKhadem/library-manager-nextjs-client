@@ -3,13 +3,9 @@
 import {useEffect, useState} from 'react';
 import {useRouter} from 'next/navigation';
 import {useAuth} from '@/src/contexts/AuthContext';
+import {useLanguage} from '@/src/lib/i18n/context';
+import {LanguageToggle} from '@/src/components/LanguageToggle';
 import styles from './signup.module.css';
-
-const FEATURES = [
-    {strong: 'Books', rest: 'tracked across your full collection'},
-    {strong: 'Loans', rest: 'managed with due date reminders'},
-    {strong: 'Authors', rest: 'catalogued with full details'},
-];
 
 function hasMinLength(pw: string) {
     return pw.length >= 8;
@@ -26,6 +22,7 @@ function hasDigit(pw: string) {
 export default function SignupPage() {
     const {isAuthenticated, hydrated, signup} = useAuth();
     const router = useRouter();
+    const {t} = useLanguage();
 
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -44,10 +41,16 @@ export default function SignupPage() {
 
     if (!hydrated || isAuthenticated) return null;
 
+    const FEATURES = [
+        {strong: t.auth.featureBooksStrong, rest: t.auth.featureBooksRest},
+        {strong: t.auth.featureLoansStrong, rest: t.auth.featureLoansRest},
+        {strong: t.auth.featureAuthorsStrong, rest: t.auth.featureAuthorsRest},
+    ];
+
     const passwordRequirements = [
-        {key: 'length', label: 'Minimum 8 characters', met: hasMinLength(password)},
-        {key: 'uppercase', label: 'One uppercase letter', met: hasUppercase(password)},
-        {key: 'digit', label: 'One number', met: hasDigit(password)},
+        {key: 'length', label: t.auth.reqLength, met: hasMinLength(password)},
+        {key: 'uppercase', label: t.auth.reqUppercase, met: hasUppercase(password)},
+        {key: 'digit', label: t.auth.reqDigit, met: hasDigit(password)},
     ];
 
     async function handleSubmit(e: React.FormEvent) {
@@ -55,17 +58,17 @@ export default function SignupPage() {
         setError('');
 
         if (!name.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
-            setError('Please fill in all fields.');
+            setError(t.auth.errFillAll);
             return;
         }
 
         if (!hasMinLength(password) || !hasUppercase(password) || !hasDigit(password)) {
-            setError('Password must be at least 8 characters and include an uppercase letter and a number.');
+            setError(t.auth.errPasswordRules);
             return;
         }
 
         if (password !== confirmPassword) {
-            setError('Passwords do not match.');
+            setError(t.auth.errPasswordMismatch);
             return;
         }
 
@@ -78,14 +81,15 @@ export default function SignupPage() {
                 setError(result.message);
             }
         } catch {
-            setError('Something went wrong. Please try again.');
+            setError(t.auth.errGeneric);
         } finally {
             setIsLoading(false);
         }
     }
 
     return (
-        <main className="min-h-screen flex items-center justify-center bg-[#f5f4f0] px-4 py-6">
+        <main className="relative min-h-screen flex items-center justify-center bg-[#f5f4f0] px-4 py-6">
+            <LanguageToggle className="absolute top-4 end-4 z-20 rounded-full border border-stone-300/80 bg-white px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-100 transition-colors cursor-pointer"/>
             <div
                 className={[
                     'flex w-full max-w-215 min-h-135 rounded-xl overflow-hidden',
@@ -116,18 +120,18 @@ export default function SignupPage() {
 
                     <div className={`relative z-10 ${styles.a2}`}>
                         <p className="text-[26px] font-semibold text-stone-50 leading-[1.3] tracking-[-0.6px] mb-3.5 max-[640px]:text-xl">
-                            Your personal<br/>
-                            <em className="not-italic text-rose-500">reading universe,</em><br/>
-                            organized.
+                            {t.auth.brandTagline1}<br/>
+                            <em className="not-italic text-rose-500">{t.auth.brandTagline2}</em><br/>
+                            {t.auth.brandTagline3}
                         </p>
                         <p className="text-[13px] text-stone-400 leading-relaxed">
-                            Track books, manage loans, and discover patterns in your reading life — all in one place.
+                            {t.auth.brandBlurb}
                         </p>
                     </div>
 
                     <ul
                         className={`flex flex-col gap-2.5 relative z-10 max-[640px]:hidden ${styles.a3}`}
-                        aria-label="Features"
+                        aria-label={t.auth.featuresLabel}
                     >
                         {FEATURES.map(({strong, rest}) => (
                             <li key={strong} className="flex items-center gap-2.5">
@@ -145,9 +149,8 @@ export default function SignupPage() {
                     className="flex-1 bg-stone-50 flex flex-col justify-center px-11 py-12 max-[640px]:px-6 max-[640px]:py-8 overflow-y-auto">
 
                     <div className={`mb-6 ${styles.a4}`}>
-                        <h1 className="text-xl font-semibold text-stone-900 tracking-[-0.4px] mb-1">Create your
-                            account</h1>
-                        <p className="text-[13px] text-stone-500">Start cataloguing your library</p>
+                        <h1 className="text-xl font-semibold text-stone-900 tracking-[-0.4px] mb-1">{t.auth.createTitle}</h1>
+                        <p className="text-[13px] text-stone-500">{t.auth.createSubtitle}</p>
                     </div>
 
                     <form onSubmit={handleSubmit} noValidate>
@@ -156,7 +159,7 @@ export default function SignupPage() {
                         <div className={`mb-3.5 ${styles.a5}`}>
                             <label className="block text-xs font-medium text-stone-700 mb-1.5 tracking-[0.1px]"
                                    htmlFor="name">
-                                Name
+                                {t.auth.nameLabel}
                             </label>
                             <div className={`relative ${styles.inputWrap}`}>
                                 <input
@@ -166,7 +169,7 @@ export default function SignupPage() {
                                     name="name"
                                     value={name}
                                     onChange={e => setName(e.target.value)}
-                                    placeholder="Ada Lovelace"
+                                    placeholder={t.auth.namePlaceholder}
                                     autoComplete="name"
                                     required
                                 />
@@ -177,11 +180,11 @@ export default function SignupPage() {
                         <div className={`mb-3.5 ${styles.a5}`}>
                             <label className="block text-xs font-medium text-stone-700 mb-1.5 tracking-[0.1px]"
                                    htmlFor="email">
-                                Email address
+                                {t.auth.emailLabel}
                             </label>
                             <div className={`relative ${styles.inputWrap}`}>
                                 <span
-                                    className={`absolute left-2.75 top-1/2 -translate-y-1/2 flex pointer-events-none transition-colors duration-150 text-stone-400 ${styles.inputIcon}`}
+                                    className={`absolute start-2.75 top-1/2 -translate-y-1/2 flex pointer-events-none transition-colors duration-150 text-stone-400 ${styles.inputIcon}`}
                                     aria-hidden="true">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                                          stroke="currentColor" strokeWidth="2" strokeLinecap="round"
@@ -192,7 +195,7 @@ export default function SignupPage() {
                                     </svg>
                                 </span>
                                 <input
-                                    className={`w-full h-10 pl-9 pr-3 border border-stone-300/80 rounded-lg bg-white font-[inherit] text-[13px] text-stone-900 outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-stone-300 ${styles.input}`}
+                                    className={`w-full h-10 ps-9 pe-3 border border-stone-300/80 rounded-lg bg-white font-[inherit] text-[13px] text-stone-900 outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-stone-300 ${styles.input}`}
                                     id="email"
                                     type="email"
                                     name="email"
@@ -209,11 +212,11 @@ export default function SignupPage() {
                         <div className={`mb-3.5 ${styles.a6}`}>
                             <label className="block text-xs font-medium text-stone-700 mb-1.5 tracking-[0.1px]"
                                    htmlFor="password">
-                                Password
+                                {t.auth.passwordLabel}
                             </label>
                             <div className={`relative ${styles.inputWrap}`}>
                                 <span
-                                    className={`absolute left-2.75 top-1/2 -translate-y-1/2 flex pointer-events-none transition-colors duration-150 text-stone-400 ${styles.inputIcon}`}
+                                    className={`absolute start-2.75 top-1/2 -translate-y-1/2 flex pointer-events-none transition-colors duration-150 text-stone-400 ${styles.inputIcon}`}
                                     aria-hidden="true">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                                          stroke="currentColor" strokeWidth="2" strokeLinecap="round"
@@ -223,7 +226,7 @@ export default function SignupPage() {
                                     </svg>
                                 </span>
                                 <input
-                                    className={`w-full h-10 pl-9 pr-9 border border-stone-300/80 rounded-lg bg-white font-[inherit] text-[13px] text-stone-900 outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-stone-300 ${styles.input}`}
+                                    className={`w-full h-10 ps-9 pe-9 border border-stone-300/80 rounded-lg bg-white font-[inherit] text-[13px] text-stone-900 outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-stone-300 ${styles.input}`}
                                     id="password"
                                     type={showPassword ? 'text' : 'password'}
                                     name="password"
@@ -235,8 +238,8 @@ export default function SignupPage() {
                                 />
                                 <button
                                     type="button"
-                                    className="absolute right-2.75 top-1/2 -translate-y-1/2 flex bg-transparent border-none p-0 text-stone-400 hover:text-stone-700 cursor-pointer transition-colors duration-150"
-                                    aria-label="Toggle password visibility"
+                                    className="absolute end-2.75 top-1/2 -translate-y-1/2 flex bg-transparent border-none p-0 text-stone-400 hover:text-stone-700 cursor-pointer transition-colors duration-150"
+                                    aria-label={t.auth.togglePassword}
                                     onClick={() => setShowPassword(v => !v)}
                                 >
                                     {showPassword ? (
@@ -259,7 +262,7 @@ export default function SignupPage() {
                                     )}
                                 </button>
                             </div>
-                            <ul className="mt-2 space-y-1" aria-label="Password requirements">
+                            <ul className="mt-2 space-y-1" aria-label={t.auth.requirementsLabel}>
                                 {passwordRequirements.map(({key, label, met}) => (
                                     <li
                                         key={key}
@@ -278,11 +281,11 @@ export default function SignupPage() {
                         <div className={`mb-4 ${styles.a7}`}>
                             <label className="block text-xs font-medium text-stone-700 mb-1.5 tracking-[0.1px]"
                                    htmlFor="confirmPassword">
-                                Confirm password
+                                {t.auth.confirmPasswordLabel}
                             </label>
                             <div className={`relative ${styles.inputWrap}`}>
                                 <input
-                                    className={`w-full h-10 pl-3 pr-9 border border-stone-300/80 rounded-lg bg-white font-[inherit] text-[13px] text-stone-900 outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-stone-300 ${styles.input}`}
+                                    className={`w-full h-10 ps-3 pe-9 border border-stone-300/80 rounded-lg bg-white font-[inherit] text-[13px] text-stone-900 outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-stone-300 ${styles.input}`}
                                     id="confirmPassword"
                                     type={showConfirmPassword ? 'text' : 'password'}
                                     name="confirmPassword"
@@ -294,8 +297,8 @@ export default function SignupPage() {
                                 />
                                 <button
                                     type="button"
-                                    className="absolute right-2.75 top-1/2 -translate-y-1/2 flex bg-transparent border-none p-0 text-stone-400 hover:text-stone-700 cursor-pointer transition-colors duration-150"
-                                    aria-label="Toggle password confirmation visibility"
+                                    className="absolute end-2.75 top-1/2 -translate-y-1/2 flex bg-transparent border-none p-0 text-stone-400 hover:text-stone-700 cursor-pointer transition-colors duration-150"
+                                    aria-label={t.auth.toggleConfirmPassword}
                                     onClick={() => setShowConfirmPassword(v => !v)}
                                 >
                                     {showConfirmPassword ? (
@@ -332,7 +335,7 @@ export default function SignupPage() {
                             className={`w-full h-10 bg-rose-600 hover:bg-rose-700 active:scale-[0.985] disabled:opacity-70 disabled:cursor-not-allowed text-white border-none rounded-lg font-[inherit] text-[13px] font-semibold cursor-pointer flex items-center justify-center gap-1.5 tracking-[0.1px] transition-[background,transform] duration-150 ${styles.a9}`}
                         >
                             {isLoading ? (
-                                <span>Creating account…</span>
+                                <span>{t.auth.creatingAccount}</span>
                             ) : (
                                 <>
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
@@ -342,7 +345,7 @@ export default function SignupPage() {
                                         <polyline points="10 17 15 12 10 7"/>
                                         <line x1="15" y1="12" x2="3" y2="12"/>
                                     </svg>
-                                    Create account
+                                    {t.auth.createAccount}
                                 </>
                             )}
                         </button>
@@ -350,13 +353,13 @@ export default function SignupPage() {
 
                     {/* Footer */}
                     <p className={`mt-5.5 text-center text-xs text-stone-400 ${styles.a10}`}>
-                        Already have an account?{' '}
+                        {t.auth.haveAccount}{' '}
                         <button
                             type="button"
                             onClick={() => router.push('/login')}
                             className="text-rose-600 font-medium no-underline hover:text-rose-700 transition-colors duration-150 bg-transparent border-none p-0 cursor-pointer"
                         >
-                            Sign in
+                            {t.auth.signIn}
                         </button>
                     </p>
 

@@ -93,6 +93,7 @@ export function AuthProvider({children}: { children: ReactNode }) {
         persistSession(remember, email);
         setUser({email});
         setIsAuthenticated(true);
+        window.dispatchEvent(new Event('librax:login')); // lets LanguageProvider pull this user's saved language
         return true;
     }, []);
 
@@ -117,6 +118,7 @@ export function AuthProvider({children}: { children: ReactNode }) {
         persistSession(true, email, name);
         setUser({email, name});
         setIsAuthenticated(true);
+        window.dispatchEvent(new Event('librax:login'));
         return {ok: true};
     }, []);
 

@@ -4,35 +4,15 @@ import {useEffect} from 'react';
 import {useRouter} from 'next/navigation';
 import Link from 'next/link';
 import {useAuth} from '@/src/contexts/AuthContext';
+import {useLanguage} from '@/src/lib/i18n/context';
 import {LanternGlyph} from './_components/LanternGlyph';
 import {Reveal} from './_components/Reveal';
-
-const GLOW_STATES = [
-    {
-        state: 'folded' as const,
-        title: 'Wishlist',
-        copy: 'Folded flat and waiting. Nothing lights up until it\'s actually on your shelf.',
-    },
-    {
-        state: 'lit' as const,
-        title: 'Owned',
-        copy: 'Catalogued in seconds — scan the barcode or type the title. It glows the moment it\'s yours.',
-    },
-    {
-        state: 'lent' as const,
-        title: 'Lent out',
-        copy: 'Still glowing, just tethered elsewhere — with who has it and when it\'s due back.',
-    },
-    {
-        state: 'overdue' as const,
-        title: 'Overdue',
-        copy: 'Flickers red until it comes home. Impossible to lose track of quietly.',
-    },
-];
 
 export default function HomePage() {
     const {isAuthenticated, hydrated} = useAuth();
     const router = useRouter();
+    const {t} = useLanguage();
+    const m = t.marketing;
 
     useEffect(() => {
         if (hydrated && isAuthenticated) {
@@ -42,12 +22,19 @@ export default function HomePage() {
 
     if (!hydrated || isAuthenticated) return null;
 
+    const GLOW_STATES = [
+        {state: 'folded' as const, title: m.stateWishlistTitle, copy: m.stateWishlistCopy},
+        {state: 'lit' as const, title: m.stateOwnedTitle, copy: m.stateOwnedCopy},
+        {state: 'lent' as const, title: m.stateLentTitle, copy: m.stateLentCopy},
+        {state: 'overdue' as const, title: m.stateOverdueTitle, copy: m.stateOverdueCopy},
+    ];
+
     return (
         <>
             {/* ── Hero ─────────────────────────────────────────────── */}
             <section className="relative overflow-hidden px-6 pt-16 pb-24 sm:px-10 sm:pt-24 sm:pb-32">
                 <div
-                    className="pointer-events-none absolute -top-40 -right-40 h-[520px] w-[520px] rounded-full opacity-25 blur-[100px] animate-orb-pulse"
+                    className="pointer-events-none absolute -top-40 -end-40 h-[520px] w-[520px] rounded-full opacity-25 blur-[100px] animate-orb-pulse"
                     style={{background: 'var(--bw-rose)'}}
                     aria-hidden="true"
                 />
@@ -55,12 +42,10 @@ export default function HomePage() {
                 <div className="relative mx-auto grid max-w-6xl items-center gap-16 lg:grid-cols-[1.1fr_0.9fr]">
                     <div>
                         <h1 className="max-w-[16ch] text-[clamp(2.6rem,6vw,5rem)] font-extrabold leading-[0.98] tracking-[-0.03em] text-[var(--bw-ink)]">
-                            Your shelf glows only where you&apos;ve been.
+                            {m.homeHeroTitle}
                         </h1>
                         <p className="mt-7 max-w-[52ch] text-[17px] leading-relaxed text-[var(--bw-ink-muted)]">
-                            toumaar is a fast, personal way to catalogue what you own, track who
-                            borrowed what, and never lose a book to memory again — no feeds,
-                            no reviews, no strangers browsing your shelf.
+                            {m.homeHeroBody}
                         </p>
 
                         <div className="mt-10 flex flex-wrap items-center gap-5">
@@ -68,13 +53,13 @@ export default function HomePage() {
                                 href="/login"
                                 className="rounded-full bg-[var(--bw-rose)] px-7 py-3.5 text-[14px] font-semibold text-white shadow-[var(--bw-glow-shadow)] transition-transform duration-200 hover:scale-[1.03] active:scale-[0.98]"
                             >
-                                Sign in to your library
+                                {m.homeCtaSignIn}
                             </Link>
                             <a
                                 href="#how-it-glows"
                                 className="text-[14px] font-medium text-[var(--bw-ink-muted)] underline decoration-[var(--bw-rib)] underline-offset-4 transition-colors hover:text-[var(--bw-ink)]"
                             >
-                                See how it works
+                                {m.homeCtaHow}
                             </a>
                         </div>
                     </div>
@@ -93,21 +78,11 @@ export default function HomePage() {
             <section className="border-t border-[var(--bw-rib)] px-6 py-20 sm:px-10 sm:py-28">
                 <Reveal className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[0.7fr_1.3fr]">
                     <h2 className="text-[clamp(1.6rem,2.8vw,2.4rem)] font-bold leading-tight tracking-[-0.02em] text-[var(--bw-ink)]">
-                        Why toumaar exists
+                        {m.homeWhyTitle}
                     </h2>
                     <div className="max-w-[70ch] space-y-5 text-[16px] leading-relaxed text-[var(--bw-ink-muted)]">
-                        <p>
-                            Most reading apps want to be your social feed — reviews, follower counts,
-                            a timeline of everyone else&apos;s bookshelf. toumaar isn&apos;t that. It exists
-                            for the much smaller, much more useful problem: knowing what you own,
-                            what you&apos;ve lent out, and when it&apos;s coming back.
-                        </p>
-                        <p>
-                            A spreadsheet can technically do this. toumaar is faster — scan a barcode
-                            or type a title and it&apos;s catalogued, with the author, genre, and lending
-                            history tracked automatically, in a view built for skimming your own
-                            collection, not browsing anyone else&apos;s.
-                        </p>
+                        <p>{m.homeWhyP1}</p>
+                        <p>{m.homeWhyP2}</p>
                     </div>
                 </Reveal>
             </section>
@@ -118,7 +93,7 @@ export default function HomePage() {
                 <div className="mx-auto max-w-6xl">
                     <Reveal>
                         <h2 className="max-w-[24ch] text-[clamp(1.6rem,2.8vw,2.4rem)] font-bold leading-tight tracking-[-0.02em] text-[var(--bw-ink)]">
-                            Every book has a state. Every state has a light.
+                            {m.homeHowTitle}
                         </h2>
                     </Reveal>
 
@@ -148,13 +123,10 @@ export default function HomePage() {
                 <div className="mx-auto grid max-w-6xl items-center gap-14 lg:grid-cols-2">
                     <Reveal>
                         <h2 className="text-[clamp(1.6rem,2.8vw,2.4rem)] font-bold leading-tight tracking-[-0.02em] text-[var(--bw-ink)]">
-                            Cataloguing shouldn&apos;t be the chore.
+                            {m.homeCaptureTitle}
                         </h2>
                         <p className="mt-5 max-w-[52ch] text-[16px] leading-relaxed text-[var(--bw-ink-muted)]">
-                            Point your camera at the barcode and toumaar fills in the title,
-                            author, and cover on its own. Prefer typing? A manual entry takes
-                            about as long as writing the title down. Either way, the book is
-                            catalogued before you&apos;ve set it back on the shelf.
+                            {m.homeCaptureBody}
                         </p>
                     </Reveal>
                     <Reveal delay={150} className="flex justify-center lg:justify-end">
@@ -190,16 +162,16 @@ export default function HomePage() {
                 />
                 <Reveal className="relative mx-auto max-w-2xl">
                     <h2 className="text-[clamp(1.8rem,3.6vw,3rem)] font-extrabold leading-[1.05] tracking-[-0.03em] text-[var(--bw-ink)]">
-                        Light the first lantern.
+                        {m.homeClosingTitle}
                     </h2>
                     <p className="mt-5 text-[16px] leading-relaxed text-[var(--bw-ink-muted)]">
-                        Sign in and start cataloguing — your collection, your rules.
+                        {m.homeClosingBody}
                     </p>
                     <Link
                         href="/login"
                         className="mt-9 inline-block rounded-full bg-[var(--bw-rose)] px-8 py-3.5 text-[14px] font-semibold text-white shadow-[var(--bw-glow-shadow)] transition-transform duration-200 hover:scale-[1.03] active:scale-[0.98]"
                     >
-                        Sign in to your library
+                        {m.homeCtaSignIn}
                     </Link>
                 </Reveal>
             </section>

@@ -1,4 +1,7 @@
+"use client";
+
 import { HTMLAttributes, ReactNode } from "react";
+import { useLanguage } from "@/src/lib/i18n/context";
 
 interface TopbarProps {
     onMenuClick?: () => void;
@@ -7,13 +10,14 @@ interface TopbarProps {
 }
 
 function Topbar({ onMenuClick, startSlot, endSlot }: TopbarProps) {
+    const { t } = useLanguage();
     return (
         <header className="sticky top-0 z-10 flex h-14 items-center gap-3 border-b border-[var(--border)] bg-[var(--background)]/90 backdrop-blur-sm px-4">
             {onMenuClick && (
                 <button
                     onClick={onMenuClick}
                     className="lg:hidden rounded-lg p-1.5 text-[var(--muted)] hover:bg-stone-100 hover:text-[var(--foreground)] transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] cursor-pointer"
-                    aria-label="Open navigation"
+                    aria-label={t.common.openNavigation}
                 >
                     <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
