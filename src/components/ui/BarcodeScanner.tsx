@@ -24,13 +24,41 @@ function describeError(err: unknown, t: Translations): string {
     return t.barcodeScanner.error;
 }
 
+const CAMERA_KEY = "barcode-scanner-camera";
+
+function readSavedCamera(): string | null {
+    try { return typeof window === "undefined" ? null : localStorage.getItem(CAMERA_KEY); } catch { return null; }
+}
+
+/**
+ * Browsers expose no "macro" flag, only device labels, which vary by phone. A camera labelled macro is
+ * the best match; otherwise an ultra-wide, which usually focuses much closer than the main lens.
+ * shortcut: label heuristic, replace if the browser ever reports minimum focus distance per device.
+ */
+function pickCloseUpCamera(devices: MediaDeviceInfo[]): MediaDeviceInfo | undefined {
+    const back = devices.filter((d) => d.label && !/front|user|selfie/i.test(d.label));
+    return back.find((d) => /macro/i.test(d.label)) ?? back.find((d) => /ultra.?wide|0\.5x/i.test(d.label));
+}
+
 export function BarcodeScanner({ open, onClose, onScan }: BarcodeScannerProps) {
     const { t } = useLanguage();
     const videoRef = useRef<HTMLVideoElement>(null);
     const controlsRef = useRef<IScannerControls | null>(null);
     const scannedRef = useRef(false);
+    // Auto-pick the close-up camera at most once per opening, so choosing "Auto" again is respected.
+    const autoPickedRef = useRef(false);
     const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
-    const [selectedDeviceId, setSelectedDeviceId] = useState("");
+    // null = the user never chose; "" = they chose Auto. Either way a stored choice beats the auto-pick.
+    const [selectedDeviceId, setSelectedDeviceId] = useState(() => {
+        const saved = readSavedCamera();
+        if (saved !== null) autoPickedRef.current = true;
+        return saved ?? "";
+    });
+    const chooseCamera = (id: string) => {
+        autoPickedRef.current = true;
+        setSelectedDeviceId(id);
+        try { localStorage.setItem(CAMERA_KEY, id); } catch { /* storage unavailable: choice lasts for this session */ }
+    };
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     useEffect(() => {
@@ -90,13 +118,31 @@ export function BarcodeScanner({ open, onClose, onScan }: BarcodeScannerProps) {
                 }
                 controlsRef.current = controls;
 
+                // Keep refocusing while the book moves; ignored where the camera lacks the control.
+                const track = (videoRef.current?.srcObject as MediaStream | null)?.getVideoTracks?.()[0];
+                void track?.applyConstraints({advanced: [{focusMode: "continuous"} as MediaTrackConstraintSet]}).catch(() => {});
+
                 try {
+                    // Labels are only filled in once camera permission is granted, i.e. after the stream started.
                     const list = await BrowserCodeReader.listVideoInputDevices();
-                    if (!cancelled) setDevices(list);
+                    if (cancelled) return;
+                    setDevices(list);
+                    if (!selectedDeviceId && !autoPickedRef.current) {
+                        autoPickedRef.current = true;
+                        const closeUp = pickCloseUpCamera(list);
+                        if (closeUp) setSelectedDeviceId(closeUp.deviceId);
+                    }
                 } catch {
                     // Device enumeration is a nice-to-have; scanning already works without it.
                 }
             } catch (err) {
+                // A saved camera that is gone (unplugged, other phone): forget it and fall back to Auto.
+                if (!cancelled && selectedDeviceId && err instanceof DOMException && err.name === "OverconstrainedError") {
+                    try { localStorage.removeItem(CAMERA_KEY); } catch { /* ignore */ }
+                    autoPickedRef.current = false;
+                    setSelectedDeviceId("");
+                    return;
+                }
                 if (!cancelled) setErrorMessage(describeError(err, t));
                 console.error(err);
             }
@@ -108,6 +154,10 @@ export function BarcodeScanner({ open, onClose, onScan }: BarcodeScannerProps) {
             controlsRef.current = null;
         };
     }, [open, onClose, onScan, selectedDeviceId, t]);
+
+    useEffect(() => {
+        if (!open) autoPickedRef.current = readSavedCamera() !== null;
+    }, [open]);
 
     const handleClose = () => {
         scannedRef.current = false;
@@ -145,7 +195,7 @@ export function BarcodeScanner({ open, onClose, onScan }: BarcodeScannerProps) {
                         <Select
                             label={t.barcodeScanner.camera}
                             value={selectedDeviceId}
-                            onChange={(e) => setSelectedDeviceId(e.target.value)}
+                            onChange={(e) => chooseCamera(e.target.value)}
                             className="text-xs"
                             data-testid="barcode-device-select"
                         >

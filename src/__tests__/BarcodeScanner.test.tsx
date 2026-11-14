@@ -1,5 +1,5 @@
 import React from "react";
-import {act, fireEvent, render, screen, waitFor} from "@testing-library/react";
+import {act, cleanup, fireEvent, render, screen, waitFor} from "@testing-library/react";
 import {BrowserMultiFormatReader} from "@zxing/browser";
 import {NotFoundException as MockNotFoundException} from "@zxing/library";
 import {BarcodeScanner} from "@/src/components/ui/BarcodeScanner";
@@ -73,6 +73,7 @@ function renderScanner(props: Partial<React.ComponentProps<typeof BarcodeScanner
 }
 
 beforeEach(() => {
+    localStorage.clear();
     capturedCallback = null;
     lastConstraints = null;
     decodeCallCount = 0;
@@ -224,6 +225,49 @@ describe("BarcodeScanner", () => {
             expect(stop).toHaveBeenCalled();
             const video = (lastConstraints?.video ?? {}) as MediaTrackConstraints;
             expect(video.deviceId).toEqual({exact: "d2"});
+        });
+    });
+
+    describe("close-up camera auto-pick", () => {
+        const cams = (...labels: string[]) =>
+            labels.map((label, i) => ({deviceId: `d${i}`, label, kind: "videoinput"}) as MediaDeviceInfo);
+
+        it("switches to a macro camera when one is found", async () => {
+            listVideoInputDevicesMock.mockResolvedValue(cams("Back Camera", "Back Ultra Wide Camera", "Back Macro Camera"));
+            renderScanner();
+
+            await waitFor(() => expect(decodeCallCount).toBe(2));
+            expect(((lastConstraints?.video ?? {}) as MediaTrackConstraints).deviceId).toEqual({exact: "d2"});
+        });
+
+        it("falls back to an ultra-wide camera when there is no macro camera", async () => {
+            listVideoInputDevicesMock.mockResolvedValue(cams("Back Camera", "Back Ultra Wide Camera", "Front Camera"));
+            renderScanner();
+
+            await waitFor(() => expect(decodeCallCount).toBe(2));
+            expect(((lastConstraints?.video ?? {}) as MediaTrackConstraints).deviceId).toEqual({exact: "d1"});
+        });
+
+        it("remembers a manual camera choice and uses it next time instead of the auto-pick", async () => {
+            listVideoInputDevicesMock.mockResolvedValue(cams("Back Camera", "Back Macro Camera"));
+            renderScanner();
+            const select = await screen.findByTestId("barcode-device-select");
+            await act(async () => { fireEvent.change(select, {target: {value: "d0"}}); });
+            expect(localStorage.getItem("barcode-scanner-camera")).toBe("d0");
+            cleanup();
+
+            decodeCallCount = 0;
+            renderScanner();
+            await waitFor(() => expect(decodeCallCount).toBe(1));
+            expect(((lastConstraints?.video ?? {}) as MediaTrackConstraints).deviceId).toEqual({exact: "d0"});
+        });
+
+        it("keeps the default camera when nothing looks like a close-up lens, and never picks the front one", async () => {
+            listVideoInputDevicesMock.mockResolvedValue(cams("Back Camera", "Front Ultra Wide Camera"));
+            renderScanner();
+
+            await screen.findByTestId("barcode-device-select");
+            expect(decodeCallCount).toBe(1);
         });
     });
 
