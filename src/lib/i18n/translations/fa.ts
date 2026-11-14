@@ -72,6 +72,7 @@ const fa: Translations = {
         navPreferences: "تنظیمات",
         addNewBook: "＋ افزودن کتاب جدید",
         languageSwitcherLabel: "زبان",
+        brand: "طومار",
     },
 
     topbar: {
@@ -157,8 +158,10 @@ const fa: Translations = {
         filterFiction: "داستان",
         filterNonfiction: "غیرداستان",
         booksInCollection: "{count} کتاب در مجموعه",
-        completeWorksTitle: "خورخه لوئیس بورخس — آثار کامل در مجموعه",
+        completeWorksTitle: "{name} — آثار کامل در مجموعه",
         changeAuthor: "تغییر نویسنده",
+        selectAuthor: "یک نویسنده انتخاب کنید",
+        selectAuthorDesc: "برای دیدن آثار او در مجموعه‌تان، یکی از نویسندگان بالا را انتخاب کنید.",
         colTitle: "عنوان",
         colYear: "سال",
         colGenre: "ژانر",
@@ -214,6 +217,15 @@ const fa: Translations = {
         labelLendTo: "امانت به",
         selectMember: "انتخاب عضو",
         noMembers: "هنوز عضوی وجود ندارد.",
+        labelTranslator: "مترجم",
+        labelQuantity: "تعداد نسخه",
+        labelYear: "سال",
+        labelCovers: "جلد کتاب",
+        frontCover: "روی جلد",
+        backCover: "پشت جلد",
+        noCover: "بدون تصویر",
+        backToBooks: "همه کتاب‌ها",
+        notFound: "این کتاب پیدا نشد.",
     },
 
     addBook: {
@@ -242,6 +254,12 @@ const fa: Translations = {
         fieldDescriptionPlaceholder: "توضیح مختصر یا خلاصه کتاب…",
         fieldNotes: "یادداشت‌های شخصی",
         fieldNotesPlaceholder: "نظرات، یادداشت‌های خواندن، پیشنهادات…",
+        fieldTranslator: "مترجم",
+        fieldTranslatorPlaceholder: "مثلاً کنستانس گارنت",
+        fieldFrontCover: "روی جلد",
+        fieldBackCover: "پشت جلد",
+        chooseImage: "انتخاب تصویر",
+        removeImage: "حذف",
         btnAdd: "افزودن به کتابخانه",
         btnCancel: "لغو",
         genres: {

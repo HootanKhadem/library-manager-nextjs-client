@@ -145,6 +145,7 @@ describe("bookToFormData", () => {
         expect(bookToFormData(book, genres)).toEqual({
             title: "Dune",
             author: "Frank Herbert",
+            translator: "", image: "", backImage: "",
             year: "1965",
             genre: "1",
             status: "Owned",

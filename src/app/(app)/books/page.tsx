@@ -1,19 +1,22 @@
 'use client';
 
+import {useRouter} from 'next/navigation';
 import {useLibrary} from '@/src/contexts/LibraryContext';
 import BooksPage from '@/src/components/pages/BooksPage';
 
 export default function BooksRoute() {
     const {
-        books, searchQuery, setSelectedBook, setShowAddModal,
+        books, searchQuery, setShowAddModal,
         booksLoading, booksError, page, totalPages, totalItems, setPage, refetchBooks,
         activeFilter, setActiveFilter,
     } = useLibrary();
 
+    const router = useRouter();
+
     return (
         <BooksPage
             books={books}
-            onBookClick={setSelectedBook}
+            onBookClick={(book) => router.push(`/books/${book.id}`)}
             onAddBook={() => setShowAddModal(true)}
             isError={booksError}
             onRetry={refetchBooks}

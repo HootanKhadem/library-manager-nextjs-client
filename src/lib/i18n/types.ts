@@ -78,6 +78,7 @@ export interface Translations {
         navPreferences: string;
         addNewBook: string;
         languageSwitcherLabel: string;
+        brand: string;
     };
 
     // ── Topbar ──────────────────────────────────────────────────────────────────
@@ -170,6 +171,8 @@ export interface Translations {
         booksInCollection: string;
         completeWorksTitle: string;
         changeAuthor: string;
+        selectAuthor: string;
+        selectAuthorDesc: string;
         colTitle: string;
         colYear: string;
         colGenre: string;
@@ -227,6 +230,15 @@ export interface Translations {
         labelLendTo: string;
         selectMember: string;
         noMembers: string;
+        labelTranslator: string;
+        labelQuantity: string;
+        labelYear: string;
+        labelCovers: string;
+        frontCover: string;
+        backCover: string;
+        noCover: string;
+        backToBooks: string;
+        notFound: string;
     };
 
     // ── Add book modal ────────────────────────────────────────────────────────────
@@ -256,6 +268,12 @@ export interface Translations {
         fieldDescriptionPlaceholder: string;
         fieldNotes: string;
         fieldNotesPlaceholder: string;
+        fieldTranslator: string;
+        fieldTranslatorPlaceholder: string;
+        fieldFrontCover: string;
+        fieldBackCover: string;
+        chooseImage: string;
+        removeImage: string;
         btnAdd: string;
         btnCancel: string;
         genres: {

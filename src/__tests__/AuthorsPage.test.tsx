@@ -12,25 +12,40 @@ const MOCK_WORKS: Book[] = [
 
 describe("AuthorsPage — empty and error states", () => {
     it("shows author cards when authors present", () => {
-        render(<AuthorsPage authors={MOCK_AUTHORS} borgesWorks={MOCK_WORKS} />);
+        render(<AuthorsPage authors={MOCK_AUTHORS} />);
         expect(screen.getByText("Jorge Borges")).toBeInTheDocument();
     });
 
     it("shows empty state when authors array is empty", () => {
-        render(<AuthorsPage authors={[]} borgesWorks={[]} />);
+        render(<AuthorsPage authors={[]} />);
         expect(screen.getByText("No authors yet")).toBeInTheDocument();
     });
 
-    it("shows empty state in works table when borgesWorks is empty", () => {
-        render(<AuthorsPage authors={MOCK_AUTHORS} borgesWorks={[]} />);
-        expect(screen.getByText("No works found")).toBeInTheDocument();
+    it("asks to select an author before showing any works", () => {
+        render(<AuthorsPage authors={MOCK_AUTHORS} />);
+        expect(screen.getByText("Pick an author above to see their works in your collection.")).toBeInTheDocument();
+    });
+
+    it("loads and shows the works of the clicked author", async () => {
+        const loadWorks = jest.fn().mockResolvedValue(MOCK_WORKS);
+        render(<AuthorsPage authors={MOCK_AUTHORS} loadWorks={loadWorks} />);
+        fireEvent.click(screen.getByRole("button", { name: /Jorge Borges/ }));
+        expect(await screen.findByText("Ficciones")).toBeInTheDocument();
+        expect(loadWorks).toHaveBeenCalledWith("a1");
+    });
+
+    it("shows empty works state for an author without books", async () => {
+        const loadWorks = jest.fn().mockResolvedValue([]);
+        render(<AuthorsPage authors={MOCK_AUTHORS} loadWorks={loadWorks} />);
+        fireEvent.click(screen.getByRole("button", { name: /Jorge Borges/ }));
+        expect(await screen.findByText("No works found")).toBeInTheDocument();
     });
 
     it("shows error state when isError is true", () => {
         render(
             <AuthorsPage
                 authors={[]}
-                borgesWorks={[]}
+               
                 isError
                 onRetry={jest.fn()}
             />
@@ -43,7 +58,7 @@ describe("AuthorsPage — empty and error states", () => {
         render(
             <AuthorsPage
                 authors={[]}
-                borgesWorks={[]}
+               
                 isError
                 onRetry={onRetry}
             />
@@ -55,7 +70,7 @@ describe("AuthorsPage — empty and error states", () => {
 
 describe("AuthorsPage — loading and pagination", () => {
     it("shows loading text when isLoading and no authors yet", () => {
-        render(<AuthorsPage authors={[]} borgesWorks={[]} isLoading />);
+        render(<AuthorsPage authors={[]} isLoading />);
         expect(screen.getByText("Loading…")).toBeInTheDocument();
     });
 
@@ -63,7 +78,7 @@ describe("AuthorsPage — loading and pagination", () => {
         render(
             <AuthorsPage
                 authors={MOCK_AUTHORS}
-                borgesWorks={MOCK_WORKS}
+               
                 page={1}
                 totalPages={3}
                 onPageChange={jest.fn()}

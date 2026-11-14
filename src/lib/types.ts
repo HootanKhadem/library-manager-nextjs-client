@@ -35,9 +35,12 @@ export interface Book {
     dateLent?: string;
     rating?: number;
     publisher?: string;
+    translator?: string;
     isbn?: string;
     pages?: number;
     quantity?: number;
+    image?: string;
+    backImage?: string;
     description?: string;
     notes?: string;
     lendingHistory?: LendRecord[];
@@ -74,6 +77,9 @@ export interface NewBookFormData {
     rating: string;
     description: string;
     notes: string;
+    translator: string;
+    image: string;
+    backImage: string;
 }
 
 // ── Dashboard API response types ────────────────────────────────────────────
@@ -149,6 +155,7 @@ export interface BackendBook {
     publisher: string;
     quantity: number;
     image?: string;
+    backImage?: string;
     genreId?: number;
     rating?: number;
     status?: string;
@@ -160,6 +167,7 @@ export interface BackendAuthor {
     name: string;
     image: string;
     userId?: number;
+    bookCount?: number;
 }
 
 export interface BackendGenre {

@@ -1,11 +1,9 @@
 "use client";
 
 import {usePathname} from 'next/navigation';
-import {Bookmark, BookOpen, BookPlus, LayoutDashboard, Library, Settings, Users} from "lucide-react";
+import {Bookmark, BookOpen, LayoutDashboard, Library, Settings, Users} from "lucide-react";
 import {useLanguage} from "@/src/lib/i18n/context";
-import {useLibrary} from "@/src/contexts/LibraryContext";
-import {NavItem, SidebarFooter, SidebarLogo, SidebarNav, SidebarShell} from "@/src/components/ui/Sidebar";
-import {Tooltip} from "@/src/components/ui/Tooltip";
+import {NavItem, SidebarLogo, SidebarNav, SidebarShell} from "@/src/components/ui/Sidebar";
 
 export const NAV_ITEMS = [
     {href: '/dashboard', icon: <LayoutDashboard className="h-4 w-4"/>},
@@ -27,42 +25,25 @@ export function navLabels(t: ReturnType<typeof useLanguage>['t']): Record<string
 
 export default function Sidebar() {
     const { t } = useLanguage();
-    const {setShowAddModal} = useLibrary();
     const pathname = usePathname();
 
     const labels = navLabels(t);
 
     return (
         <SidebarShell>
-            <SidebarLogo icon={<Library className="h-5 w-5"/>} label="toumaar"/>
+            <SidebarLogo icon={<Library className="h-5 w-5"/>} label={t.sidebar.brand}/>
 
             <SidebarNav>
                 {NAV_ITEMS.map(({href, icon}) => (
-                    <Tooltip key={href} content={labels[href]} side="right">
-                        <NavItem
-                            href={href}
-                            icon={icon}
-                            label={labels[href]}
-                            active={pathname === href}
-                        />
-                    </Tooltip>
+                    <NavItem
+                        key={href}
+                        href={href}
+                        icon={icon}
+                        label={labels[href]}
+                        active={pathname === href || (href !== '/dashboard' && pathname.startsWith(href + '/'))}
+                    />
                 ))}
             </SidebarNav>
-
-            <SidebarFooter>
-                <Tooltip content={t.sidebar.addNewBook} side="right">
-                    <button
-                        onClick={() => setShowAddModal(true)}
-                        aria-label={t.sidebar.addNewBook}
-                        className="flex items-center gap-3 w-full rounded-lg px-2.5 py-2 text-sm font-medium transition-colors duration-150 cursor-pointer bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)] overflow-hidden"
-                    >
-                        <BookPlus className="h-4 w-4 shrink-0" aria-hidden="true" />
-                        <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 whitespace-nowrap overflow-hidden">
-                            {t.sidebar.addNewBook}
-                        </span>
-                    </button>
-                </Tooltip>
-            </SidebarFooter>
         </SidebarShell>
     );
 }

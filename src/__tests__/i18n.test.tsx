@@ -318,7 +318,7 @@ describe("Sidebar i18n", () => {
         // fa.sidebar.navDashboard = "داشبورد"
         expect(screen.getByText(fa.sidebar.navDashboard)).toBeInTheDocument();
         expect(screen.getByText(fa.sidebar.navAllBooks)).toBeInTheDocument();
-        expect(screen.getByText(fa.sidebar.addNewBook)).toBeInTheDocument();
+        expect(screen.getByText(fa.sidebar.brand)).toBeInTheDocument();
     });
 });
 

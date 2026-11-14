@@ -6,17 +6,15 @@ import {useLanguage} from '@/src/lib/i18n/context';
 import Sidebar from '@/src/components/Sidebar';
 import Topbar from '@/src/components/Topbar';
 import BottomNav from '@/src/components/BottomNav';
-import BookDetailModal from '@/src/components/BookDetailModal';
 import AddBookModal from '@/src/components/AddBookModal';
 import {bookToFormData} from '@/src/lib/mappers';
 
 export default function AppShell({children}: { children: React.ReactNode }) {
     const {
-        selectedBook, setSelectedBook,
         showAddModal, setShowAddModal,
         editingBook, setEditingBook,
         genres,
-        addBook, updateBook, removeBookLocal, markBookLent,
+        addBook, updateBook,
     } = useLibrary();
     const {t} = useLanguage();
 
@@ -44,24 +42,6 @@ export default function AppShell({children}: { children: React.ReactNode }) {
                 <Plus className="h-6 w-6" aria-hidden="true"/>
             </button>
 
-            {selectedBook && (
-                <BookDetailModal
-                    book={selectedBook}
-                    onClose={() => setSelectedBook(null)}
-                    onLent={() => {
-                        if (selectedBook) markBookLent(selectedBook.id);
-                        setSelectedBook(null);
-                    }}
-                    onEdit={() => {
-                        setEditingBook(selectedBook);
-                        setSelectedBook(null);
-                    }}
-                    onDeleted={() => {
-                        removeBookLocal(selectedBook.id);
-                        setSelectedBook(null);
-                    }}
-                />
-            )}
             {showBookForm && (
                 <AddBookModal
                     key={editingBook?.id ?? 'add'}

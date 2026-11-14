@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { Author, Book } from "@/src/lib/types";
 import { interpolate, useLanguage } from "@/src/lib/i18n/context";
 import { PageHeader } from "@/src/components/ui/Topbar";
@@ -17,7 +18,10 @@ import Pagination from "@/src/components/ui/Pagination";
 
 interface AuthorsPageProps {
     authors: Author[];
-    borgesWorks: Book[];
+    /** Loads the books of one author; null means the request failed. */
+    loadWorks?: (authorId: string) => Promise<Book[] | null>;
+    /** Changes when books are mutated elsewhere, so the open author's works reload. */
+    refreshKey?: number;
     isError?: boolean;
     onRetry?: () => void;
     isLoading?: boolean;
@@ -27,10 +31,34 @@ interface AuthorsPageProps {
 }
 
 export default function AuthorsPage({
-    authors, borgesWorks, isError, onRetry,
+    authors, loadWorks, refreshKey = 0, isError, onRetry,
     isLoading = false, page = 1, totalPages = 1, onPageChange = () => {},
 }: AuthorsPageProps) {
     const { t } = useLanguage();
+    const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [result, setResult] = useState<{ id: string; works: Book[] | null } | null>(null);
+    const [attempt, setAttempt] = useState(0);
+    const gridRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!selectedId || !loadWorks) return;
+        let cancelled = false;
+        loadWorks(selectedId).then((works) => {
+            if (!cancelled) setResult({ id: selectedId, works });
+        });
+        return () => { cancelled = true; };
+    }, [selectedId, loadWorks, refreshKey, attempt]);
+
+    const selected = authors.find((a) => a.id === selectedId) ?? null;
+    const current = result && result.id === selectedId ? result : null;
+    const worksLoading = !!selected && !current;
+    const worksError = !!current && current.works === null;
+    const works = current?.works ?? [];
+
+    function changeAuthor() {
+        setSelectedId(null);
+        gridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
 
     return (
         <div data-testid="authors-page">
@@ -57,9 +85,14 @@ export default function AuthorsPage({
                 />
             ) : (
                 <>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-4">
+                    <div ref={gridRef} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-4">
                         {authors.map((author) => (
-                            <AuthorCard key={author.id} author={author} />
+                            <AuthorCard
+                                key={author.id}
+                                author={author}
+                                selected={author.id === selectedId}
+                                onSelect={() => setSelectedId(author.id)}
+                            />
                         ))}
                     </div>
                     <Pagination
@@ -76,37 +109,52 @@ export default function AuthorsPage({
             <Card>
                 <CardHeader>
                     <span className="text-sm font-semibold text-[var(--foreground)]">
-                        {t.authors.completeWorksTitle}
+                        {selected
+                            ? interpolate(t.authors.completeWorksTitle, { name: selected.name })
+                            : t.authors.selectAuthor}
                     </span>
-                    <Button variant="ghost" size="sm">{t.authors.changeAuthor}</Button>
+                    {selected && (
+                        <Button variant="ghost" size="sm" onClick={changeAuthor}>{t.authors.changeAuthor}</Button>
+                    )}
                 </CardHeader>
-                <DataTable className="rounded-t-none border-0 shadow-none">
-                    <DataTableHead>
-                        <tr>
-                            <Th>{t.authors.colTitle}</Th>
-                            <Th>{t.authors.colYear}</Th>
-                            <Th>{t.authors.colGenre}</Th>
-                            <Th>{t.authors.colStatus}</Th>
-                            <Th>{t.authors.colRating}</Th>
-                            <Th>{t.authors.colNotes}</Th>
-                        </tr>
-                    </DataTableHead>
-                    {borgesWorks.length === 0 ? (
-                        <tbody>
+
+                {!selected ? (
+                    <EmptyState
+                        heading={t.authors.selectAuthor}
+                        description={t.authors.selectAuthorDesc}
+                        icon={<Users className="h-6 w-6" />}
+                        className="py-10"
+                    />
+                ) : worksError ? (
+                    <ErrorState
+                        heading={t.common.errorHeading}
+                        description={t.common.errorDescription}
+                        retryLabel={t.common.retry}
+                        onRetry={() => { setResult(null); setAttempt((a) => a + 1); }}
+                        className="py-10"
+                    />
+                ) : worksLoading ? (
+                    <p className="py-10 text-center text-sm text-[var(--muted)]">{t.common.loading}</p>
+                ) : works.length === 0 ? (
+                    <EmptyState
+                        heading={t.authors.emptyWorks}
+                        description={t.authors.emptyWorksDesc}
+                        icon={<BookOpen className="h-6 w-6" />}
+                        className="py-10"
+                    />
+                ) : (
+                    <DataTable className="rounded-t-none border-0 shadow-none">
+                        <DataTableHead>
                             <tr>
-                                <td colSpan={6}>
-                                    <EmptyState
-                                        heading={t.authors.emptyWorks}
-                                        description={t.authors.emptyWorksDesc}
-                                        icon={<BookOpen className="h-6 w-6" />}
-                                        className="py-10"
-                                    />
-                                </td>
+                                <Th>{t.authors.colTitle}</Th>
+                                <Th>{t.authors.colYear}</Th>
+                                <Th>{t.authors.colGenre}</Th>
+                                <Th>{t.authors.colStatus}</Th>
+                                <Th>{t.authors.colRating}</Th>
                             </tr>
-                        </tbody>
-                    ) : (
+                        </DataTableHead>
                         <DataTableBody>
-                            {borgesWorks.map((book) => (
+                            {works.map((book) => (
                                 <DataTableRow key={book.id}>
                                     <Td>
                                         <span className="font-medium text-[var(--foreground)]">{book.title}</span>
@@ -120,31 +168,35 @@ export default function AuthorsPage({
                                             : <span className="text-[var(--muted-foreground)]">—</span>
                                         }
                                     </Td>
-                                    <Td className="text-xs text-[var(--muted)] italic">{book.notes ?? ""}</Td>
                                 </DataTableRow>
                             ))}
                         </DataTableBody>
-                    )}
-                </DataTable>
+                    </DataTable>
+                )}
             </Card>
         </div>
     );
 }
 
-function AuthorCard({ author }: { author: Author }) {
+function AuthorCard({ author, selected, onSelect }: { author: Author; selected: boolean; onSelect: () => void }) {
     const { t } = useLanguage();
     return (
-        <Card className="text-center p-5 cursor-pointer hover:-translate-y-0.5 transition-transform">
-            <CardBody className="flex flex-col items-center gap-2 p-0">
-                <Avatar name={author.name} size="lg" />
-                <div>
-                    <p className="text-sm font-semibold text-[var(--foreground)] leading-tight">{author.name}</p>
-                    <p className="text-xs text-[var(--muted)] mt-0.5">
-                        {interpolate(t.authors.booksInCollection, { count: String(author.bookCount) })}
-                    </p>
-                </div>
-                <GenreTag genre={author.genre} />
-            </CardBody>
-        </Card>
+        <button type="button" onClick={onSelect} aria-pressed={selected} className="text-start cursor-pointer">
+            <Card className={[
+                "text-center p-5 hover:-translate-y-0.5 transition-all",
+                selected ? "border-[var(--accent)] ring-2 ring-[var(--accent)]/20" : "",
+            ].join(" ")}>
+                <CardBody className="flex flex-col items-center gap-2 p-0">
+                    <Avatar name={author.name} size="lg" />
+                    <div>
+                        <p className="text-sm font-semibold text-[var(--foreground)] leading-tight">{author.name}</p>
+                        <p className="text-xs text-[var(--muted)] mt-0.5">
+                            {interpolate(t.authors.booksInCollection, { count: String(author.bookCount) })}
+                        </p>
+                    </div>
+                    {author.genre && <GenreTag genre={author.genre} />}
+                </CardBody>
+            </Card>
+        </button>
     );
 }

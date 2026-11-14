@@ -29,13 +29,16 @@ function initialState<T>(): SectionState<T> {
 
 interface DashboardPageProps {
     onViewAll: () => void;
+    /** Changes whenever library data is mutated elsewhere; triggers a refetch. */
+    refreshKey?: number;
 }
 
 async function fetchSection<T>(
     url: string,
     setState: React.Dispatch<React.SetStateAction<SectionState<T>>>
 ) {
-    setState({ data: null, loading: true, error: false });
+    // Keep showing existing data during a background refresh; only the first load shows a skeleton.
+    setState((prev) => (prev.data ? prev : { data: null, loading: true, error: false }));
     try {
         const res = await fetch(url);
         if (!res.ok) throw new Error("non-ok");
@@ -46,7 +49,7 @@ async function fetchSection<T>(
     }
 }
 
-export default function DashboardPage({ onViewAll }: DashboardPageProps) {
+export default function DashboardPage({ onViewAll, refreshKey = 0 }: DashboardPageProps) {
     const { t } = useLanguage();
 
     const [bookStats, setBookStats] = useState<SectionState<BookStats>>(initialState());
@@ -77,7 +80,7 @@ export default function DashboardPage({ onViewAll }: DashboardPageProps) {
         loadOverdueStats();
         loadRecentBooks();
         loadActivity();
-    }, [loadBookStats, loadLentStats, loadOverdueStats, loadRecentBooks, loadActivity]);
+    }, [loadBookStats, loadLentStats, loadOverdueStats, loadRecentBooks, loadActivity, refreshKey]);
 
     return (
         <div data-testid="dashboard-page">

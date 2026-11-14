@@ -7,6 +7,7 @@ import { BackendBook, NewBookFormData, PagedResponse } from "@/src/lib/types";
 const FORM: NewBookFormData = {
     title: "Dune", author: "Frank Herbert", year: "1965", genre: "Science Fiction", status: "Owned",
     publisher: "Chilton", isbn: "123", pages: "412", quantity: "1", rating: "5", description: "", notes: "",
+    translator: "", image: "", backImage: "",
 };
 
 const EMPTY_PAGE: PagedResponse<unknown> = { items: [], page: 1, pageSize: 20, totalItems: 0, totalPages: 1 };
