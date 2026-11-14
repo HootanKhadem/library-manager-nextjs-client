@@ -8,6 +8,7 @@ import {Modal, ModalBody, ModalCloseButton, ModalFooter, ModalHeader} from "@/sr
 import {Input} from "@/src/components/ui/Input";
 import {Select} from "@/src/components/ui/Select";
 import {Button} from "@/src/components/ui/Button";
+import {AuthorPicker} from "@/src/components/AuthorPicker";
 import {BarcodeScanner} from "@/src/components/ui/BarcodeScanner";
 import {CoverPicker} from "@/src/components/ui/CoverPicker";
 
@@ -30,7 +31,7 @@ interface IsbnLookupResult {
 }
 
 const EMPTY_FORM: NewBookFormData = {
-    title: "", author: "", year: "", genre: "", status: "Owned",
+    title: "", author: "", authorId: "", newAuthor: false, year: "", genre: "", status: "Owned",
     publisher: "", isbn: "", pages: "", quantity: "1", rating: "", description: "", notes: "",
     translator: "", language: "", image: "", backImage: "",
 };
@@ -112,7 +113,7 @@ export default function AddBookModal({ onClose, onAdd, mode = "add", initialData
     const submitLabel = mode === "edit" ? t.common.save : t.addBook.btnAdd;
 
     return (
-        <Modal open onClose={onClose} className="max-w-[min(640px,95vw)] max-h-[90vh] overflow-y-auto" data-testid="add-book-modal">
+        <Modal open onClose={onClose} className="max-w-[min(640px,95vw)] max-h-[90vh] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" data-testid="add-book-modal">
             <ModalHeader>
                 <div>
                     <h2 className="text-base font-semibold text-[var(--foreground)]">{heading}</h2>
@@ -132,12 +133,13 @@ export default function AddBookModal({ onClose, onAdd, mode = "add", initialData
                             placeholder={t.addBook.fieldTitlePlaceholder}
                         />
                     </div>
-                    <Input
+                    <AuthorPicker
                         label={t.addBook.fieldAuthor}
-                        name="author"
-                        value={form.author}
-                        onChange={handleChange}
                         placeholder={t.addBook.fieldAuthorPlaceholder}
+                        value={{ name: form.author, authorId: form.authorId, newAuthor: form.newAuthor }}
+                        onChange={({ name, authorId, newAuthor }) =>
+                            setForm((prev) => ({ ...prev, author: name, authorId, newAuthor }))
+                        }
                     />
                     <Input
                         label={t.addBook.fieldTranslator}

@@ -7,7 +7,7 @@ import { BackendBook, NewBookFormData, PagedResponse } from "@/src/lib/types";
 const FORM: NewBookFormData = {
     title: "Dune", author: "Frank Herbert", year: "1965", genre: "Science Fiction", status: "Owned",
     publisher: "Chilton", isbn: "123", pages: "412", quantity: "1", rating: "5", description: "", notes: "",
-    translator: "", language: "", image: "", backImage: "",
+    authorId: "", newAuthor: false, translator: "", language: "", image: "", backImage: "",
 };
 
 const EMPTY_PAGE: PagedResponse<unknown> = { items: [], page: 1, pageSize: 20, totalItems: 0, totalPages: 1 };
@@ -204,6 +204,59 @@ describe("LibraryContext.addBook", () => {
         await userEvent.click(screen.getByText("add"));
         await waitFor(() => expect((global.fetch as jest.Mock).mock.calls.some(([, o]: [string, RequestInit]) => o?.method === "POST")).toBe(true));
         expect(screen.queryAllByRole("listitem").length).toBe(before);
+    });
+});
+
+describe("LibraryContext author handling", () => {
+    afterEach(() => jest.resetAllMocks());
+
+    function AddHarness({ data }: { data: NewBookFormData }) {
+        const { addBook } = useLibrary();
+        return <button onClick={() => addBook(data)}>add</button>;
+    }
+    const postBody = (path: string) => {
+        const call = (global.fetch as jest.Mock).mock.calls.find(([u, o]: [string, RequestInit]) => u === path && o?.method === "POST");
+        return call ? JSON.parse(call[1].body) : undefined;
+    };
+
+    it("sends the chosen author id so same-named authors stay distinct", async () => {
+        setupFetchMock({ "POST /api/book": () => jsonResponse(201, { ...SAMPLE_BOOK, id: 99 }) });
+        render(<LibraryProvider><AddHarness data={{ ...FORM, authorId: "12" }} /></LibraryProvider>);
+        await waitFor(() => expect(screen.getByText("add")).toBeInTheDocument());
+        await userEvent.click(screen.getByText("add"));
+        await waitFor(() => expect(postBody("/api/book")).toBeDefined());
+        expect(postBody("/api/book").author).toEqual({ id: 12, name: "Frank Herbert", image: "" });
+    });
+
+    it("creates a separate author first when asked, then references it by id", async () => {
+        setupFetchMock({
+            "POST /api/author": () => jsonResponse(201, { id: 77, name: "Frank Herbert", image: "" }),
+            "POST /api/book": () => jsonResponse(201, { ...SAMPLE_BOOK, id: 99 }),
+        });
+        render(<LibraryProvider><AddHarness data={{ ...FORM, newAuthor: true }} /></LibraryProvider>);
+        await waitFor(() => expect(screen.getByText("add")).toBeInTheDocument());
+        await userEvent.click(screen.getByText("add"));
+        await waitFor(() => expect(postBody("/api/book")).toBeDefined());
+        expect(postBody("/api/author")).toEqual({ name: "Frank Herbert", image: "" });
+        expect(postBody("/api/book").author).toEqual({ id: 77, name: "Frank Herbert", image: "" });
+    });
+
+    it("does not create the book when the separate author could not be created", async () => {
+        setupFetchMock({ "POST /api/author": () => jsonResponse(500, {}) });
+        render(<LibraryProvider><AddHarness data={{ ...FORM, newAuthor: true }} /></LibraryProvider>);
+        await waitFor(() => expect(screen.getByText("add")).toBeInTheDocument());
+        await userEvent.click(screen.getByText("add"));
+        await waitFor(() => expect(postBody("/api/author")).toBeDefined());
+        expect(postBody("/api/book")).toBeUndefined();
+    });
+
+    it("sends no id when the author was only typed, leaving the backend to match by name", async () => {
+        setupFetchMock({ "POST /api/book": () => jsonResponse(201, { ...SAMPLE_BOOK, id: 99 }) });
+        render(<LibraryProvider><AddHarness data={FORM} /></LibraryProvider>);
+        await waitFor(() => expect(screen.getByText("add")).toBeInTheDocument());
+        await userEvent.click(screen.getByText("add"));
+        await waitFor(() => expect(postBody("/api/book")).toBeDefined());
+        expect(postBody("/api/book").author).toEqual({ name: "Frank Herbert", image: "" });
     });
 });
 

@@ -27,6 +27,7 @@ export interface Book {
     id: string;
     title: string;
     author: string;
+    authorId?: string;
     year: number | null;
     genre: BookGenre | string;
     status: BookStatus;
@@ -68,6 +69,10 @@ export type PageId = "dashboard" | "books" | "lent" | "authors" | "settings";
 export interface NewBookFormData {
     title: string;
     author: string;
+    /** Existing author picked in the form ("" = match/create by name). */
+    authorId: string;
+    /** Force a brand-new author even if one with this name exists. */
+    newAuthor: boolean;
     year: string;
     genre: string;
     status: BookStatus;
