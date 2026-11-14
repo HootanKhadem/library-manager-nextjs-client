@@ -1,13 +1,9 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import AuthorsPage from "@/src/components/pages/AuthorsPage";
-import { Author, Book } from "@/src/lib/types";
+import { Author } from "@/src/lib/types";
 
 const MOCK_AUTHORS: Author[] = [
     { id: "a1", initials: "JB", name: "Jorge Borges", bookCount: 2, genre: "Fiction" },
-];
-
-const MOCK_WORKS: Book[] = [
-    { id: "b1", title: "Ficciones", author: "Jorge Borges", year: 1944, genre: "Fiction", status: "Owned" },
 ];
 
 describe("AuthorsPage — empty and error states", () => {
@@ -21,24 +17,9 @@ describe("AuthorsPage — empty and error states", () => {
         expect(screen.getByText("No authors yet")).toBeInTheDocument();
     });
 
-    it("asks to select an author before showing any works", () => {
+    it("links each author card to its own page", () => {
         render(<AuthorsPage authors={MOCK_AUTHORS} />);
-        expect(screen.getByText("Pick an author above to see their works in your collection.")).toBeInTheDocument();
-    });
-
-    it("loads and shows the works of the clicked author", async () => {
-        const loadWorks = jest.fn().mockResolvedValue(MOCK_WORKS);
-        render(<AuthorsPage authors={MOCK_AUTHORS} loadWorks={loadWorks} />);
-        fireEvent.click(screen.getByRole("button", { name: /Jorge Borges/ }));
-        expect(await screen.findByText("Ficciones")).toBeInTheDocument();
-        expect(loadWorks).toHaveBeenCalledWith("a1");
-    });
-
-    it("shows empty works state for an author without books", async () => {
-        const loadWorks = jest.fn().mockResolvedValue([]);
-        render(<AuthorsPage authors={MOCK_AUTHORS} loadWorks={loadWorks} />);
-        fireEvent.click(screen.getByRole("button", { name: /Jorge Borges/ }));
-        expect(await screen.findByText("No works found")).toBeInTheDocument();
+        expect(screen.getByRole("link", { name: /Jorge Borges/ })).toHaveAttribute("href", "/authors/a1");
     });
 
     it("shows error state when isError is true", () => {

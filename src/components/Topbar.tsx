@@ -63,7 +63,7 @@ export default function Topbar() {
         if (q.trim() && pathname !== '/books') router.push('/books');
     }
 
-    const pageId: PageId = PATH_TO_PAGE[pathname] ?? (pathname.startsWith('/books/') ? 'books' : 'dashboard');
+    const pageId: PageId = PATH_TO_PAGE[pathname] ?? (pathname.startsWith('/books/') ? 'books' : pathname.startsWith('/authors/') ? 'authors' : 'dashboard');
     const [title] = t.topbar.pages[pageId];
 
     function closeSearch() {

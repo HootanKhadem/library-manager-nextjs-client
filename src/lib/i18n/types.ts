@@ -171,6 +171,12 @@ export interface Translations {
         booksInCollection: string;
         completeWorksTitle: string;
         changeAuthor: string;
+        backToAuthors: string;
+        notFound: string;
+        statBooks: string;
+        statOwned: string;
+        statLentOut: string;
+        statAvgRating: string;
         selectAuthor: string;
         selectAuthorDesc: string;
         colTitle: string;
