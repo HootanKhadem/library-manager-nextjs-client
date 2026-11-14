@@ -14,7 +14,7 @@
  *   `border-e-*`).  Physical directional classes (`ml-*`, `pl-*`, etc.) do NOT
  *   flip — avoid them in layout code and prefer their logical equivalents.
  *
- * • The Vazirmatn font is used for Farsi text (loaded via next/font/google in
+ * • The Vazirmatn font is used for Farsi text (self-hosted via next/font/local in
  *   app/layout.tsx).  Latin text inside Farsi UI falls back gracefully.
  *
  * • Persian numerals are kept as Arabic-script digits (۱، ۲، ۳…) in pure

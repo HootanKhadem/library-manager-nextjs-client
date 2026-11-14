@@ -4,9 +4,9 @@ import {cookies} from "next/headers";
 import RootLayout from "@/src/app/layout";
 
 jest.mock("next/headers", () => ({cookies: jest.fn()}));
-jest.mock("next/font/google", () => ({
-    Plus_Jakarta_Sans: () => ({variable: "jakarta"}),
-    Vazirmatn: () => ({variable: "vazir"}),
+jest.mock("@/src/app/fonts", () => ({
+    plusJakartaSans: {variable: "jakarta"},
+    vazirmatn: {variable: "vazir"},
 }));
 jest.mock("@/src/app/globals.css", () => ({}), {virtual: true});
 jest.mock("@/src/components/PwaRegistration", () => ({PwaRegistration: () => null}));

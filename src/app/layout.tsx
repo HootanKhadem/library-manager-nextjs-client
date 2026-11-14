@@ -1,24 +1,11 @@
 import type {Metadata, Viewport} from "next";
-import {Plus_Jakarta_Sans, Vazirmatn} from "next/font/google";
 import "./globals.css";
+import {plusJakartaSans, vazirmatn} from "./fonts";
 import {AuthProvider} from "@/src/contexts/AuthContext";
 import {PwaRegistration} from "@/src/components/PwaRegistration";
 import {LanguageProvider} from "@/src/lib/i18n/context";
 import {LANGUAGE_META} from "@/src/lib/i18n/meta";
 import {getServerLanguage} from "@/src/lib/i18n/server";
-
-const plusJakartaSans = Plus_Jakarta_Sans({
-    variable: "--font-plus-jakarta-sans",
-    subsets: ["latin"],
-    display: "swap",
-    weight: ["300", "400", "500", "600", "700", "800"],
-});
-
-const vazirmatn = Vazirmatn({
-    variable: "--font-vazirmatn",
-    subsets: ["arabic"],
-    display: "swap",
-});
 
 export const metadata: Metadata = {
     title: "toumaar — Personal Library Manager",

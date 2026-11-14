@@ -1,13 +1,6 @@
-import {Manrope} from 'next/font/google';
+import {manrope} from '../fonts';
 import {MarketingHeader} from './_components/MarketingHeader';
 import {MarketingFooter} from './_components/MarketingFooter';
-
-const manrope = Manrope({
-    variable: '--font-manrope',
-    subsets: ['latin'],
-    display: 'swap',
-    weight: ['400', '500', '600', '700', '800'],
-});
 
 const DIRECTION_CONTRACT = `
 THESIS: toumaar's shelf glows only where you've been — a lit paper lantern,
